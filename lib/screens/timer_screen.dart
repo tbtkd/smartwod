@@ -1,11 +1,19 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '../core/amrap_runner.dart';
+
 import '../core/amrap_block.dart';
+import '../core/amrap_runner.dart';
+import '../core/timer_ui_state.dart';
+import '../widgets/central_timer.dart';
+import '../utils/feedback_service.dart';
 
 class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
 
-  const TimerScreen({super.key, required this.blocks});
+  const TimerScreen({
+    super.key,
+    required this.blocks,
+  });
 
   @override
   State<TimerScreen> createState() => _TimerScreenState();
@@ -14,10 +22,15 @@ class TimerScreen extends StatefulWidget {
 class _TimerScreenState extends State<TimerScreen> {
   late AmrapRunner _runner;
 
+  TimerUiState _uiState = TimerUiState.idle;
+
   int _seconds = 0;
-  bool _isRunning = false;
-  bool _isFinished = false;
+  int _countdownSeconds = 10;
+
+  Timer? _countdownTimer;
+
   AmrapBlock? _currentBlock;
+  int _currentBlockIndex = 0;
 
   @override
   void initState() {
@@ -26,18 +39,22 @@ class _TimerScreenState extends State<TimerScreen> {
     _runner = AmrapRunner(
       blocks: widget.blocks,
       onBlockStart: (block) {
+        FeedbackService.strongBeep();
+
         setState(() {
           _currentBlock = block;
-          _isRunning = true;
+          _currentBlockIndex++;
+          _uiState = TimerUiState.running;
         });
       },
       onTick: (seconds) {
         setState(() => _seconds = seconds);
       },
       onFinish: () {
+        FeedbackService.strongBeep();
+
         setState(() {
-          _isRunning = false;
-          _isFinished = true;
+          _uiState = TimerUiState.finished;
         });
       },
     );
@@ -45,62 +62,142 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _runner.stop();
     super.dispose();
   }
 
-  String _formatTime(int s) =>
-      '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+  // -----------------------------
+  // TAP HANDLER
+  // -----------------------------
+  void _onCentralTap() {
+    switch (_uiState) {
+      case TimerUiState.idle:
+        _startCountdown();
+        break;
+      case TimerUiState.countdown:
+        _cancelCountdown();
+        break;
+      case TimerUiState.running:
+        _runner.pause();
+        setState(() => _uiState = TimerUiState.paused);
+        break;
+      case TimerUiState.paused:
+        _runner.resume();
+        setState(() => _uiState = TimerUiState.running);
+        break;
+      case TimerUiState.finished:
+        Navigator.pop(context);
+        break;
+    }
+  }
 
+  // -----------------------------
+  // COUNTDOWN
+  // -----------------------------
+  void _startCountdown() {
+    setState(() {
+      _uiState = TimerUiState.countdown;
+      _countdownSeconds = 10;
+      _currentBlockIndex = 0;
+    });
+
+    _countdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        setState(() => _countdownSeconds--);
+
+        if (_countdownSeconds <= 3 && _countdownSeconds > 0) {
+          FeedbackService.beep();
+        }
+
+        if (_countdownSeconds <= 0) {
+          timer.cancel();
+          _runner.start();
+        }
+      },
+    );
+  }
+
+  void _cancelCountdown() {
+    _countdownTimer?.cancel();
+    setState(() => _uiState = TimerUiState.idle);
+  }
+
+  // -----------------------------
+  // UI HELPERS
+  // -----------------------------
+  Color _activeColor() {
+    if (_currentBlock == null) return Colors.orange;
+    return _currentBlock!.isRest ? Colors.blue : Colors.orange;
+  }
+
+  String _blockLabel() {
+    if (_currentBlock == null) return '';
+    return _currentBlock!.isRest ? 'DESCANSO' : 'AMRAP';
+  }
+
+  double _progress() {
+    if (_uiState == TimerUiState.countdown) {
+      return _countdownSeconds / 10;
+    }
+    if (_currentBlock == null || _seconds <= 0) return 0;
+    return _seconds / _currentBlock!.durationSeconds;
+  }
+
+  // -----------------------------
+  // UI
+  // -----------------------------
   @override
   Widget build(BuildContext context) {
-    final label = _currentBlock == null
-        ? 'LISTO'
-        : _currentBlock!.isRest
-            ? 'DESCANSO'
-            : 'AMRAP';
-
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, title: const Text('AMRAP')),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('AMRAP'),
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70)),
-          const SizedBox(height: 20),
-          Text(
-            _formatTime(_seconds),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
+          if (_uiState != TimerUiState.idle &&
+              _uiState != TimerUiState.finished)
+            Column(
+              children: [
+                Text(
+                  _blockLabel(),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${_currentBlockIndex} de ${widget.blocks.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
+          const SizedBox(height: 30),
+          CentralTimer(
+            state: _uiState,
+            seconds: _uiState == TimerUiState.countdown
+                ? _countdownSeconds
+                : _seconds,
+            progress: _progress(),
+            color: _activeColor(),
+            onTap: _onCentralTap,
           ),
-          const SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: (!_isRunning && !_isFinished)
-                    ? _runner.start
-                    : null,
-                child: const Text('START'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _isRunning ? _runner.pause : null,
-                child: const Text('PAUSE'),
-              ),
-            ],
-          ),
-          if (_isFinished)
-            const Padding(
-              padding: EdgeInsets.only(top: 24),
-              child: Text(
-                'ENTRENAMIENTO FINALIZADO',
-                style: TextStyle(color: Colors.green),
-              ),
+          if (_uiState == TimerUiState.finished) ...[
+            const SizedBox(height: 30),
+            const Text(
+              'ENTRENAMIENTO FINALIZADO',
+              style: TextStyle(color: Colors.green),
             ),
+          ],
         ],
       ),
     );
