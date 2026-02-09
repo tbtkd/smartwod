@@ -31,7 +31,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
   AmrapBlock? _currentBlock;
 
-
   @override
   void initState() {
     super.initState();
@@ -40,18 +39,21 @@ class _TimerScreenState extends State<TimerScreen> {
       blocks: widget.blocks,
       onBlockStart: (block) {
         FeedbackService.strongBeep();
-
         setState(() {
           _currentBlock = block;
           _uiState = TimerUiState.running;
         });
       },
       onTick: (seconds) {
-        setState(() => _seconds = seconds);
+        setState(() {
+          _seconds = seconds;
+        });
       },
       onFinish: () {
         FeedbackService.strongBeep();
-        setState(() => _uiState = TimerUiState.finished);
+        setState(() {
+          _uiState = TimerUiState.finished;
+        });
       },
     );
   }
@@ -64,7 +66,7 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   // -----------------------------
-  // TAP HANDLER
+  // USER TAP HANDLER
   // -----------------------------
   void _onCentralTap() {
     switch (_uiState) {
@@ -100,7 +102,9 @@ class _TimerScreenState extends State<TimerScreen> {
     _countdownTimer = Timer.periodic(
       const Duration(seconds: 1),
       (timer) {
-        setState(() => _countdownSeconds--);
+        setState(() {
+          _countdownSeconds--;
+        });
 
         if (_countdownSeconds <= 3 && _countdownSeconds > 0) {
           FeedbackService.beep();
@@ -116,7 +120,21 @@ class _TimerScreenState extends State<TimerScreen> {
 
   void _cancelCountdown() {
     _countdownTimer?.cancel();
-    setState(() => _uiState = TimerUiState.idle);
+    setState(() {
+      _uiState = TimerUiState.idle;
+    });
+  }
+
+  AmrapBlock? _effectiveBlock() {
+    // Durante countdown, mostramos el primer bloque de trabajo
+    if (_uiState == TimerUiState.countdown) {
+      return widget.blocks.firstWhere(
+        (b) => !b.isRest,
+        orElse: () => widget.blocks.first,
+      );
+    }
+
+    return _currentBlock;
   }
 
   // -----------------------------
@@ -136,56 +154,54 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   // -----------------------------
-  // ROUND INDICATOR (SOLO TRABAJO)
+  // TOP INFO (X de N + tiempo)
   // -----------------------------
-  Widget _buildRoundIndicator() {
+  Widget _buildTopInfo() {
     if (_uiState == TimerUiState.idle ||
         _uiState == TimerUiState.finished) {
       return const SizedBox.shrink();
     }
 
-    final workBlocks =
-        widget.blocks.where((b) => !b.isRest).toList();
+    final block = _effectiveBlock();
+    if (block == null) return const SizedBox.shrink();
 
-    if (workBlocks.isEmpty || _currentBlock == null) {
-      return const SizedBox.shrink();
-    }
+    // Solo bloques de trabajo
+    final workBlocks = widget.blocks.where((b) => !b.isRest).toList();
+    final totalWorkBlocks = workBlocks.length;
 
-    final currentWorkIndex =
-        workBlocks.indexOf(_currentBlock!) + 1;
+    int currentWorkIndex = workBlocks.indexOf(block) + 1;
+    if (currentWorkIndex <= 0) currentWorkIndex = 1;
 
-    return Text(
-      '$currentWorkIndex de ${workBlocks.length}',
-      style: TextStyle(
-        color: _currentBlock!.isRest
-            ? Colors.white54
-            : Colors.white,
-        fontSize: _currentBlock!.isRest ? 20 : 26,
-        fontWeight: FontWeight.bold,
-      ),
+    final duration = block.durationSeconds;
+    final minutes = duration ~/ 60;
+    final seconds = duration % 60;
+
+    final timeLabel = minutes > 0
+        ? '$minutes:${seconds.toString().padLeft(2, '0')}'
+        : '$duration segundos';
+
+    return Column(
+      children: [
+        Text(
+          '$currentWorkIndex de $totalWorkBlocks',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          timeLabel,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 18,
+          ),
+        ),
+      ],
     );
   }
 
-  // -----------------------------
-  // REST INFO
-  // -----------------------------
-  Widget _buildRestInfo() {
-    if (_currentBlock == null || !_currentBlock!.isRest) {
-      return const SizedBox.shrink();
-    }
-
-    final minutes = _currentBlock!.durationSeconds ~/ 60;
-    final seconds = _currentBlock!.durationSeconds % 60;
-
-    return Text(
-      'Descanso · $minutes:${seconds.toString().padLeft(2, '0')}',
-      style: const TextStyle(
-        color: Colors.blueAccent,
-        fontSize: 16,
-        letterSpacing: 1,
-      ),
-    );
-  }
 
   // -----------------------------
   // UI
@@ -214,7 +230,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildRoundIndicator(),
+                    _buildTopInfo(),
                     const SizedBox(height: 24),
                     CentralTimer(
                       state: _uiState,
@@ -225,8 +241,6 @@ class _TimerScreenState extends State<TimerScreen> {
                       color: _activeColor(),
                       onTap: _onCentralTap,
                     ),
-                    const SizedBox(height: 16),
-                    _buildRestInfo(),
                   ],
                 ),
               ),

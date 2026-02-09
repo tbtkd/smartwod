@@ -5,7 +5,7 @@ import '../core/timer_ui_state.dart';
 class CentralTimer extends StatelessWidget {
   final TimerUiState state;
   final int seconds;
-  final double progress; // 0.0 → 1.0
+  final double progress;
   final Color color;
   final VoidCallback onTap;
 
@@ -53,15 +53,15 @@ class CentralTimer extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             CustomPaint(
-              size: const Size(260, 260),
               painter: _BaseCirclePainter(),
+              size: const Size(260, 260),
             ),
             CustomPaint(
-              size: const Size(260, 260),
               painter: _ProgressPainter(
                 progress: progress,
                 color: color,
               ),
+              size: const Size(260, 260),
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -77,7 +77,9 @@ class CentralTimer extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   _label(),
-                  style: const TextStyle(color: Colors.white70),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                  ),
                 ),
               ],
             ),
@@ -87,10 +89,6 @@ class CentralTimer extends StatelessWidget {
     );
   }
 }
-
-// -----------------------------
-// PAINTERS
-// -----------------------------
 
 class _BaseCirclePainter extends CustomPainter {
   @override
@@ -134,16 +132,15 @@ class _ProgressPainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round;
 
-    final center = size.center(Offset.zero);
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    final startAngle = -pi / 2;
-    final sweepAngle = 2 * pi * progress;
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: radius,
+    );
 
     canvas.drawArc(
       rect,
-      startAngle,
-      sweepAngle,
+      -pi / 2,
+      2 * pi * progress,
       false,
       paint,
     );
