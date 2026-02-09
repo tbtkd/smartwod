@@ -157,49 +157,55 @@ class _TimerScreenState extends State<TimerScreen> {
         title: const Text('AMRAP'),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (_uiState != TimerUiState.idle &&
-              _uiState != TimerUiState.finished)
-            Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  _blockLabel(),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    letterSpacing: 2,
+                if (_uiState != TimerUiState.idle &&
+                    _uiState != TimerUiState.finished)
+                  Column(
+                    children: [
+                      Text(
+                        _blockLabel(),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${_currentBlockIndex} de ${widget.blocks.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${_currentBlockIndex} de ${widget.blocks.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+
+                const SizedBox(height: 30),
+
+                CentralTimer(
+                  state: _uiState,
+                  seconds: _uiState == TimerUiState.countdown
+                      ? _countdownSeconds
+                      : _seconds,
+                  progress: _progress(),
+                  color: _activeColor(),
+                  onTap: _onCentralTap,
                 ),
               ],
             ),
-          const SizedBox(height: 30),
-          CentralTimer(
-            state: _uiState,
-            seconds: _uiState == TimerUiState.countdown
-                ? _countdownSeconds
-                : _seconds,
-            progress: _progress(),
-            color: _activeColor(),
-            onTap: _onCentralTap,
           ),
-          if (_uiState == TimerUiState.finished) ...[
-            const SizedBox(height: 30),
-            const Text(
-              'ENTRENAMIENTO FINALIZADO',
-              style: TextStyle(color: Colors.green),
-            ),
-          ],
-        ],
-      ),
+        ),
+
+        // Espacio inferior reservado (futuro contador de rondas / botones)
+        const SizedBox(height: 24),
+      ],
+    ),
     );
   }
 }
