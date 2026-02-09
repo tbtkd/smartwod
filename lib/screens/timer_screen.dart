@@ -30,7 +30,7 @@ class _TimerScreenState extends State<TimerScreen> {
   Timer? _countdownTimer;
 
   AmrapBlock? _currentBlock;
-  int _currentBlockIndex = 0;
+
 
   @override
   void initState() {
@@ -43,7 +43,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
         setState(() {
           _currentBlock = block;
-          _currentBlockIndex++;
           _uiState = TimerUiState.running;
         });
       },
@@ -52,10 +51,7 @@ class _TimerScreenState extends State<TimerScreen> {
       },
       onFinish: () {
         FeedbackService.strongBeep();
-
-        setState(() {
-          _uiState = TimerUiState.finished;
-        });
+        setState(() => _uiState = TimerUiState.finished);
       },
     );
   }
@@ -99,7 +95,6 @@ class _TimerScreenState extends State<TimerScreen> {
     setState(() {
       _uiState = TimerUiState.countdown;
       _countdownSeconds = 10;
-      _currentBlockIndex = 0;
     });
 
     _countdownTimer = Timer.periodic(
@@ -132,17 +127,64 @@ class _TimerScreenState extends State<TimerScreen> {
     return _currentBlock!.isRest ? Colors.blue : Colors.orange;
   }
 
-  String _blockLabel() {
-    if (_currentBlock == null) return '';
-    return _currentBlock!.isRest ? 'DESCANSO' : 'AMRAP';
-  }
-
   double _progress() {
     if (_uiState == TimerUiState.countdown) {
       return _countdownSeconds / 10;
     }
     if (_currentBlock == null || _seconds <= 0) return 0;
     return _seconds / _currentBlock!.durationSeconds;
+  }
+
+  // -----------------------------
+  // ROUND INDICATOR (SOLO TRABAJO)
+  // -----------------------------
+  Widget _buildRoundIndicator() {
+    if (_uiState == TimerUiState.idle ||
+        _uiState == TimerUiState.finished) {
+      return const SizedBox.shrink();
+    }
+
+    final workBlocks =
+        widget.blocks.where((b) => !b.isRest).toList();
+
+    if (workBlocks.isEmpty || _currentBlock == null) {
+      return const SizedBox.shrink();
+    }
+
+    final currentWorkIndex =
+        workBlocks.indexOf(_currentBlock!) + 1;
+
+    return Text(
+      '$currentWorkIndex de ${workBlocks.length}',
+      style: TextStyle(
+        color: _currentBlock!.isRest
+            ? Colors.white54
+            : Colors.white,
+        fontSize: _currentBlock!.isRest ? 20 : 26,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  // -----------------------------
+  // REST INFO
+  // -----------------------------
+  Widget _buildRestInfo() {
+    if (_currentBlock == null || !_currentBlock!.isRest) {
+      return const SizedBox.shrink();
+    }
+
+    final minutes = _currentBlock!.durationSeconds ~/ 60;
+    final seconds = _currentBlock!.durationSeconds % 60;
+
+    return Text(
+      'Descanso · $minutes:${seconds.toString().padLeft(2, '0')}',
+      style: const TextStyle(
+        color: Colors.blueAccent,
+        fontSize: 16,
+        letterSpacing: 1,
+      ),
+    );
   }
 
   // -----------------------------
@@ -154,58 +196,45 @@ class _TimerScreenState extends State<TimerScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('AMRAP'),
-      ),
-      body: Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_uiState != TimerUiState.idle &&
-                    _uiState != TimerUiState.finished)
-                  Column(
-                    children: [
-                      Text(
-                        _blockLabel(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_currentBlockIndex} de ${widget.blocks.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: 30),
-
-                CentralTimer(
-                  state: _uiState,
-                  seconds: _uiState == TimerUiState.countdown
-                      ? _countdownSeconds
-                      : _seconds,
-                  progress: _progress(),
-                  color: _activeColor(),
-                  onTap: _onCentralTap,
-                ),
-              ],
-            ),
+        centerTitle: true,
+        title: const Text(
+          'AMRAP',
+          style: TextStyle(
+            letterSpacing: 2,
+            fontWeight: FontWeight.bold,
           ),
         ),
-
-        // Espacio inferior reservado (futuro contador de rondas / botones)
-        const SizedBox(height: 24),
-      ],
-    ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildRoundIndicator(),
+                    const SizedBox(height: 24),
+                    CentralTimer(
+                      state: _uiState,
+                      seconds: _uiState == TimerUiState.countdown
+                          ? _countdownSeconds
+                          : _seconds,
+                      progress: _progress(),
+                      color: _activeColor(),
+                      onTap: _onCentralTap,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildRestInfo(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }
