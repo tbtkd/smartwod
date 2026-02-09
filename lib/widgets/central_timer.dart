@@ -4,11 +4,15 @@ import '../core/timer_ui_state.dart';
 
 class CentralTimer extends StatelessWidget {
   final TimerUiState? uiState;
+  final bool isCountingDown;
+  final int countdownSeconds;
   final VoidCallback onTap;
 
   const CentralTimer({
     super.key,
     required this.uiState,
+    required this.isCountingDown,
+    required this.countdownSeconds,
     required this.onTap,
   });
 
@@ -21,22 +25,29 @@ class CentralTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isIdle = uiState == null;
+    final bool isIdle = uiState == null && !isCountingDown;
 
-    final Color ringColor = isIdle
+    final Color ringColor = isCountingDown
         ? Colors.orange
-        : uiState!.phase == TimerPhase.rest
-            ? Colors.blue
-            : Colors.orange;
+        : isIdle
+            ? Colors.orange
+            : uiState!.phase == TimerPhase.rest
+                ? Colors.blue
+                : Colors.orange;
 
-    final String mainText =
-        isIdle ? '▶' : _format(uiState!.remainingSeconds);
+    final String mainText = isCountingDown
+        ? countdownSeconds.toString()
+        : isIdle
+            ? '▶'
+            : _format(uiState!.remainingSeconds);
 
-    final String helperText = isIdle
-        ? 'toca para empezar'
-        : uiState!.phase == TimerPhase.rest
-            ? 'descansa'
-            : 'toca para pausar';
+    final String helperText = isCountingDown
+        ? 'prepárate'
+        : isIdle
+            ? 'toca para empezar'
+            : uiState!.phase == TimerPhase.rest
+                ? 'descansa'
+                : 'toca para pausar';
 
     return GestureDetector(
       onTap: onTap,
@@ -56,16 +67,19 @@ class CentralTimer extends StatelessWidget {
             children: [
               Text(
                 mainText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 48,
-                  color: Colors.orange,
                   fontWeight: FontWeight.bold,
+                  color: ringColor,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 helperText,
-                style: const TextStyle(color: Colors.white70),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
