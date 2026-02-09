@@ -23,7 +23,6 @@ class _TimerScreenState extends State<TimerScreen> {
   TimerUiState? _uiState;
   late AmrapRunner _runner;
 
-  // Countdown previo
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
   Timer? _countdownTimer;
@@ -41,7 +40,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
   void _onCentralTap() {
     if (_uiState != null || _isCountingDown) return;
-
     _startCountdown();
   }
 
@@ -55,14 +53,10 @@ class _TimerScreenState extends State<TimerScreen> {
     _countdownTimer =
         Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_countdownSeconds > 1) {
-        setState(() {
-          _countdownSeconds--;
-        });
+        setState(() => _countdownSeconds--);
       } else {
         timer.cancel();
-        setState(() {
-          _isCountingDown = false;
-        });
+        setState(() => _isCountingDown = false);
         _runner.start();
       }
     });
@@ -75,31 +69,64 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
+  /// Descanso que sigue al AMRAP actual
+  int? _nextRestSeconds() {
+    final index = (_uiState?.currentRound ?? 1) - 1;
+
+    if (index < 0 || index >= widget.blocks.length - 1) {
+      return null;
+    }
+
+    return widget.blocks[index + 1].restSeconds;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final totalRounds = widget.blocks.length;
+    final currentRound = _uiState?.currentRound ?? 1;
+    final restSeconds = _nextRestSeconds();
+
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('AMRAP'),
-      ),
+      appBar: AppBar(title: const Text('AMRAP')),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (_uiState != null)
-            Text(
-              '${_uiState!.currentRound} de ${_uiState!.totalRounds}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-              ),
-            ),
           const SizedBox(height: 24),
-          Center(
-            child: CentralTimer(
-              uiState: _uiState,
-              isCountingDown: _isCountingDown,
-              countdownSeconds: _countdownSeconds,
-              onTap: _onCentralTap,
+
+          // 🔹 INFO SUPERIOR
+          Column(
+            children: [
+              Text(
+                '$currentRound de $totalRounds',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (restSeconds != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Descanso · ${restSeconds}s',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          // 🔹 TEMPORIZADOR SIEMPRE CENTRADO
+          Expanded(
+            child: Center(
+              child: CentralTimer(
+                uiState: _uiState,
+                isCountingDown: _isCountingDown,
+                countdownSeconds: _countdownSeconds,
+                onTap: _onCentralTap,
+              ),
             ),
           ),
         ],
