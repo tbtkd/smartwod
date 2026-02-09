@@ -7,7 +7,7 @@ class AmrapBlock {
   // true = descanso, false = trabajo (AMRAP)
   final bool isRest;
 
-  AmrapBlock({
+  const AmrapBlock({
     required this.durationSeconds,
     required this.isRest,
   });

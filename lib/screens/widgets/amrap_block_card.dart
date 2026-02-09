@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Card visual que representa un bloque AMRAP (trabajo)
 class AmrapBlockCard extends StatelessWidget {
-  /// Número de bloque (AMRAP 1, AMRAP 2, etc.)
   final int index;
-
-  /// Duración del bloque en segundos
   final int durationSeconds;
-
-  /// Callback cuando el usuario quiere cambiar el tiempo
   final VoidCallback onEditTime;
-
-  /// Callback para agregar un descanso debajo de este bloque
   final VoidCallback onAddRest;
 
   const AmrapBlockCard({
@@ -22,12 +14,11 @@ class AmrapBlockCard extends StatelessWidget {
     required this.onAddRest,
   });
 
-  /// Convierte segundos a formato mm:ss
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:'
-           '${remainingSeconds.toString().padLeft(2, '0')}';
+        '${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -46,7 +37,7 @@ class AmrapBlockCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado del bloque
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -54,8 +45,8 @@ class AmrapBlockCard extends StatelessWidget {
                 'AMRAP ${index + 1}',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
               IconButton(
@@ -67,7 +58,7 @@ class AmrapBlockCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Tiempo del bloque
+          // Time
           Text(
             _formatTime(durationSeconds),
             style: const TextStyle(
@@ -79,16 +70,13 @@ class AmrapBlockCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Acción para agregar descanso
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onAddRest,
-              icon: const Icon(Icons.add, color: Colors.orange),
-              label: const Text(
-                'Agregar descanso',
-                style: TextStyle(color: Colors.orange),
-              ),
+          // Add rest
+          TextButton.icon(
+            onPressed: onAddRest,
+            icon: const Icon(Icons.add, color: Colors.orange),
+            label: const Text(
+              'Agregar descanso',
+              style: TextStyle(color: Colors.orange),
             ),
           ),
         ],
