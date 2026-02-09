@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+
+/// Diálogo para seleccionar tiempo en minutos y segundos
+class TimePickerDialog extends StatefulWidget {
+  /// Tiempo inicial en segundos
+  final int initialSeconds;
+
+  /// Callback con el nuevo tiempo seleccionado (en segundos)
+  final ValueChanged<int> onTimeSelected;
+
+  const TimePickerDialog({
+    super.key,
+    required this.initialSeconds,
+    required this.onTimeSelected,
+  });
+
+  @override
+  State<TimePickerDialog> createState() => _TimePickerDialogState();
+}
+
+class _TimePickerDialogState extends State<TimePickerDialog> {
+  late int _minutes;
+  late int _seconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutes = widget.initialSeconds ~/ 60;
+    _seconds = widget.initialSeconds % 60;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.black,
+      title: const Text(
+        'Seleccionar tiempo',
+        style: TextStyle(color: Colors.white),
+      ),
+      content: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _NumberPicker(
+            label: 'min',
+            value: _minutes,
+            max: 99,
+            onChanged: (value) {
+              setState(() => _minutes = value);
+            },
+          ),
+          const SizedBox(width: 16),
+          _NumberPicker(
+            label: 'seg',
+            value: _seconds,
+            max: 59,
+            onChanged: (value) {
+              setState(() => _seconds = value);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            final totalSeconds = (_minutes * 60) + _seconds;
+            widget.onTimeSelected(totalSeconds);
+            Navigator.pop(context);
+          },
+          child: const Text(
+            'Aceptar',
+            style: TextStyle(color: Colors.orange),
+          ),
+        ),
+      ],
+    );
+  }
+}

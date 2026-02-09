@@ -1,14 +1,9 @@
-/// Representa un bloque dentro de un AMRAP
-/// Puede ser de trabajo o de descanso
 class AmrapBlock {
-  // Duración del bloque en segundos
-  final int durationSeconds;
-
-  // true = descanso, false = trabajo (AMRAP)
-  final bool isRest;
+  final int workSeconds;
+  final int? restSeconds;
 
   const AmrapBlock({
-    required this.durationSeconds,
-    required this.isRest,
+    required this.workSeconds,
+    this.restSeconds,
   });
 }

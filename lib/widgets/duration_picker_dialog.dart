@@ -30,27 +30,31 @@ class _DurationPickerDialogState
     if (!_steps.contains(_seconds)) _seconds = 0;
   }
 
-  void _incSeconds() {
-    final i = _steps.indexOf(_seconds);
-    if (i == _steps.length - 1) {
+  void _increaseSeconds() {
+    final index = _steps.indexOf(_seconds);
+    if (index == _steps.length - 1) {
       setState(() {
         _minutes++;
         _seconds = 0;
       });
     } else {
-      setState(() => _seconds = _steps[i + 1]);
+      setState(() {
+        _seconds = _steps[index + 1];
+      });
     }
   }
 
-  void _decSeconds() {
-    final i = _steps.indexOf(_seconds);
-    if (i == 0 && _minutes > 0) {
+  void _decreaseSeconds() {
+    final index = _steps.indexOf(_seconds);
+    if (index == 0 && _minutes > 0) {
       setState(() {
         _minutes--;
         _seconds = 45;
       });
-    } else if (i > 0) {
-      setState(() => _seconds = _steps[i - 1]);
+    } else if (index > 0) {
+      setState(() {
+        _seconds = _steps[index - 1];
+      });
     }
   }
 
@@ -65,52 +69,69 @@ class _DurationPickerDialogState
       content: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _MinutePicker(
+          _buildPicker(
+            label: 'min',
             value: _minutes,
-            onChanged: (v) => setState(() => _minutes = v),
+            onIncrease: () {
+              setState(() {
+                _minutes++;
+              });
+            },
+            onDecrease: _minutes > 0
+                ? () {
+                    setState(() {
+                      _minutes--;
+                    });
+                  }
+                : null,
           ),
           const SizedBox(width: 24),
-          _SecondPicker(
+          _buildPicker(
+            label: 'seg',
             value: _seconds,
-            onInc: _incSeconds,
-            onDec: _decSeconds,
+            onIncrease: _increaseSeconds,
+            onDecrease: _decreaseSeconds,
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar',
-              style: TextStyle(color: Colors.grey)),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Colors.grey),
+          ),
         ),
         TextButton(
           onPressed: () {
             widget.onTimeSelected(_minutes * 60 + _seconds);
             Navigator.pop(context);
           },
-          child: const Text('Aceptar',
-              style: TextStyle(color: Colors.orange)),
+          child: const Text(
+            'Aceptar',
+            style: TextStyle(color: Colors.orange),
+          ),
         ),
       ],
     );
   }
-}
 
-class _MinutePicker extends StatelessWidget {
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  const _MinutePicker({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPicker({
+    required String label,
+    required int value,
+    required VoidCallback onIncrease,
+    VoidCallback? onDecrease,
+  }) {
     return Column(
       children: [
-        const Text('min', style: TextStyle(color: Colors.white)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white),
+        ),
         IconButton(
           icon: const Icon(Icons.keyboard_arrow_up),
           color: Colors.white,
-          onPressed: () => onChanged(value + 1),
+          onPressed: onIncrease,
         ),
         Text(
           value.toString().padLeft(2, '0'),
@@ -123,46 +144,7 @@ class _MinutePicker extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.keyboard_arrow_down),
           color: Colors.white,
-          onPressed: value > 0 ? () => onChanged(value - 1) : null,
-        ),
-      ],
-    );
-  }
-}
-
-class _SecondPicker extends StatelessWidget {
-  final int value;
-  final VoidCallback onInc;
-  final VoidCallback onDec;
-
-  const _SecondPicker({
-    required this.value,
-    required this.onInc,
-    required this.onDec,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Text('seg', style: TextStyle(color: Colors.white)),
-        IconButton(
-          icon: const Icon(Icons.keyboard_arrow_up),
-          color: Colors.white,
-          onPressed: onInc,
-        ),
-        Text(
-          value.toString().padLeft(2, '0'),
-          style: const TextStyle(
-            color: Colors.orange,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down),
-          color: Colors.white,
-          onPressed: onDec,
+          onPressed: onDecrease,
         ),
       ],
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/amrap_block.dart';
-import 'widgets/amrap_block_card.dart';
 import '../widgets/duration_picker_dialog.dart';
 import 'timer_screen.dart';
 
@@ -13,20 +12,27 @@ class AmrapConfigScreen extends StatefulWidget {
 }
 
 class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
-  List<AmrapBlock> _blocks = const [
-    AmrapBlock(durationSeconds: 60, isRest: false),
+  final List<AmrapBlock> _blocks = [
+    const AmrapBlock(workSeconds: 60),
   ];
 
-  void _editTime(int index) {
+  String _fmt(int s) {
+    final m = s ~/ 60;
+    final r = s % 60;
+    return '${m.toString().padLeft(2, '0')}:'
+        '${r.toString().padLeft(2, '0')}';
+  }
+
+  void _editWork(int i) {
     showDialog(
       context: context,
       builder: (_) => DurationPickerDialog(
-        initialSeconds: _blocks[index].durationSeconds,
-        onTimeSelected: (s) {
+        initialSeconds: _blocks[i].workSeconds,
+        onTimeSelected: (v) {
           setState(() {
-            _blocks[index] = AmrapBlock(
-              durationSeconds: s,
-              isRest: _blocks[index].isRest,
+            _blocks[i] = AmrapBlock(
+              workSeconds: v,
+              restSeconds: _blocks[i].restSeconds,
             );
           });
         },
@@ -34,25 +40,33 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     );
   }
 
-  void _addRestAfter(int index) {
+  void _editRest(int i) {
+    showDialog(
+      context: context,
+      builder: (_) => DurationPickerDialog(
+        initialSeconds: _blocks[i].restSeconds ?? 15,
+        onTimeSelected: (v) {
+          setState(() {
+            _blocks[i] = AmrapBlock(
+              workSeconds: _blocks[i].workSeconds,
+              restSeconds: v,
+            );
+          });
+        },
+      ),
+    );
+  }
+
+  void _addAmrap() {
     setState(() {
-      _blocks.insert(
-        index + 1,
-        const AmrapBlock(durationSeconds: 15, isRest: true),
-      );
+      _blocks.add(const AmrapBlock(
+        restSeconds: 15,
+        workSeconds: 60,
+      ));
     });
   }
 
-  void _addWorkBlock() {
-    setState(() {
-      _blocks = [
-        ..._blocks,
-        const AmrapBlock(durationSeconds: 60, isRest: false),
-      ];
-    });
-  }
-
-  void _startAmrap() {
+  void _start() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -63,48 +77,73 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int workIndex = 0;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configurar AMRAP'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Configurar AMRAP')),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               itemCount: _blocks.length,
-              itemBuilder: (context, index) {
-                final block = _blocks[index];
-
-                if (block.isRest) {
-                  return ListTile(
-                    leading:
-                        const Icon(Icons.timer, color: Colors.grey),
-                    title: const Text(
-                      'Descanso',
-                      style: TextStyle(color: Colors.white),
+              itemBuilder: (_, i) {
+                final b = _blocks[i];
+                return Card(
+                  color: Colors.grey.shade900,
+                  margin: const EdgeInsets.all(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AMRAP ${i + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (b.restSeconds != null) ...[
+                          const SizedBox(height: 12),
+                          const Text('Descanso',
+                              style: TextStyle(color: Colors.grey)),
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _fmt(b.restSeconds!),
+                                style: const TextStyle(
+                                    color: Colors.blue, fontSize: 20),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.white),
+                                onPressed: () => _editRest(i),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        const Text('Trabajo',
+                            style: TextStyle(color: Colors.grey)),
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _fmt(b.workSeconds),
+                              style: const TextStyle(
+                                  color: Colors.orange, fontSize: 24),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit,
+                                  color: Colors.white),
+                              onPressed: () => _editWork(i),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    subtitle: Text(
-                      '${block.durationSeconds} segundos',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    trailing: IconButton(
-                      icon:
-                          const Icon(Icons.edit, color: Colors.white),
-                      onPressed: () => _editTime(index),
-                    ),
-                  );
-                }
-
-                final current = workIndex++;
-
-                return AmrapBlockCard(
-                  index: current,
-                  durationSeconds: block.durationSeconds,
-                  onEditTime: () => _editTime(index),
-                  onAddRest: () => _addRestAfter(index),
+                  ),
                 );
               },
             ),
@@ -114,12 +153,12 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
             child: Column(
               children: [
                 ElevatedButton(
-                  onPressed: _addWorkBlock,
-                  child: const Text('Añadir otro AMRAP'),
+                  onPressed: _addAmrap,
+                  child: const Text('Añadir nuevo AMRAP'),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: _startAmrap,
+                  onPressed: _start,
                   child: const Text('Empezar'),
                 ),
               ],
