@@ -86,3 +86,6 @@ lib/
 Base sólida, funcional y lista para continuar iterando.
 
 💪 Continuará...
+
+
+flutter run -d emulator-5554
