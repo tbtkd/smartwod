@@ -17,21 +17,30 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     AmrapBlock(durationSeconds: 60, isRest: false),
   ];
 
-  void _editBlockTime(int index) {
+  void _editTime(int index) {
     showDialog(
       context: context,
       builder: (_) => DurationPickerDialog(
         initialSeconds: _blocks[index].durationSeconds,
-        onTimeSelected: (newSeconds) {
+        onTimeSelected: (s) {
           setState(() {
             _blocks[index] = AmrapBlock(
-              durationSeconds: newSeconds,
-              isRest: false,
+              durationSeconds: s,
+              isRest: _blocks[index].isRest,
             );
           });
         },
       ),
     );
+  }
+
+  void _addRestAfter(int index) {
+    setState(() {
+      _blocks.insert(
+        index + 1,
+        const AmrapBlock(durationSeconds: 15, isRest: true),
+      );
+    });
   }
 
   void _addWorkBlock() {
@@ -54,6 +63,8 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int workIndex = 0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configurar AMRAP'),
@@ -67,13 +78,33 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
               itemBuilder: (context, index) {
                 final block = _blocks[index];
 
+                if (block.isRest) {
+                  return ListTile(
+                    leading:
+                        const Icon(Icons.timer, color: Colors.grey),
+                    title: const Text(
+                      'Descanso',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      '${block.durationSeconds} segundos',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    trailing: IconButton(
+                      icon:
+                          const Icon(Icons.edit, color: Colors.white),
+                      onPressed: () => _editTime(index),
+                    ),
+                  );
+                }
+
+                final current = workIndex++;
+
                 return AmrapBlockCard(
-                  index: index,
+                  index: current,
                   durationSeconds: block.durationSeconds,
-                  onEditTime: () => _editBlockTime(index),
-                  onAddRest: () {
-                    // siguiente paso
-                  },
+                  onEditTime: () => _editTime(index),
+                  onAddRest: () => _addRestAfter(index),
                 );
               },
             ),

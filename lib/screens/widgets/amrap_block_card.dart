@@ -15,29 +15,25 @@ class AmrapBlockCard extends StatelessWidget {
   });
 
   String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:'
-        '${remainingSeconds.toString().padLeft(2, '0')}';
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:'
+        '${s.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.orange,
-          width: 1.2,
-        ),
+        border: Border.all(color: Colors.orange, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -45,20 +41,17 @@ class AmrapBlockCard extends StatelessWidget {
                 'AMRAP ${index + 1}',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               IconButton(
-                onPressed: onEditTime,
                 icon: const Icon(Icons.edit, color: Colors.white),
+                onPressed: onEditTime,
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          // Time
           Text(
             _formatTime(durationSeconds),
             style: const TextStyle(
@@ -67,10 +60,7 @@ class AmrapBlockCard extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // Add rest
+          const SizedBox(height: 8),
           TextButton.icon(
             onPressed: onAddRest,
             icon: const Icon(Icons.add, color: Colors.orange),

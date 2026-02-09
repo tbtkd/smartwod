@@ -17,6 +17,8 @@ class DurationPickerDialog extends StatefulWidget {
 
 class _DurationPickerDialogState
     extends State<DurationPickerDialog> {
+  static const List<int> _steps = [0, 15, 30, 45];
+
   late int _minutes;
   late int _seconds;
 
@@ -25,6 +27,31 @@ class _DurationPickerDialogState
     super.initState();
     _minutes = widget.initialSeconds ~/ 60;
     _seconds = widget.initialSeconds % 60;
+    if (!_steps.contains(_seconds)) _seconds = 0;
+  }
+
+  void _incSeconds() {
+    final i = _steps.indexOf(_seconds);
+    if (i == _steps.length - 1) {
+      setState(() {
+        _minutes++;
+        _seconds = 0;
+      });
+    } else {
+      setState(() => _seconds = _steps[i + 1]);
+    }
+  }
+
+  void _decSeconds() {
+    final i = _steps.indexOf(_seconds);
+    if (i == 0 && _minutes > 0) {
+      setState(() {
+        _minutes--;
+        _seconds = 45;
+      });
+    } else if (i > 0) {
+      setState(() => _seconds = _steps[i - 1]);
+    }
   }
 
   @override
@@ -32,79 +59,58 @@ class _DurationPickerDialogState
     return AlertDialog(
       backgroundColor: Colors.black,
       title: const Text(
-        'Seleccionar tiempo',
+        'Seleccionar duración',
         style: TextStyle(color: Colors.white),
       ),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _NumberPicker(
-            label: 'min',
+          _MinutePicker(
             value: _minutes,
-            max: 99,
-            onChanged: (value) {
-              setState(() => _minutes = value);
-            },
+            onChanged: (v) => setState(() => _minutes = v),
           ),
-          const SizedBox(width: 16),
-          _NumberPicker(
-            label: 'seg',
+          const SizedBox(width: 24),
+          _SecondPicker(
             value: _seconds,
-            max: 59,
-            onChanged: (value) {
-              setState(() => _seconds = value);
-            },
+            onInc: _incSeconds,
+            onDec: _decSeconds,
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Colors.grey),
-          ),
+          child: const Text('Cancelar',
+              style: TextStyle(color: Colors.grey)),
         ),
         TextButton(
           onPressed: () {
-            final totalSeconds = (_minutes * 60) + _seconds;
-            widget.onTimeSelected(totalSeconds);
+            widget.onTimeSelected(_minutes * 60 + _seconds);
             Navigator.pop(context);
           },
-          child: const Text(
-            'Aceptar',
-            style: TextStyle(color: Colors.orange),
-          ),
+          child: const Text('Aceptar',
+              style: TextStyle(color: Colors.orange)),
         ),
       ],
     );
   }
 }
 
-/// Widget interno para seleccionar números
-class _NumberPicker extends StatelessWidget {
-  final String label;
+class _MinutePicker extends StatelessWidget {
   final int value;
-  final int max;
   final ValueChanged<int> onChanged;
 
-  const _NumberPicker({
-    required this.label,
-    required this.value,
-    required this.max,
-    required this.onChanged,
-  });
+  const _MinutePicker({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: Colors.white)),
-        const SizedBox(height: 8),
+        const Text('min', style: TextStyle(color: Colors.white)),
         IconButton(
-          onPressed: value < max ? () => onChanged(value + 1) : null,
           icon: const Icon(Icons.keyboard_arrow_up),
           color: Colors.white,
+          onPressed: () => onChanged(value + 1),
         ),
         Text(
           value.toString().padLeft(2, '0'),
@@ -115,9 +121,48 @@ class _NumberPicker extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: value > 0 ? () => onChanged(value - 1) : null,
           icon: const Icon(Icons.keyboard_arrow_down),
           color: Colors.white,
+          onPressed: value > 0 ? () => onChanged(value - 1) : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _SecondPicker extends StatelessWidget {
+  final int value;
+  final VoidCallback onInc;
+  final VoidCallback onDec;
+
+  const _SecondPicker({
+    required this.value,
+    required this.onInc,
+    required this.onDec,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('seg', style: TextStyle(color: Colors.white)),
+        IconButton(
+          icon: const Icon(Icons.keyboard_arrow_up),
+          color: Colors.white,
+          onPressed: onInc,
+        ),
+        Text(
+          value.toString().padLeft(2, '0'),
+          style: const TextStyle(
+            color: Colors.orange,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.keyboard_arrow_down),
+          color: Colors.white,
+          onPressed: onDec,
         ),
       ],
     );
