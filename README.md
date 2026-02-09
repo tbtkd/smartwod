@@ -1,136 +1,88 @@
-# SmartWOD 🏋️‍♂️
 
-SmartWOD es una aplicación de temporizador para entrenamientos funcionales
-desarrollada en Flutter. El proyecto está enfocado en **uso personal**,
-aprendizaje progresivo y buenas prácticas de arquitectura.
+# SMARTWOD 🏋️‍♂️⏱️
 
-Actualmente se está desarrollando primero el modo **AMRAP**, el cual ya cuenta
-con un flujo completo desde configuración hasta ejecución.
+SMARTWOD es una aplicación de temporizadores para entrenamiento funcional (CrossFit-style),
+diseñada inicialmente para **uso personal**, con foco en **AMRAP**, y preparada para crecer
+a otros formatos como EMOM, TABATA y MIX.
 
----
-
-## 🚦 Estado actual del proyecto
-
-✔ Proyecto Flutter configurado correctamente  
-✔ Emulador Android funcionando  
-✔ Estructura de carpetas organizada  
-✔ Navegación entre pantallas  
-✔ Modo **AMRAP funcional de extremo a extremo**  
-
-El flujo actual es:
-
-```
-Home
- └── AMRAP
-      └── Configuración de bloques
-            └── Ejecución del entrenamiento
-```
+El proyecto está desarrollado en **Flutter**, con prioridad en Android, manteniendo una
+arquitectura clara, escalable y fácil de mantener.
 
 ---
 
-## 🧠 Conceptos clave implementados
+## 🎯 Objetivo del proyecto
 
-- Separación clara entre:
-  - UI (screens / widgets)
-  - Lógica (core)
-- Motor de tiempo independiente de Flutter
-- Ejecución por bloques (trabajo / descanso)
-- Flujo automático sin intervención del usuario
-- Código comentado y legible
+- Crear un temporizador de entrenamiento **simple, visual y robusto**
+- Permitir configurar entrenamientos tipo **AMRAP con múltiples bloques**
+- Integrar descansos, sonidos, vibración y UX clara durante el entrenamiento
+- Servir como proyecto de aprendizaje progresivo en Flutter
 
 ---
 
-## 📌 Regla principal del proyecto
+## 📁 Estructura del proyecto (actual)
 
-> **Todo el desarrollo se realiza únicamente dentro de la carpeta `lib/`.**
-
-No modificar carpetas de plataforma (`android/`, `ios/`, etc.)
-a menos que sea estrictamente necesario.
-
----
-
-## 📁 Estructura del proyecto
-
-```
+```text
 lib/
+├── core/
+│   ├── amrap_block.dart
+│   ├── amrap_runner.dart
+│   └── timer_ui_state.dart
 │
-├── main.dart
-│   # Punto de entrada de la app
+├── screens/
+│   ├── amrap_config_screen.dart
+│   ├── home_screen.dart
+│   └── timer_screen.dart
+│   └── widgets/
+│
+├── widgets/
+│   ├── central_timer.dart
+│   ├── circular_timer.dart
+│   ├── duration_picker_dialog.dart
+│   └── wod_button.dart
 │
 ├── app/
 │   └── smartwod_app.dart
-│   # Configuración general (MaterialApp, tema)
 │
-├── screens/
-│   ├── home_screen.dart
-│   │   # Pantalla principal con modos de entrenamiento
-│   │
-│   ├── amrap_config_screen.dart
-│   │   # Configuración dinámica del AMRAP por bloques
-│   │
-│   └── timer_screen.dart
-│       # Ejecución real del entrenamiento
-│
-├── widgets/
-│   └── wod_button.dart
-│   # Botón reutilizable de los modos
-│
-├── core/
-│   ├── amrap_block.dart
-│   │   # Modelo de bloque (trabajo / descanso)
-│   │
-│   ├── timer_engine.dart
-│   │   # Motor genérico de conteo de tiempo
-│   │
-│   └── amrap_runner.dart
-│       # Controlador que ejecuta bloques en secuencia
-│
-└── utils/
-    └── constants.dart
-    # Reservado para constantes futuras
+└── main.dart
 ```
 
 ---
 
-## ▶️ Flujo de desarrollo recomendado
+## ✅ Funcionalidad IMPLEMENTADA
 
-1. Iniciar emulador Android
-2. Ejecutar:
-   ```bash
-   flutter run
-   ```
-3. Modificar únicamente archivos dentro de `lib/`
-4. Guardar → Hot Reload automático
+### Configuración AMRAP
+- Múltiples bloques AMRAP
+- Primer AMRAP solo trabajo
+- AMRAPs siguientes:
+  - Descanso
+  - Trabajo
+- Selector de tiempo en bloques de 15s con rollover a minutos
 
----
+### Runner
+- Ejecución secuencial de bloques
+- Manejo correcto de trabajo / descanso
+- Runner desacoplado de UI
 
-## 🚫 Cosas que NO hacer
-
-- ❌ No modificar `MainActivity.kt`
-- ❌ No editar archivos Gradle sin motivo
-- ❌ No mezclar Dart con código nativo
-- ❌ No ejecutar lógica de tiempo desde la UI
-
----
-
-## 🚀 Próximos pasos planeados
-
-- Pulir UX del temporizador (colores, animaciones)
-- Agregar sonido y vibración entre bloques
-- Implementar FOR TIME reutilizando el motor
-- Implementar EMOM y TABATA
-- Guardar configuraciones favoritas
-- Definir lógica de modo Premium (uso personal)
+### UI
+- Círculo central
+- Estado inicial visible
+- Cambio de color por fase
+- Indicador “X de N”
 
 ---
 
-## 🧠 Filosofía del proyecto
+## ⏸️ Pendiente
 
-SmartWOD prioriza:
-- Código claro
-- Arquitectura limpia
-- Aprendizaje consciente
-- Escalabilidad
+- Número central azul durante descanso
+- Mostrar descansos futuros debajo del contador
+- Countdown previo de 10 segundos
+- Sonido y vibración
+- Pulido de UX
 
-Cada modo de entrenamiento debe ser
-**fácil de entender, reutilizar y mantener**.
+---
+
+## 🚀 Estado
+
+Base sólida, funcional y lista para continuar iterando.
+
+💪 Continuará...
