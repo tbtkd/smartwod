@@ -1,79 +1,92 @@
+# SMARTWOD — CONTEXTO TÉCNICO PARA IA (ACTUALIZADO)
 
-SMARTWOD — CONTEXTO TÉCNICO PARA IA
+## 1. IDENTIDAD DEL PROYECTO
+Nombre: SMARTWOD  
+Tipo: Aplicación móvil Flutter  
+Plataforma principal: Android (iOS posterior)  
+Dominio: Fitness / CrossFit timers  
+Estado: En desarrollo activo (base funcional estable)
 
-1. IDENTIDAD DEL PROYECTO
-Nombre: SMARTWOD
-Tipo: Aplicación móvil Flutter
-Plataforma principal: Android (iOS posterior)
-Dominio: Fitness / CrossFit timers
-Estado: En desarrollo activo
+## 2. ESTADO ACTUAL CONFIRMADO (CRÍTICO)
+- El proyecto compila correctamente
+- El temporizador baja correctamente
+- Flujo AMRAP estable
+- Countdown inicial de 10 segundos
+- Trabajo actual enfocado SOLO en UI/UX
+- No cambiar APIs existentes
 
-2. OBJETIVO FUNCIONAL
-SMARTWOD es un temporizador avanzado para entrenamientos tipo CrossFit, comenzando por AMRAP, con soporte para:
+## 3. OBJETIVO FUNCIONAL
+Temporizador avanzado para entrenamientos tipo CrossFit (AMRAP inicialmente), con:
 - Múltiples bloques de trabajo
-- Bloques de descanso intermedios
+- Descansos intermedios
 - Ejecución secuencial automática
-- UI clara, deportiva y usable en entrenamiento real
-- Arquitectura desacoplada (lógica ≠ UI)
+- UI clara y usable durante entrenamiento
+- Separación estricta lógica / UI
 
-3. ARQUITECTURA (CRÍTICO)
-Principios obligatorios:
-- La UI no maneja lógica de tiempo
-- El runner no maneja widgets
+## 4. ARQUITECTURA (NO ROMPER)
+- UI no maneja tiempo
+- Runner no maneja widgets
 - TimerUiState es la única fuente de verdad
-- Los efectos (sonido, vibración, color) reaccionan al estado
-- No duplicar lógica de temporizador
+- Efectos reaccionan al estado
+- No duplicar lógica
 
-4. ESTRUCTURA ACTUAL DEL PROYECTO
-
+## 5. ESTRUCTURA REAL DEL PROYECTO
 lib/
- app/
-  smartwod_app.dart
  core/
   amrap_block.dart
   amrap_runner.dart
-  timer_engine.dart
   timer_ui_state.dart
- models/
  screens/
   amrap_config_screen.dart
-  home_screen.dart
   timer_screen.dart
-  widgets/
  widgets/
-  central_action.dart
   central_timer.dart
-  circular_timer.dart
-  wod_button.dart
  main.dart
 
-5. FLUJO AMRAP IMPLEMENTADO
-- Primer AMRAP: solo trabajo
-- AMRAPs siguientes: descanso + trabajo
-- Selector de tiempo en bloques de 15 segundos con rollover a minutos
+## 6. MODELO DE ESTADO (CRÍTICO)
+enum TimerPhase { rest, work, finished }
 
-6. RUNNER AMRAP
-- Ejecuta bloques secuenciales
-- Maneja trabajo y descanso
-- Actualiza TimerUiState
-- No depende de UI
+class TimerUiState {
+  final int remainingSeconds;
+  final int currentRound;
+  final int totalRounds;
+  final TimerPhase phase;
+}
 
-7. ESTADO UI ACTUAL
-- Temporizador funcional
-- Progreso circular visible
-- Pantalla AMRAP operativa
+NO existen idle / paused / running.
 
-8. FUNCIONALIDADES PENDIENTES
-- Countdown previo de 10 segundos antes de iniciar
-- Contador en color azul tanto en trabajo como descanso
-- Mostrar resumen de bloques y descansos bajo el contador
-- Sonido y vibración por fase
+## 7. AMRAP RUNNER
+- Recibe List<AmrapBlock>
+- Emite estado vía callback
+- Controla trabajo y descanso
+- NO depende de UI
+- NO implementa pause / resume
 
-9. RESTRICCIONES TÉCNICAS
-- Mantener el proyecto compilable
-- No rehacer arquitectura
-- Entregar archivos completos al modificar
-- Respetar decisiones previas
+## 8. TIMER SCREEN (UI)
+- Recibe bloques desde configuración
+- Muestra:
+  - AppBar con flecha + AMRAP
+  - Texto Trabajo / Descanso
+  - X de N
+  - Descanso con segundos
+  - Temporizador circular centrado
+- El temporizador siempre debe bajar
 
-10. INSTRUCCIÓN FINAL PARA IA
-Continuar el proyecto exactamente desde este estado, respetando arquitectura, estado actual y funcionalidades ya implementadas.
+## 9. OBJETIVO ACTUAL (SOLO UI)
+Pendiente:
+1. Ajustes de spacing
+2. Jerarquía visual
+3. Tipografía
+4. Colores por fase
+5. Animaciones suaves
+6. Sonido y vibración (futuro)
+
+## 10. RESTRICCIONES ABSOLUTAS
+- No inventar APIs
+- No modificar lógica
+- No romper compilación
+- Entregar archivos completos
+
+## 11. INSTRUCCIÓN FINAL PARA IA
+El proyecto YA funciona.
+Continuar desde este estado, enfocándose SOLO en UI/UX.
