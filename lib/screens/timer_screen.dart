@@ -67,7 +67,6 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   void _onCentralTap() {
-    // Solo se inicia una vez
     if (_uiState == null && !_isCountingDown) {
       _startCountdown();
     }
@@ -103,71 +102,69 @@ class _TimerScreenState extends State<TimerScreen> {
       ),
       body: Column(
         children: [
-          const Spacer(flex: 2),
+          const Spacer(),
 
-          // ===== 1 DE N + DESCANSO =====
-          // ===== BLOQUE SUPERIOR (TRABAJO / DESCANSO / 1 DE N) =====
-          Column(
-            children: [
-              // Texto de fase
-              if (_uiState != null)
-                Text(
-                  _uiState!.phase == TimerPhase.work
-                      ? 'Amrap'
-                      : _uiState!.phase == TimerPhase.rest
-                          ? 'Descanso'
-                          : '',
-                  style: TextStyle(
-                    color: _uiState!.phase == TimerPhase.rest
-                        ? Colors.blue
-                        : Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-
-              const SizedBox(height: 6),
-
-              // 1 de N
-              Text(
-                '$currentRound de $totalRounds',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              // Descanso con segundos (solo en rest)
-              if (isRest)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    '${remaining}s',
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      fontSize: 14,
+          // ===== BLOQUE CENTRAL (TODO JUNTO) =====
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // AMRAP / DESCANSO
+                if (_uiState != null)
+                  Text(
+                    _uiState!.phase == TimerPhase.work
+                        ? 'AMRAP'
+                        : _uiState!.phase == TimerPhase.rest
+                            ? 'DESCANSO'
+                            : '',
+                    style: TextStyle(
+                      color: _uiState!.phase == TimerPhase.rest
+                          ? Colors.blue
+                          : Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+
+                const SizedBox(height: 6),
+
+                // 1 de N (JUSTO ENCIMA DEL TIMER)
+                Text(
+                  '$currentRound de $totalRounds',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+                // Descanso en segundos
+                if (isRest)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${remaining}s',
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
 
-          // ===== TEMPORIZADOR =====
-          Expanded(
-            flex: 5,
-            child: Center(
-              child: CentralTimer(
-                uiState: _uiState,
-                isCountingDown: _isCountingDown,
-                countdownSeconds: _countdownSeconds,
-                onTap: _onCentralTap,
-              ),
+                const SizedBox(height: 20),
+
+                // ===== TEMPORIZADOR =====
+                CentralTimer(
+                  uiState: _uiState,
+                  isCountingDown: _isCountingDown,
+                  countdownSeconds: _countdownSeconds,
+                  onTap: _onCentralTap,
+                ),
+              ],
             ),
           ),
-          const Spacer(flex: 1),
+
+          const Spacer(),
         ],
       ),
     );
