@@ -42,12 +42,12 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-        ? 'prepárate'
+        ? 'Prepárate'
         : isIdle
-            ? 'toca para empezar'
+            ? 'Toca para empezar'
             : uiState!.phase == TimerPhase.rest
-                ? 'descansa'
-                : 'toca para pausar';
+                ? 'Descansa'
+                : 'Toca para pausar';
 
     return GestureDetector(
       onTap: onTap,
