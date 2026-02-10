@@ -1,124 +1,138 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import '../core/amrap_block.dart';
 import '../core/amrap_runner.dart';
 import '../core/timer_ui_state.dart';
+import '../core/amrap_block.dart';
 import '../widgets/central_timer.dart';
 
 class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
 
   const TimerScreen({
-    super.key,
+    Key? key,
     required this.blocks,
-  });
+  }) : super(key: key);
 
   @override
   State<TimerScreen> createState() => _TimerScreenState();
 }
 
 class _TimerScreenState extends State<TimerScreen> {
+  late final AmrapRunner _runner;
+
   TimerUiState? _uiState;
-  late AmrapRunner _runner;
 
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
-  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
+
     _runner = AmrapRunner(
       blocks: widget.blocks,
-      onUpdate: (state) {
-        setState(() => _uiState = state);
-      },
+      onUpdate: _onUpdate,
     );
   }
 
-  void _onCentralTap() {
-    if (_uiState != null || _isCountingDown) return;
-    _startCountdown();
+  void _onUpdate(TimerUiState state) {
+    setState(() {
+      _uiState = state;
+    });
   }
 
   void _startCountdown() {
+    if (_isCountingDown) return;
+
     setState(() {
       _isCountingDown = true;
       _countdownSeconds = 10;
     });
 
-    _countdownTimer?.cancel();
-    _countdownTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_countdownSeconds > 1) {
-        setState(() => _countdownSeconds--);
-      } else {
-        timer.cancel();
-        setState(() => _isCountingDown = false);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+
+      setState(() {
+        _countdownSeconds--;
+      });
+
+      if (_countdownSeconds <= 0) {
+        _isCountingDown = false;
         _runner.start();
+        return false;
       }
+      return true;
     });
+  }
+
+  void _onCentralTap() {
+    // Solo se inicia una vez
+    if (_uiState == null && !_isCountingDown) {
+      _startCountdown();
+    }
   }
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
     _runner.dispose();
     super.dispose();
   }
 
-  /// Descanso que sigue al AMRAP actual
-  int? _nextRestSeconds() {
-    final index = (_uiState?.currentRound ?? 1) - 1;
-
-    if (index < 0 || index >= widget.blocks.length - 1) {
-      return null;
-    }
-
-    return widget.blocks[index + 1].restSeconds;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final totalRounds = widget.blocks.length;
-    final currentRound = _uiState?.currentRound ?? 1;
-    final restSeconds = _nextRestSeconds();
+    final int currentRound = _uiState?.currentRound ?? 1;
+    final int totalRounds = _uiState?.totalRounds ?? widget.blocks.length;
+    final bool isRest = _uiState?.phase == TimerPhase.rest;
+    final int remaining = _uiState?.remainingSeconds ?? 0;
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('AMRAP')),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'AMRAP',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
       body: Column(
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // 🔹 INFO SUPERIOR
+          // ===== 1 DE N + DESCANSO =====
           Column(
             children: [
               Text(
                 '$currentRound de $totalRounds',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              if (restSeconds != null)
+              if (isRest)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    'Descanso · ${restSeconds}s',
+                    'Descanso · ${remaining}s',
                     style: const TextStyle(
                       color: Colors.blue,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ),
             ],
           ),
 
-          // 🔹 TEMPORIZADOR SIEMPRE CENTRADO
+          const SizedBox(height: 24),
+
+          // ===== TEMPORIZADOR =====
           Expanded(
             child: Center(
               child: CentralTimer(
