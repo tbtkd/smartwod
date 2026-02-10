@@ -103,11 +103,32 @@ class _TimerScreenState extends State<TimerScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 32),
+          const Spacer(flex: 2),
 
           // ===== 1 DE N + DESCANSO =====
+          // ===== BLOQUE SUPERIOR (TRABAJO / DESCANSO / 1 DE N) =====
           Column(
             children: [
+              // Texto de fase
+              if (_uiState != null)
+                Text(
+                  _uiState!.phase == TimerPhase.work
+                      ? 'Amrap'
+                      : _uiState!.phase == TimerPhase.rest
+                          ? 'Descanso'
+                          : '',
+                  style: TextStyle(
+                    color: _uiState!.phase == TimerPhase.rest
+                        ? Colors.blue
+                        : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+              const SizedBox(height: 6),
+
+              // 1 de N
               Text(
                 '$currentRound de $totalRounds',
                 style: const TextStyle(
@@ -116,11 +137,13 @@ class _TimerScreenState extends State<TimerScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+
+              // Descanso con segundos (solo en rest)
               if (isRest)
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Descanso · ${remaining}s',
+                    '${remaining}s',
                     style: const TextStyle(
                       color: Colors.blue,
                       fontSize: 14,
@@ -130,10 +153,11 @@ class _TimerScreenState extends State<TimerScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // ===== TEMPORIZADOR =====
           Expanded(
+            flex: 5,
             child: Center(
               child: CentralTimer(
                 uiState: _uiState,
@@ -143,6 +167,7 @@ class _TimerScreenState extends State<TimerScreen> {
               ),
             ),
           ),
+          const Spacer(flex: 1),
         ],
       ),
     );
