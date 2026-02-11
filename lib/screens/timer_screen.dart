@@ -104,12 +104,12 @@ class _TimerScreenState extends State<TimerScreen> {
         children: [
           const Spacer(),
 
-          // ===== BLOQUE CENTRAL (TEXTO + TIMER) =====
+          // ===== BLOQUE CENTRAL (TODO JUNTO) =====
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // FASE (AMRAP / DESCANSO)
+                // AMRAP / DESCANSO
                 if (_uiState != null)
                   Text(
                     _uiState!.phase == TimerPhase.work
@@ -119,41 +119,39 @@ class _TimerScreenState extends State<TimerScreen> {
                             : '',
                     style: TextStyle(
                       color: _uiState!.phase == TimerPhase.rest
-                          ? Colors.blueAccent
-                          : Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 1.2,
+                          ? Colors.blue
+                          : Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
-                // 1 DE N (JUSTO ENCIMA DEL TIMER)
+                // 1 de N (JUSTO ENCIMA DEL TIMER)
                 Text(
                   '$currentRound de $totalRounds',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
                   ),
                 ),
 
-                // DESCANSO EN SEGUNDOS
+                // Descanso en segundos
                 if (isRest)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       '${remaining}s',
                       style: const TextStyle(
-                        color: Colors.blueAccent,
-                        fontSize: 13,
+                        color: Colors.blue,
+                        fontSize: 14,
                       ),
                     ),
                   ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
                 // ===== TEMPORIZADOR =====
                 CentralTimer(
