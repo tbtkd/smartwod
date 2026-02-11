@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../core/timer_ui_state.dart';
 
 class CentralTimer extends StatelessWidget {
@@ -42,23 +41,23 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-        ? 'Prepárate'
+        ? 'prepárate'
         : isIdle
-            ? 'Toca para empezar'
+            ? 'toca para empezar'
             : uiState!.phase == TimerPhase.rest
-                ? 'Descansa'
-                : 'Toca para pausar';
+                ? 'descansa'
+                : 'toca para pausar';
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 260,
-        height: 260,
+        width: 280, // 🔼 aumentado
+        height: 280, // 🔼 aumentado
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
             color: ringColor,
-            width: 10,
+            width: 8, // 🔽 un poco más delgado
           ),
         ),
         child: Center(
@@ -68,7 +67,7 @@ class CentralTimer extends StatelessWidget {
               Text(
                 mainText,
                 style: TextStyle(
-                  fontSize: 48,
+                  fontSize: 44, // 🔽 reducido ligeramente
                   fontWeight: FontWeight.bold,
                   color: ringColor,
                 ),
@@ -78,7 +77,7 @@ class CentralTimer extends StatelessWidget {
                 helperText,
                 style: const TextStyle(
                   color: Colors.white70,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
               ),
             ],
