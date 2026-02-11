@@ -1,91 +1,188 @@
+# SmartWOD 🏋️‍♂️
 
-# SMARTWOD 🏋️‍♂️⏱️
+SmartWOD es una aplicación de temporizador para entrenamientos funcionales
+desarrollada en Flutter. El proyecto está enfocado en **uso personal**,
+aprendizaje progresivo y buenas prácticas de arquitectura.
 
-SMARTWOD es una aplicación de temporizadores para entrenamiento funcional (CrossFit-style),
-diseñada inicialmente para **uso personal**, con foco en **AMRAP**, y preparada para crecer
-a otros formatos como EMOM, TABATA y MIX.
-
-El proyecto está desarrollado en **Flutter**, con prioridad en Android, manteniendo una
-arquitectura clara, escalable y fácil de mantener.
-
----
-
-## 🎯 Objetivo del proyecto
-
-- Crear un temporizador de entrenamiento **simple, visual y robusto**
-- Permitir configurar entrenamientos tipo **AMRAP con múltiples bloques**
-- Integrar descansos, sonidos, vibración y UX clara durante el entrenamiento
-- Servir como proyecto de aprendizaje progresivo en Flutter
+Actualmente se está desarrollando primero el modo **AMRAP**, el cual ya cuenta
+con un flujo completo desde configuración hasta ejecución.
 
 ---
 
-## 📁 Estructura del proyecto (actual)
+## 🚦 Estado actual del proyecto
 
-```text
-lib/
-├── core/
-│   ├── amrap_block.dart
-│   ├── amrap_runner.dart
-│   └── timer_ui_state.dart
-│
-├── screens/
-│   ├── amrap_config_screen.dart
-│   ├── home_screen.dart
-│   └── timer_screen.dart
-│   └── widgets/
-│
-├── widgets/
-│   ├── central_timer.dart
-│   ├── circular_timer.dart
-│   ├── duration_picker_dialog.dart
-│   └── wod_button.dart
-│
-├── app/
-│   └── smartwod_app.dart
-│
-└── main.dart
+✔ Proyecto Flutter configurado correctamente  
+✔ Emulador Android funcionando  
+✔ Estructura de carpetas organizada  
+✔ Navegación entre pantallas  
+✔ Modo **AMRAP funcional de extremo a extremo**  
+
+El flujo actual es:
+
+```
+Home
+ └── AMRAP
+      └── Configuración de bloques
+            └── Ejecución del entrenamiento
 ```
 
 ---
 
-## ✅ Funcionalidad IMPLEMENTADA
+## 🧠 Conceptos clave implementados
 
-### Configuración AMRAP
-- Múltiples bloques AMRAP
-- Primer AMRAP solo trabajo
-- AMRAPs siguientes:
-  - Descanso
-  - Trabajo
-- Selector de tiempo en bloques de 15s con rollover a minutos
-
-### Runner
-- Ejecución secuencial de bloques
-- Manejo correcto de trabajo / descanso
-- Runner desacoplado de UI
-
-### UI
-- Círculo central
-- Estado inicial visible
-- Cambio de color por fase
-- Indicador “X de N”
+- Separación clara entre:
+  - UI (screens / widgets)
+  - Lógica (core)
+- Motor de tiempo independiente de Flutter
+- Ejecución por bloques (trabajo / descanso)
+- Flujo automático sin intervención del usuario
+- Código comentado y legible
 
 ---
 
-## ⏸️ Pendiente
+## 📌 Regla principal del proyecto
 
-- Número central azul durante descanso
-- Mostrar descansos futuros debajo del contador
-- Countdown previo de 10 segundos
-- Sonido y vibración
-- Pulido de UX
+> **Todo el desarrollo se realiza únicamente dentro de la carpeta `lib/`.**
+
+No modificar carpetas de plataforma (`android/`, `ios/`, etc.)
+a menos que sea estrictamente necesario.
 
 ---
 
-## 🚀 Estado
+## 📁 Estructura del proyecto
 
-Base sólida, funcional y lista para continuar iterando.
+```
+lib/
+│
+├── main.dart
+│   # Punto de entrada de la app
+│
+├── app/
+│   └── smartwod_app.dart
+│   # Configuración general (MaterialApp, tema)
+│
+├── screens/
+│   ├── home_screen.dart
+│   │   # Pantalla principal con modos de entrenamiento
+│   │
+│   ├── amrap_config_screen.dart
+│   │   # Configuración dinámica del AMRAP por bloques
+│   │
+│   └── timer_screen.dart
+│       # Ejecución real del entrenamiento
+│
+├── widgets/
+│   └── wod_button.dart
+│   # Botón reutilizable de los modos
+│
+├── core/
+│   ├── amrap_block.dart
+│   │   # Modelo de bloque (trabajo / descanso)
+│   │
+│   ├── timer_engine.dart
+│   │   # Motor genérico de conteo de tiempo
+│   │
+│   └── amrap_runner.dart
+│       # Controlador que ejecuta bloques en secuencia
+│
+└── utils/
+    └── constants.dart
+    # Reservado para constantes futuras
+```
 
-💪 Continuará...
+---
 
+## ▶️ Flujo de desarrollo recomendado
 
-flutter run -d emulator-5554
+1. Iniciar emulador Android
+2. Ejecutar:
+   ```bash
+   flutter run
+   ```
+3. Modificar únicamente archivos dentro de `lib/`
+4. Guardar → Hot Reload automático
+
+---
+
+## 🚫 Cosas que NO hacer
+
+- ❌ No modificar `MainActivity.kt`
+- ❌ No editar archivos Gradle sin motivo
+- ❌ No mezclar Dart con código nativo
+- ❌ No ejecutar lógica de tiempo desde la UI
+
+---
+
+## 🚀 Próximos pasos planeados
+
+- Pulir UX del temporizador (colores, animaciones)
+- Agregar sonido y vibración entre bloques
+- Implementar FOR TIME reutilizando el motor
+- Implementar EMOM y TABATA
+- Guardar configuraciones favoritas
+- Definir lógica de modo Premium (uso personal)
+
+---
+
+## 🧠 Filosofía del proyecto
+
+SmartWOD prioriza:
+- Código claro
+- Arquitectura limpia
+- Aprendizaje consciente
+- Escalabilidad
+
+Cada modo de entrenamiento debe ser
+**fácil de entender, reutilizar y mantener**.
+ ##################################################### UPDATE
+
+ # SMARTWOD 🏋️‍♂️⏱️
+
+SMARTWOD es una aplicación de temporizadores para entrenamiento
+funcional (estilo CrossFit), desarrollada en Flutter con prioridad en
+Android.
+
+Actualmente el proyecto se encuentra en una versión estable funcional,
+con arquitectura limpia y enfoque en mejorar la experiencia visual.
+
+------------------------------------------------------------------------
+
+## Estado actual (estable)
+
+✔ Configuración múltiple de bloques AMRAP\
+✔ Primer bloque solo trabajo\
+✔ Bloques posteriores: descanso + trabajo\
+✔ Countdown inicial de 10 segundos\
+✔ Runner secuencial estable\
+✔ Timer descendente correcto\
+✔ Cambio de color por fase\
+✔ Indicador "AMRAP X de N"\
+✔ Tiempo total calculado correctamente
+
+------------------------------------------------------------------------
+
+## Arquitectura
+
+-   AmrapRunner desacoplado de UI\
+-   TimerUiState como única fuente de verdad\
+-   UI reactiva sin lógica de negocio\
+-   Sin estados idle / paused / running
+
+------------------------------------------------------------------------
+
+## Estructura
+
+lib/ ├── core/ ├── screens/ ├── widgets/ ├── app/ └── main.dart
+
+------------------------------------------------------------------------
+
+## En desarrollo
+
+-   Animación progresiva del círculo
+-   Optimización visual
+-   Espaciado responsivo
+-   Mejora tipográfica
+
+------------------------------------------------------------------------
+
+Base estable confirmada.

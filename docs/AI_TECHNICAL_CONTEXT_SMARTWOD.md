@@ -90,3 +90,57 @@ Pendiente:
 ## 11. INSTRUCCIÓN FINAL PARA IA
 El proyecto YA funciona.
 Continuar desde este estado, enfocándose SOLO en UI/UX.
+
+
+########################################## update
+
+# SMARTWOD --- CONTEXTO TÉCNICO IA
+
+Proyecto: SMARTWOD\
+Framework: Flutter\
+Plataforma: Android\
+Estado: Base funcional estable
+
+------------------------------------------------------------------------
+
+## Reglas críticas
+
+-   NO modificar AmrapRunner sin autorización explícita.
+-   NO inventar estados adicionales.
+-   UI no controla tiempo.
+-   Runner no conoce widgets.
+-   TimerUiState es la única fuente de verdad.
+-   Siempre entregar archivos completos al modificar.
+
+------------------------------------------------------------------------
+
+## Modelo actual
+
+enum TimerPhase { rest, work, finished, }
+
+class TimerUiState { final int remainingSeconds; final int currentRound;
+final int totalRounds; final TimerPhase phase; }
+
+------------------------------------------------------------------------
+
+## Estado confirmado
+
+✔ Countdown funcional\
+✔ Runner funcional\
+✔ Trabajo y descanso correctos\
+✔ Cambio de color correcto\
+✔ UI estable\
+✔ Sin audio integrado
+
+------------------------------------------------------------------------
+
+## Trabajo actual
+
+Enfocados únicamente en: - Animación decreciente del círculo - Mejora
+visual y jerarquía - Responsividad
+
+NO tocar lógica.
+
+------------------------------------------------------------------------
+
+Continuar desde esta versión estable.
