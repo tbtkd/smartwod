@@ -24,34 +24,14 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
 
-  late final int _totalTimeSeconds;
-
   @override
   void initState() {
     super.initState();
-
-    _totalTimeSeconds = _calculateTotalTime();
 
     _runner = AmrapRunner(
       blocks: widget.blocks,
       onUpdate: _onUpdate,
     );
-  }
-
-  int _calculateTotalTime() {
-    int total = 0;
-    for (final block in widget.blocks) {
-      total += block.workSeconds;
-      total += block.restSeconds ?? 0;
-    }
-    return total;
-  }
-
-  String _format(int seconds) {
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
   }
 
   void _onUpdate(TimerUiState state) {
@@ -91,6 +71,25 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
+  String _formatTotalTime() {
+    int total = 0;
+
+    for (int i = 0; i < widget.blocks.length; i++) {
+      total += widget.blocks[i].workSeconds;
+
+      // Solo sumar descanso si NO es el último bloque
+      if (i < widget.blocks.length - 1) {
+        total += widget.blocks[i].restSeconds ?? 0;
+      }
+    }
+
+    final m = total ~/ 60;
+    final s = total % 60;
+
+    return '${m.toString().padLeft(2, '0')}:'
+        '${s.toString().padLeft(2, '0')}';
+  }
+
   @override
   void dispose() {
     _runner.dispose();
@@ -99,26 +98,16 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isIdle = _uiState == null && !_isCountingDown;
+    final bool isRest =
+        _uiState != null && _uiState!.phase == TimerPhase.rest;
 
-    String topMessage;
-
-    if (isIdle || _isCountingDown) {
-      topMessage = "Prepárate";
-    } else if (_uiState!.phase == TimerPhase.work) {
-      topMessage =
-          "AMRAP ${_uiState!.currentRound} de ${_uiState!.totalRounds}";
-    } else if (_uiState!.phase == TimerPhase.rest) {
-      // Ajuste correcto del descanso (no usar currentRound directo)
-      final int restIndex =
-          (_uiState!.currentRound > 1) ? _uiState!.currentRound - 1 : 1;
-      final int totalRests =
-          (_uiState!.totalRounds > 1) ? _uiState!.totalRounds - 1 : 1;
-
-      topMessage = "DESCANSO $restIndex de $totalRests";
-    } else {
-      topMessage = "";
-    }
+    final String topLabel = _isCountingDown
+        ? 'Prepárate'
+        : (_uiState == null
+            ? 'Prepárate'
+            : (isRest
+                ? 'Descanso'
+                : 'Amrap ${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -136,52 +125,47 @@ class _TimerScreenState extends State<TimerScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const Spacer(),
-
-            // ===== MENSAJE SUPERIOR =====
-            Text(
-              topMessage,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _uiState?.phase == TimerPhase.rest
-                    ? Colors.blue
-                    : Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // ===== CÍRCULO CENTRADO =====
-            Expanded(
-              flex: 3,
-              child: Center(
-                child: CentralTimer(
-                  uiState: _uiState,
-                  isCountingDown: _isCountingDown,
-                  countdownSeconds: _countdownSeconds,
-                  onTap: _onCentralTap,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              /// ===== TEXTO SUPERIOR =====
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  topLabel,
+                  key: ValueKey(topLabel),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isRest ? Colors.blue : Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-            // ===== TIEMPO TOTAL =====
-            Text(
-              "Tiempo total · ${_format(_totalTimeSeconds)}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 14,
+              /// ===== CÍRCULO =====
+              CentralTimer(
+                uiState: _uiState,
+                isCountingDown: _isCountingDown,
+                countdownSeconds: _countdownSeconds,
+                onTap: _onCentralTap,
               ),
-            ),
 
-            const Spacer(),
-          ],
+              const SizedBox(height: 24),
+
+              /// ===== TIEMPO TOTAL =====
+              Text(
+                'Tiempo total · ${_formatTotalTime()}',
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
