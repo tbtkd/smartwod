@@ -81,9 +81,19 @@ class _TimerScreenState extends State<TimerScreen> {
   @override
   Widget build(BuildContext context) {
     final int currentRound = _uiState?.currentRound ?? 1;
-    final int totalRounds = _uiState?.totalRounds ?? widget.blocks.length;
+    final int totalRounds =
+        _uiState?.totalRounds ?? widget.blocks.length;
+
     final bool isRest = _uiState?.phase == TimerPhase.rest;
-    final int remaining = _uiState?.remainingSeconds ?? 0;
+
+    final bool showNextRestPreview =
+        _uiState != null &&
+        _uiState!.phase == TimerPhase.work &&
+        _uiState!.currentRound < _uiState!.totalRounds;
+
+    final int nextRestSeconds = showNextRestPreview
+        ? (widget.blocks[_uiState!.currentRound].restSeconds ?? 0)
+        : 0;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -102,69 +112,65 @@ class _TimerScreenState extends State<TimerScreen> {
       ),
       body: Column(
         children: [
-          const Spacer(),
+          const Spacer(flex: 1),
 
-          // ===== BLOQUE CENTRAL (TODO JUNTO) =====
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // AMRAP / DESCANSO
-                if (_uiState != null)
-                  Text(
-                    _uiState!.phase == TimerPhase.work
-                        ? 'AMRAP'
-                        : _uiState!.phase == TimerPhase.rest
-                            ? 'DESCANSO'
-                            : '',
-                    style: TextStyle(
-                      color: _uiState!.phase == TimerPhase.rest
-                          ? Colors.blue
-                          : Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                const SizedBox(height: 6),
-
-                // 1 de N (JUSTO ENCIMA DEL TIMER)
+          // ===== BLOQUE SUPERIOR =====
+          Column(
+            children: [
+              if (_uiState != null)
                 Text(
-                  '$currentRound de $totalRounds',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                  _uiState!.phase == TimerPhase.work
+                      ? 'AMRAP'
+                      : _uiState!.phase == TimerPhase.rest
+                          ? 'DESCANSO'
+                          : '',
+                  style: TextStyle(
+                    color: isRest ? Colors.blue : Colors.white,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
 
-                // Descanso en segundos
-                if (isRest)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      '${remaining}s',
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
+              const SizedBox(height: 8),
 
-                const SizedBox(height: 20),
-
-                // ===== TEMPORIZADOR =====
-                CentralTimer(
-                  uiState: _uiState,
-                  isCountingDown: _isCountingDown,
-                  countdownSeconds: _countdownSeconds,
-                  onTap: _onCentralTap,
+              Text(
+                '$currentRound de $totalRounds',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // ===== TEMPORIZADOR CENTRAL =====
+          Expanded(
+            child: Center(
+              child: CentralTimer(
+                uiState: _uiState,
+                isCountingDown: _isCountingDown,
+                countdownSeconds: _countdownSeconds,
+                onTap: _onCentralTap,
+              ),
             ),
           ),
 
-          const Spacer(),
+          const SizedBox(height: 24),
+
+          // ===== PREVIEW SIGUIENTE DESCANSO =====
+          if (showNextRestPreview)
+            Text(
+              'Siguiente descanso · ${nextRestSeconds}s',
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 14,
+              ),
+            ),
+
+          const Spacer(flex: 1),
         ],
       ),
     );
