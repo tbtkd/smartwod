@@ -5,6 +5,7 @@ class CentralTimer extends StatelessWidget {
   final TimerUiState? uiState;
   final bool isCountingDown;
   final int countdownSeconds;
+  final int totalSeconds;
   final VoidCallback onTap;
 
   const CentralTimer({
@@ -12,6 +13,7 @@ class CentralTimer extends StatelessWidget {
     required this.uiState,
     required this.isCountingDown,
     required this.countdownSeconds,
+    required this.totalSeconds,
     required this.onTap,
   });
 
@@ -24,11 +26,6 @@ class CentralTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // 🔥 Tamaño responsivo del círculo (75% del ancho)
-    final double size = screenWidth * 0.75;
-
     final bool isIdle = uiState == null && !isCountingDown;
     final bool isRest =
         uiState != null && uiState!.phase == TimerPhase.rest;
@@ -48,71 +45,107 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-        ? ''
+        ? 'prepárate'
         : isIdle
-            ? 'Toca para empezar'
+            ? 'toca para empezar'
             : uiState!.phase == TimerPhase.work
-                ? 'Toca para pausar'
+                ? 'toca para pausar'
                 : '';
+
+    // 🎯 Progreso real
+    double progress = 1.0;
+
+    if (uiState != null && totalSeconds > 0) {
+      progress = uiState!.remainingSeconds / totalSeconds;
+      progress = progress.clamp(0.0, 1.0);
+    }
+
+    final double size = MediaQuery.of(context).size.width * 0.75;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
+      child: SizedBox(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: ringColor,
-            width: size * 0.05, // 🔥 Grosor proporcional
-          ),
-        ),
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: Size(size, size),
+              painter: _CirclePainter(
+                progress: progress,
+                color: ringColor,
+              ),
+            ),
+            Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 🔥 Animación suave al cambiar texto
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Text(
-                    mainText,
-                    key: ValueKey(mainText),
-                    style: TextStyle(
-                      fontSize: size * 0.22, // 🔥 Escala automática
-                      fontWeight: FontWeight.bold,
-                      color: ringColor,
-                    ),
+                Text(
+                  mainText,
+                  style: TextStyle(
+                    fontSize: size * 0.18,
+                    fontWeight: FontWeight.bold,
+                    color: ringColor,
                   ),
                 ),
-
                 if (helperText.isNotEmpty) ...[
-                  SizedBox(height: size * 0.05),
+                  const SizedBox(height: 8),
                   Text(
                     helperText,
                     style: TextStyle(
                       color: Colors.white70,
-                      fontSize: size * 0.06,
+                      fontSize: size * 0.05,
                     ),
                   ),
                 ]
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _CirclePainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _CirclePainter({
+    required this.progress,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = 10.0;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - strokeWidth;
+
+    final backgroundPaint = Paint()
+      ..color = Colors.white12
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, backgroundPaint);
+
+    final sweepAngle = 2 * 3.1415926535 * progress;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -3.1415926535 / 2,
+      sweepAngle,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

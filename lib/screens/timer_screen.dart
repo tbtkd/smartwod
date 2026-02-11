@@ -151,6 +151,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 uiState: _uiState,
                 isCountingDown: _isCountingDown,
                 countdownSeconds: _countdownSeconds,
+                totalSeconds: _runner.currentBlockTotalSeconds,
                 onTap: _onCentralTap,
               ),
 
