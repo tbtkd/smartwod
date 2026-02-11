@@ -86,6 +86,13 @@ class _TimerScreenState extends State<TimerScreen> {
 
     final bool isRest = _uiState?.phase == TimerPhase.rest;
 
+    // 🔹 Cálculo correcto de descansos
+    final int totalRests =
+        totalRounds > 1 ? totalRounds - 1 : 0;
+
+    final int currentRest =
+        isRest ? (currentRound - 1) : 0;
+
     final bool showNextRestPreview =
         _uiState != null &&
         _uiState!.phase == TimerPhase.work &&
@@ -119,11 +126,7 @@ class _TimerScreenState extends State<TimerScreen> {
             children: [
               if (_uiState != null)
                 Text(
-                  _uiState!.phase == TimerPhase.work
-                      ? 'AMRAP'
-                      : _uiState!.phase == TimerPhase.rest
-                          ? 'DESCANSO'
-                          : '',
+                  isRest ? 'DESCANSO' : 'AMRAP',
                   style: TextStyle(
                     color: isRest ? Colors.blue : Colors.white,
                     fontSize: 16,
@@ -133,8 +136,11 @@ class _TimerScreenState extends State<TimerScreen> {
 
               const SizedBox(height: 8),
 
+              // 🔹 Mostrar AMRAP o DESCANSO correctamente
               Text(
-                '$currentRound de $totalRounds',
+                isRest
+                    ? '$currentRest de $totalRests'
+                    : '$currentRound de $totalRounds',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -146,7 +152,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
           const SizedBox(height: 32),
 
-          // ===== TEMPORIZADOR CENTRAL =====
+          // ===== TEMPORIZADOR =====
           Expanded(
             child: Center(
               child: CentralTimer(
@@ -160,7 +166,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
           const SizedBox(height: 24),
 
-          // ===== PREVIEW SIGUIENTE DESCANSO =====
+          // ===== PREVIEW DEL SIGUIENTE DESCANSO =====
           if (showNextRestPreview)
             Text(
               'Siguiente descanso · ${nextRestSeconds}s',
