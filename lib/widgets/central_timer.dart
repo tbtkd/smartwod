@@ -24,8 +24,12 @@ class CentralTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isIdle = uiState == null && !isCountingDown;
+    final screenWidth = MediaQuery.of(context).size.width;
 
+    // 🔥 Tamaño responsivo del círculo (75% del ancho)
+    final double size = screenWidth * 0.75;
+
+    final bool isIdle = uiState == null && !isCountingDown;
     final bool isRest =
         uiState != null && uiState!.phase == TimerPhase.rest;
 
@@ -44,66 +48,71 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-        ? 'prepárate'
+        ? ''
         : isIdle
-            ? 'toca para empezar'
+            ? 'Toca para empezar'
             : uiState!.phase == TimerPhase.work
-                ? 'toca para pausar'
+                ? 'Toca para pausar'
                 : '';
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 🔥 Toma el espacio real disponible
-        final double maxSize = constraints.maxHeight;
-
-        // ✅ 75% del espacio disponible
-        final double size = maxSize * 0.75;
-
-        return GestureDetector(
-          onTap: onTap,
-          child: Center(
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: ringColor,
-                  width: size * 0.04, // grosor proporcional
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 🔥 Número principal
-                    Text(
-                      mainText,
-                      style: TextStyle(
-                        fontSize: size * 0.22, // escala proporcional
-                        fontWeight: FontWeight.bold,
-                        color: ringColor,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: ringColor,
+            width: size * 0.05, // 🔥 Grosor proporcional
+          ),
+        ),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 🔥 Animación suave al cambiar texto
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: animation,
+                        child: child,
                       ),
+                    );
+                  },
+                  child: Text(
+                    mainText,
+                    key: ValueKey(mainText),
+                    style: TextStyle(
+                      fontSize: size * 0.22, // 🔥 Escala automática
+                      fontWeight: FontWeight.bold,
+                      color: ringColor,
                     ),
-
-                    // 🔥 Texto secundario
-                    if (helperText.isNotEmpty) ...[
-                      SizedBox(height: size * 0.05),
-                      Text(
-                        helperText,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: size * 0.07,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
+
+                if (helperText.isNotEmpty) ...[
+                  SizedBox(height: size * 0.05),
+                  Text(
+                    helperText,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: size * 0.06,
+                    ),
+                  ),
+                ]
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
