@@ -26,11 +26,14 @@ class CentralTimer extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isIdle = uiState == null && !isCountingDown;
 
+    final bool isRest =
+        uiState != null && uiState!.phase == TimerPhase.rest;
+
     final Color ringColor = isCountingDown
         ? Colors.orange
         : isIdle
             ? Colors.orange
-            : uiState!.phase == TimerPhase.rest
+            : isRest
                 ? Colors.blue
                 : Colors.orange;
 
@@ -44,20 +47,20 @@ class CentralTimer extends StatelessWidget {
         ? 'prepárate'
         : isIdle
             ? 'toca para empezar'
-            : uiState!.phase == TimerPhase.rest
-                ? 'descansa'
-                : 'toca para pausar';
+            : uiState!.phase == TimerPhase.work
+                ? 'toca para pausar'
+                : ''; // 🔥 eliminado texto "descansa"
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 280, // 🔼 aumentado
-        height: 280, // 🔼 aumentado
+        width: 260,
+        height: 260,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
             color: ringColor,
-            width: 8, // 🔽 un poco más delgado
+            width: 10,
           ),
         ),
         child: Center(
@@ -67,19 +70,21 @@ class CentralTimer extends StatelessWidget {
               Text(
                 mainText,
                 style: TextStyle(
-                  fontSize: 44, // 🔽 reducido ligeramente
+                  fontSize: 48,
                   fontWeight: FontWeight.bold,
                   color: ringColor,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                helperText,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 15,
+              if (helperText.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  helperText,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
+              ]
             ],
           ),
         ),
