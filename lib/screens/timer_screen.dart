@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../core/amrap_runner.dart';
 import '../core/timer_ui_state.dart';
 import '../core/amrap_block.dart';
@@ -25,14 +24,34 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
 
+  late final int _totalTimeSeconds;
+
   @override
   void initState() {
     super.initState();
+
+    _totalTimeSeconds = _calculateTotalTime();
 
     _runner = AmrapRunner(
       blocks: widget.blocks,
       onUpdate: _onUpdate,
     );
+  }
+
+  int _calculateTotalTime() {
+    int total = 0;
+    for (final block in widget.blocks) {
+      total += block.workSeconds;
+      total += block.restSeconds ?? 0;
+    }
+    return total;
+  }
+
+  String _format(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:'
+        '${s.toString().padLeft(2, '0')}';
   }
 
   void _onUpdate(TimerUiState state) {
@@ -78,40 +97,28 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
-  String _format(int seconds) {
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
-  }
-
-  int _calculateTotalWorkoutTime() {
-    int total = 0;
-
-    for (final block in widget.blocks) {
-      total += block.workSeconds;
-      total += block.restSeconds ?? 0;
-    }
-
-    return total;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final int currentRound = _uiState?.currentRound ?? 1;
-    final int totalRounds =
-        _uiState?.totalRounds ?? widget.blocks.length;
+    final bool isIdle = _uiState == null && !_isCountingDown;
 
-    final bool isRest = _uiState?.phase == TimerPhase.rest;
+    String topMessage;
 
-    final int totalRests =
-        totalRounds > 1 ? totalRounds - 1 : 0;
+    if (isIdle || _isCountingDown) {
+      topMessage = "Prepárate";
+    } else if (_uiState!.phase == TimerPhase.work) {
+      topMessage =
+          "AMRAP ${_uiState!.currentRound} de ${_uiState!.totalRounds}";
+    } else if (_uiState!.phase == TimerPhase.rest) {
+      // Ajuste correcto del descanso (no usar currentRound directo)
+      final int restIndex =
+          (_uiState!.currentRound > 1) ? _uiState!.currentRound - 1 : 1;
+      final int totalRests =
+          (_uiState!.totalRounds > 1) ? _uiState!.totalRounds - 1 : 1;
 
-    final int currentRest =
-        isRest ? (currentRound - 1) : 0;
-
-    final int totalWorkoutSeconds =
-        _calculateTotalWorkoutTime();
+      topMessage = "DESCANSO $restIndex de $totalRests";
+    } else {
+      topMessage = "";
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -128,65 +135,54 @@ class _TimerScreenState extends State<TimerScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      body: Column(
-        children: [
-          const Spacer(flex: 1),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Spacer(),
 
-          // ===== BLOQUE SUPERIOR =====
-          Column(
-            children: [
-              if (_uiState != null)
-                Text(
-                  isRest ? 'DESCANSO' : 'AMRAP',
-                  style: TextStyle(
-                    color: isRest ? Colors.blue : Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                isRest
-                    ? '$currentRest de $totalRests'
-                    : '$currentRound de $totalRounds',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // 🔥 NUEVO: TIEMPO TOTAL DEL WORKOUT
-              Text(
-                'Tiempo total · ${_format(totalWorkoutSeconds)}',
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          // ===== TEMPORIZADOR =====
-          Expanded(
-            child: Center(
-              child: CentralTimer(
-                uiState: _uiState,
-                isCountingDown: _isCountingDown,
-                countdownSeconds: _countdownSeconds,
-                onTap: _onCentralTap,
+            // ===== MENSAJE SUPERIOR =====
+            Text(
+              topMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _uiState?.phase == TimerPhase.rest
+                    ? Colors.blue
+                    : Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
 
-          const Spacer(flex: 1),
-        ],
+            const SizedBox(height: 24),
+
+            // ===== CÍRCULO CENTRADO =====
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: CentralTimer(
+                  uiState: _uiState,
+                  isCountingDown: _isCountingDown,
+                  countdownSeconds: _countdownSeconds,
+                  onTap: _onCentralTap,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ===== TIEMPO TOTAL =====
+            Text(
+              "Tiempo total · ${_format(_totalTimeSeconds)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 14,
+              ),
+            ),
+
+            const Spacer(),
+          ],
+        ),
       ),
     );
   }

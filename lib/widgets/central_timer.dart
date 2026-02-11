@@ -49,46 +49,61 @@ class CentralTimer extends StatelessWidget {
             ? 'toca para empezar'
             : uiState!.phase == TimerPhase.work
                 ? 'toca para pausar'
-                : ''; // 🔥 eliminado texto "descansa"
+                : '';
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 260,
-        height: 260,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: ringColor,
-            width: 10,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                mainText,
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 🔥 Toma el espacio real disponible
+        final double maxSize = constraints.maxHeight;
+
+        // ✅ 75% del espacio disponible
+        final double size = maxSize * 0.75;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Center(
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
                   color: ringColor,
+                  width: size * 0.04, // grosor proporcional
                 ),
               ),
-              if (helperText.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  helperText,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 🔥 Número principal
+                    Text(
+                      mainText,
+                      style: TextStyle(
+                        fontSize: size * 0.22, // escala proporcional
+                        fontWeight: FontWeight.bold,
+                        color: ringColor,
+                      ),
+                    ),
+
+                    // 🔥 Texto secundario
+                    if (helperText.isNotEmpty) ...[
+                      SizedBox(height: size * 0.05),
+                      Text(
+                        helperText,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: size * 0.07,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ]
-            ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
