@@ -78,6 +78,24 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
+  String _format(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:'
+        '${s.toString().padLeft(2, '0')}';
+  }
+
+  int _calculateTotalWorkoutTime() {
+    int total = 0;
+
+    for (final block in widget.blocks) {
+      total += block.workSeconds;
+      total += block.restSeconds ?? 0;
+    }
+
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     final int currentRound = _uiState?.currentRound ?? 1;
@@ -86,21 +104,14 @@ class _TimerScreenState extends State<TimerScreen> {
 
     final bool isRest = _uiState?.phase == TimerPhase.rest;
 
-    // 🔹 Cálculo correcto de descansos
     final int totalRests =
         totalRounds > 1 ? totalRounds - 1 : 0;
 
     final int currentRest =
         isRest ? (currentRound - 1) : 0;
 
-    final bool showNextRestPreview =
-        _uiState != null &&
-        _uiState!.phase == TimerPhase.work &&
-        _uiState!.currentRound < _uiState!.totalRounds;
-
-    final int nextRestSeconds = showNextRestPreview
-        ? (widget.blocks[_uiState!.currentRound].restSeconds ?? 0)
-        : 0;
+    final int totalWorkoutSeconds =
+        _calculateTotalWorkoutTime();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -136,7 +147,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
               const SizedBox(height: 8),
 
-              // 🔹 Mostrar AMRAP o DESCANSO correctamente
               Text(
                 isRest
                     ? '$currentRest de $totalRests'
@@ -145,6 +155,17 @@ class _TimerScreenState extends State<TimerScreen> {
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // 🔥 NUEVO: TIEMPO TOTAL DEL WORKOUT
+              Text(
+                'Tiempo total · ${_format(totalWorkoutSeconds)}',
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -163,18 +184,6 @@ class _TimerScreenState extends State<TimerScreen> {
               ),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          // ===== PREVIEW DEL SIGUIENTE DESCANSO =====
-          if (showNextRestPreview)
-            Text(
-              'Siguiente descanso · ${nextRestSeconds}s',
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 14,
-              ),
-            ),
 
           const Spacer(flex: 1),
         ],
