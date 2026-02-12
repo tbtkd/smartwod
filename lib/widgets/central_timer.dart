@@ -20,8 +20,7 @@ class CentralTimer extends StatelessWidget {
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -29,14 +28,18 @@ class CentralTimer extends StatelessWidget {
     final bool isIdle = uiState == null && !isCountingDown;
     final bool isRest =
         uiState != null && uiState!.phase == TimerPhase.rest;
+    final bool isPaused =
+        uiState != null && uiState!.phase == TimerPhase.paused;
 
-    final Color ringColor = isCountingDown
+    final Color targetColor = isCountingDown
         ? Colors.orange
         : isIdle
             ? Colors.orange
             : isRest
                 ? Colors.blue
-                : Colors.orange;
+                : isPaused
+                    ? Colors.orange.shade300
+                    : Colors.orange;
 
     final String mainText = isCountingDown
         ? countdownSeconds.toString()
@@ -45,16 +48,15 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-    ? 'Prepárate'
-    : isIdle
-        ? 'Toca para empezar'
-        : uiState!.phase == TimerPhase.work
-            ? 'Presiona para pausar'
-            : uiState!.phase == TimerPhase.paused
-                ? 'Presiona para continuar'
-                : '';
+        ? 'Prepárate'
+        : isIdle
+            ? 'Toca para empezar'
+            : uiState!.phase == TimerPhase.work
+                ? 'Presiona para pausar'
+                : uiState!.phase == TimerPhase.paused
+                    ? 'Presiona para continuar'
+                    : '';
 
-    // 🎯 Progreso real
     double progress = 1.0;
 
     if (uiState != null && totalSeconds > 0) {
@@ -72,35 +74,52 @@ class CentralTimer extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            CustomPaint(
-              size: Size(size, size),
-              painter: _CirclePainter(
-                progress: progress,
-                color: ringColor,
+
+            /// 🔥 CÍRCULO CON TRANSICIÓN SUAVE
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              child: CustomPaint(
+                size: Size(size, size),
+                painter: _CirclePainter(
+                  progress: progress,
+                  color: targetColor,
+                  dimmed: isPaused,
+                ),
               ),
             ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  mainText,
-                  style: TextStyle(
-                    fontSize: size * 0.18,
-                    fontWeight: FontWeight.bold,
-                    color: ringColor,
-                  ),
-                ),
-                if (helperText.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    helperText,
+
+            /// 🔥 TEXTO CON TRANSICIÓN
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: Column(
+                key: ValueKey(mainText + targetColor.toString()),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
                     style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: size * 0.05,
+                      fontSize: size * 0.18,
+                      fontWeight: FontWeight.bold,
+                      color: targetColor,
                     ),
+                    child: Text(mainText),
                   ),
-                ]
-              ],
+                  if (helperText.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: size * 0.05,
+                      ),
+                      child: Text(helperText),
+                    ),
+                  ]
+                ],
+              ),
             ),
           ],
         ),
@@ -112,10 +131,12 @@ class CentralTimer extends StatelessWidget {
 class _CirclePainter extends CustomPainter {
   final double progress;
   final Color color;
+  final bool dimmed;
 
   _CirclePainter({
     required this.progress,
     required this.color,
+    required this.dimmed,
   });
 
   @override
@@ -130,7 +151,7 @@ class _CirclePainter extends CustomPainter {
       ..strokeWidth = strokeWidth;
 
     final progressPaint = Paint()
-      ..color = color
+      ..color = dimmed ? color.withOpacity(0.4) : color
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
