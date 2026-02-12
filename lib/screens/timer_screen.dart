@@ -65,11 +65,19 @@ class _TimerScreenState extends State<TimerScreen> {
     });
   }
 
-  void _onCentralTap() {
-    if (_uiState == null && !_isCountingDown) {
-      _startCountdown();
-    }
+void _onCentralTap() {
+  if (_uiState == null && !_isCountingDown) {
+    _startCountdown();
+    return;
   }
+
+  if (_uiState != null) {
+    if (_uiState!.isFinished) return;
+
+    _runner.togglePause();
+  }
+}
+
 
   String _formatTotalTime() {
     int total = 0;

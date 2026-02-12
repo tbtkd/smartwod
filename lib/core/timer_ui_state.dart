@@ -1,6 +1,7 @@
 enum TimerPhase {
-  rest,
   work,
+  rest,
+  paused,
   finished,
 }
 
@@ -16,4 +17,9 @@ class TimerUiState {
     required this.totalRounds,
     required this.phase,
   });
+
+  bool get isWork => phase == TimerPhase.work;
+  bool get isRest => phase == TimerPhase.rest;
+  bool get isPaused => phase == TimerPhase.paused;
+  bool get isFinished => phase == TimerPhase.finished;
 }
