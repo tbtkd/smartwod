@@ -3,6 +3,7 @@ import '../core/amrap_runner.dart';
 import '../core/timer_ui_state.dart';
 import '../core/amrap_block.dart';
 import '../widgets/central_timer.dart';
+import 'workout_finished_screen.dart';
 
 class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
@@ -35,10 +36,24 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   void _onUpdate(TimerUiState state) {
-    setState(() {
-      _uiState = state;
-    });
-  }
+    if (state.phase == TimerPhase.finished) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WorkoutFinishedScreen(
+            totalSeconds: _runner.totalWorkoutSeconds,
+            totalAmraps: state.totalRounds,
+          ),
+        ),
+      );
+      return;
+    }
+
+  setState(() {
+    _uiState = state;
+  });
+}
+
 
   void _startCountdown() {
     if (_isCountingDown) return;
