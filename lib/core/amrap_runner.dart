@@ -144,28 +144,41 @@ class AmrapRunner {
     onUpdate(_state!);
   }
 
-  void resume() {
-    if (_state == null || !_isPaused) return;
+void resume() {
+  if (_state == null) return;
 
-    _isPaused = false;
+  // Solo permitir reanudar si realmente está pausado
+  if (!_isPaused) return;
 
-    _state = TimerUiState(
-      remainingSeconds: _state!.remainingSeconds,
-      currentRound: _state!.currentRound,
-      totalRounds: _state!.totalRounds,
-      phase: TimerPhase.work,
-    );
+  _isPaused = false;
 
-    onUpdate(_state!);
-  }
+  _state = TimerUiState(
+    remainingSeconds: _state!.remainingSeconds,
+    currentRound: _state!.currentRound,
+    totalRounds: _state!.totalRounds,
+    phase: TimerPhase.work,
+  );
+
+  onUpdate(_state!);
+}
+
 
   void togglePause() {
+    if (_state == null) return;
+
+    // ❌ No permitir pausar descanso
+    if (_state!.phase == TimerPhase.rest) return;
+
+    // ❌ No permitir pausar finalizado
+    if (_state!.phase == TimerPhase.finished) return;
+
     if (_isPaused) {
       resume();
     } else {
       pause();
     }
   }
+
 
   // ==============================================================
   // CAMBIO DE FASE

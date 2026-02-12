@@ -45,12 +45,14 @@ class CentralTimer extends StatelessWidget {
             : _format(uiState!.remainingSeconds);
 
     final String helperText = isCountingDown
-        ? 'Prepárate'
-        : isIdle
-            ? 'Toca para empezar'
-            : uiState!.phase == TimerPhase.work
-                ? 'Toca para pausar'
-                : 'Continua';
+    ? 'Prepárate'
+    : isIdle
+        ? 'Toca para empezar'
+        : uiState!.phase == TimerPhase.work
+            ? 'Presiona para pausar'
+            : uiState!.phase == TimerPhase.paused
+                ? 'Presiona para continuar'
+                : '';
 
     // 🎯 Progreso real
     double progress = 1.0;
