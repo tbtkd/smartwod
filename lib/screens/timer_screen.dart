@@ -49,11 +49,10 @@ class _TimerScreenState extends State<TimerScreen> {
       return;
     }
 
-  setState(() {
-    _uiState = state;
-  });
-}
-
+    setState(() {
+      _uiState = state;
+    });
+  }
 
   void _startCountdown() {
     if (_isCountingDown) return;
@@ -80,19 +79,17 @@ class _TimerScreenState extends State<TimerScreen> {
     });
   }
 
-void _onCentralTap() {
-  if (_uiState == null && !_isCountingDown) {
-    _startCountdown();
-    return;
+  void _onCentralTap() {
+    if (_uiState == null && !_isCountingDown) {
+      _startCountdown();
+      return;
+    }
+
+    if (_uiState != null) {
+      if (_uiState!.isFinished) return;
+      _runner.togglePause();
+    }
   }
-
-  if (_uiState != null) {
-    if (_uiState!.isFinished) return;
-
-    _runner.togglePause();
-  }
-}
-
 
   String _formatTotalTime() {
     int total = 0;
@@ -100,7 +97,6 @@ void _onCentralTap() {
     for (int i = 0; i < widget.blocks.length; i++) {
       total += widget.blocks[i].workSeconds;
 
-      // Solo sumar descanso si NO es el último bloque
       if (i < widget.blocks.length - 1) {
         total += widget.blocks[i].restSeconds ?? 0;
       }
@@ -152,7 +148,7 @@ void _onCentralTap() {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              /// ===== TEXTO SUPERIOR =====
+              /// ===== TEXTO SUPERIOR (Animado) =====
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
@@ -169,7 +165,7 @@ void _onCentralTap() {
 
               const SizedBox(height: 32),
 
-              /// ===== CÍRCULO =====
+              /// ===== CÍRCULO CENTRAL =====
               CentralTimer(
                 uiState: _uiState,
                 isCountingDown: _isCountingDown,
@@ -178,7 +174,25 @@ void _onCentralTap() {
                 onTap: _onCentralTap,
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
+
+              /// ===== BARRA GLOBAL =====
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: LinearProgressIndicator(
+                    value: _runner.globalProgress,
+                    minHeight: 6,
+                    backgroundColor: Colors.white12,
+                    valueColor: AlwaysStoppedAnimation(
+                      isRest ? Colors.blue : Colors.orange,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
 
               /// ===== TIEMPO TOTAL =====
               Text(

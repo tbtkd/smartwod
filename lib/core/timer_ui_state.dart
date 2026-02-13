@@ -11,15 +11,16 @@ class TimerUiState {
   final int totalRounds;
   final TimerPhase phase;
 
+  // 🔥 NUEVO
+  final TimerPhase? previousPhase;
+
   const TimerUiState({
     required this.remainingSeconds,
     required this.currentRound,
     required this.totalRounds,
     required this.phase,
+    this.previousPhase,
   });
 
-  bool get isWork => phase == TimerPhase.work;
-  bool get isRest => phase == TimerPhase.rest;
-  bool get isPaused => phase == TimerPhase.paused;
   bool get isFinished => phase == TimerPhase.finished;
 }
