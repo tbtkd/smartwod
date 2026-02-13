@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'amrap_block.dart';
 import 'timer_ui_state.dart';
+import '../utils/feedback_service.dart';
 
 class AmrapRunner {
   final List<AmrapBlock> _blocks;
@@ -106,59 +107,72 @@ class AmrapRunner {
     });
   }
 
-  void _nextPhase() {
-    if (_state == null) return;
+void _nextPhase() {
+  if (_state == null) return;
 
-    final current = _blocks[_index];
+  final current = _blocks[_index];
 
-    if (_state!.phase == TimerPhase.rest) {
-      _state = TimerUiState(
-        remainingSeconds: current.workSeconds,
-        currentRound: _index + 1,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.work,
-      );
-
-      onUpdate(_state!);
-      return;
-    }
-
-    _index++;
-
-    if (_index >= _blocks.length) {
-      _timer?.cancel();
-
-      _state = TimerUiState(
-        remainingSeconds: 0,
-        currentRound: _blocks.length,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.finished,
-      );
-
-      onUpdate(_state!);
-      return;
-    }
-
-    final next = _blocks[_index];
-
-    if (next.restSeconds != null && next.restSeconds! > 0) {
-      _state = TimerUiState(
-        remainingSeconds: next.restSeconds!,
-        currentRound: _index + 1,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.rest,
-      );
-    } else {
-      _state = TimerUiState(
-        remainingSeconds: next.workSeconds,
-        currentRound: _index + 1,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.work,
-      );
-    }
+  // 🔁 Si venimos de descanso → iniciar trabajo
+  if (_state!.phase == TimerPhase.rest) {
+    _state = TimerUiState(
+      remainingSeconds: current.workSeconds,
+      currentRound: _index + 1,
+      totalRounds: _blocks.length,
+      phase: TimerPhase.work,
+    );
 
     onUpdate(_state!);
+
+    // 🔥 SONIDO INMEDIATO
+    FeedbackService.playPhaseChange();
+
+    return;
   }
+
+  _index++;
+
+  // 🏁 Final del entrenamiento
+  if (_index >= _blocks.length) {
+    _timer?.cancel();
+
+    _state = TimerUiState(
+      remainingSeconds: 0,
+      currentRound: _blocks.length,
+      totalRounds: _blocks.length,
+      phase: TimerPhase.finished,
+    );
+
+    onUpdate(_state!);
+
+    FeedbackService.playWorkoutFinished();
+
+    return;
+  }
+
+  final next = _blocks[_index];
+
+  if (next.restSeconds != null && next.restSeconds! > 0) {
+    _state = TimerUiState(
+      remainingSeconds: next.restSeconds!,
+      currentRound: _index + 1,
+      totalRounds: _blocks.length,
+      phase: TimerPhase.rest,
+    );
+  } else {
+    _state = TimerUiState(
+      remainingSeconds: next.workSeconds,
+      currentRound: _index + 1,
+      totalRounds: _blocks.length,
+      phase: TimerPhase.work,
+    );
+  }
+
+  onUpdate(_state!);
+
+  // 🔥 SONIDO INMEDIATO
+  FeedbackService.playPhaseChange();
+}
+
 
   void togglePause() {
     if (_state == null) return;

@@ -2,9 +2,6 @@ import 'package:audioplayers/audioplayers.dart';
 
 class FeedbackService {
 
-  static final AudioPlayer _countdownPlayer = AudioPlayer()
-    ..setPlayerMode(PlayerMode.lowLatency);
-
   static final AudioPlayer _phasePlayer = AudioPlayer()
     ..setPlayerMode(PlayerMode.lowLatency);
 
@@ -26,19 +23,10 @@ class FeedbackService {
   static Future<void> _ensureInit() async {
     if (_initialized) return;
 
-    await _countdownPlayer.setAudioContext(_audioContext);
     await _phasePlayer.setAudioContext(_audioContext);
     await _finishPlayer.setAudioContext(_audioContext);
 
     _initialized = true;
-  }
-
-  static Future<void> playCountdownBeep() async {
-    await _ensureInit();
-    await _countdownPlayer.stop();
-    await _countdownPlayer.play(
-      AssetSource('sounds/beep_countdown.mp3'),
-    );
   }
 
   static Future<void> playPhaseChange() async {
