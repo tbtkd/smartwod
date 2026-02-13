@@ -19,14 +19,13 @@ class AmrapRunner {
     required this.onUpdate,
   }) : _blocks = blocks;
 
-  // ===== TOTAL WORKOUT =====
   int get totalWorkoutSeconds {
     int total = 0;
 
     for (int i = 0; i < _blocks.length; i++) {
       total += _blocks[i].workSeconds;
 
-      if (i < _blocks.length - 1) {
+      if (i > 0) {
         total += _blocks[i].restSeconds ?? 0;
       }
     }
@@ -59,7 +58,6 @@ class AmrapRunner {
     return current.workSeconds;
   }
 
-  // ===== START =====
   void start() {
     if (_blocks.isEmpty) return;
 
@@ -82,7 +80,10 @@ class AmrapRunner {
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_isPaused || _state == null) return;
+      if (_state == null) return;
+
+      // 🔥 descanso nunca se pausa
+      if (_isPaused && _state!.phase == TimerPhase.work) return;
 
       if (_state!.remainingSeconds > 1) {
         _elapsedSeconds++;
@@ -102,27 +103,29 @@ class AmrapRunner {
     });
   }
 
-  // ===== PAUSE =====
   void pause() {
-    if (_state == null || _state!.isFinished) return;
+    if (_state == null) return;
+
+    // 🔥 NO permitir pausa en descanso
+    if (_state!.phase == TimerPhase.rest) return;
+
+    if (_state!.isFinished) return;
 
     _isPaused = true;
-
-    final previous = _state!.phase;
 
     _state = TimerUiState(
       remainingSeconds: _state!.remainingSeconds,
       currentRound: _state!.currentRound,
       totalRounds: _state!.totalRounds,
       phase: TimerPhase.paused,
-      previousPhase: previous,
     );
 
     onUpdate(_state!);
   }
 
   void resume() {
-    if (_state == null || !_isPaused) return;
+    if (_state == null) return;
+    if (!_isPaused) return;
 
     _isPaused = false;
 
@@ -130,13 +133,18 @@ class AmrapRunner {
       remainingSeconds: _state!.remainingSeconds,
       currentRound: _state!.currentRound,
       totalRounds: _state!.totalRounds,
-      phase: _state!.previousPhase ?? TimerPhase.work,
+      phase: TimerPhase.work,
     );
 
     onUpdate(_state!);
   }
 
   void togglePause() {
+    if (_state == null) return;
+
+    // 🔥 descanso completamente bloqueado
+    if (_state!.phase == TimerPhase.rest) return;
+
     if (_isPaused) {
       resume();
     } else {
@@ -144,12 +152,12 @@ class AmrapRunner {
     }
   }
 
-  // ===== PHASE CHANGE =====
   void _nextPhase() {
     if (_state == null) return;
 
     final current = _blocks[_index];
 
+    // Si venimos de descanso → iniciar trabajo
     if (_state!.phase == TimerPhase.rest) {
       _state = TimerUiState(
         remainingSeconds: current.workSeconds,

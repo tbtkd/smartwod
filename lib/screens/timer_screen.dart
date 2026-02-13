@@ -87,17 +87,19 @@ class _TimerScreenState extends State<TimerScreen> {
 
     if (_uiState != null) {
       if (_uiState!.isFinished) return;
+
       _runner.togglePause();
     }
   }
 
+  // 🔥 TOTAL CORREGIDO
   String _formatTotalTime() {
     int total = 0;
 
     for (int i = 0; i < widget.blocks.length; i++) {
       total += widget.blocks[i].workSeconds;
 
-      if (i < widget.blocks.length - 1) {
+      if (i > 0) {
         total += widget.blocks[i].restSeconds ?? 0;
       }
     }
@@ -148,7 +150,6 @@ class _TimerScreenState extends State<TimerScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              /// ===== TEXTO SUPERIOR (Animado) =====
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
@@ -165,7 +166,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
               const SizedBox(height: 32),
 
-              /// ===== CÍRCULO CENTRAL =====
               CentralTimer(
                 uiState: _uiState,
                 isCountingDown: _isCountingDown,
@@ -174,27 +174,23 @@ class _TimerScreenState extends State<TimerScreen> {
                 onTap: _onCentralTap,
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              /// ===== BARRA GLOBAL =====
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+              // 🔥 Barra global
+              if (_uiState != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: LinearProgressIndicator(
                     value: _runner.globalProgress,
                     minHeight: 6,
                     backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation(
-                      isRest ? Colors.blue : Colors.orange,
-                    ),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Colors.orange),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              /// ===== TIEMPO TOTAL =====
               Text(
                 'Tiempo total · ${_formatTotalTime()}',
                 style: const TextStyle(
