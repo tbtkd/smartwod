@@ -75,6 +75,7 @@ class _TimerScreenState extends State<TimerScreen> {
         _runner.start();
         return false;
       }
+
       return true;
     });
   }
@@ -87,12 +88,10 @@ class _TimerScreenState extends State<TimerScreen> {
 
     if (_uiState != null) {
       if (_uiState!.isFinished) return;
-
       _runner.togglePause();
     }
   }
 
-  // 🔥 TOTAL CORREGIDO
   String _formatTotalTime() {
     int total = 0;
 
@@ -108,7 +107,7 @@ class _TimerScreenState extends State<TimerScreen> {
     final s = total % 60;
 
     return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
+           '${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -176,7 +175,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
               const SizedBox(height: 24),
 
-              // 🔥 Barra global
               if (_uiState != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
