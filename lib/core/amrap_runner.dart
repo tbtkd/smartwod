@@ -82,8 +82,10 @@ class AmrapRunner {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_state == null) return;
 
-      // 🔥 descanso nunca se pausa
-      if (_isPaused && _state!.phase == TimerPhase.work) return;
+      // 🔥 pausa solo afecta trabajo
+      if (_isPaused && _state!.phase != TimerPhase.rest) {
+        return;
+      }
 
       if (_state!.remainingSeconds > 1) {
         _elapsedSeconds++;
