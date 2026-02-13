@@ -1,42 +1,48 @@
 # SmartWOD 🏋️‍♂️
 
-SmartWOD es una aplicación de temporizador para entrenamientos funcionales
-desarrollada en Flutter. El proyecto está enfocado en **uso personal**,
-aprendizaje progresivo y buenas prácticas de arquitectura.
+SmartWOD es una aplicación móvil desarrollada en Flutter enfocada en temporizadores para entrenamientos funcionales estilo CrossFit.
 
-Actualmente se está desarrollando primero el modo **AMRAP**, el cual ya cuenta
-con un flujo completo desde configuración hasta ejecución.
+Actualmente el proyecto se encuentra en una base funcional estable, con arquitectura desacoplada y enfoque fuerte en claridad estructural.
 
 ---
 
 ## 🚦 Estado actual del proyecto
 
-✔ Proyecto Flutter configurado correctamente  
-✔ Emulador Android funcionando  
-✔ Estructura de carpetas organizada  
-✔ Navegación entre pantallas  
-✔ Modo **AMRAP funcional de extremo a extremo**  
+✔ Configuración dinámica de bloques AMRAP
+✔ Primer bloque solo trabajo
+✔ Bloques posteriores: descanso + trabajo
+✔ Countdown inicial de 10 segundos
+✔ Temporizador circular decreciente (CustomPainter)
+✔ Transiciones suaves entre fases
+✔ Cambio de color por fase (trabajo / descanso)
+✔ Indicador "Amrap X de N"
+✔ Barra de progreso global del entrenamiento
+✔ Pantalla final profesional
+✔ Cálculo correcto de tiempos totales (incluye último descanso)
+✔ Separación estricta lógica / UI
 
 El flujo actual es:
 
-```
+
 Home
  └── AMRAP
-      └── Configuración de bloques
-            └── Ejecución del entrenamiento
-```
+      └── Configuración
+            └── Countdown
+                  └── Ejecución
+                        └── Pantalla final
 
----
 
-## 🧠 Conceptos clave implementados
+## 🧠 Arquitectura
 
-- Separación clara entre:
-  - UI (screens / widgets)
-  - Lógica (core)
-- Motor de tiempo independiente de Flutter
-- Ejecución por bloques (trabajo / descanso)
-- Flujo automático sin intervención del usuario
-- Código comentado y legible
+Separación estricta de responsabilidades:
+
+  - core/ → lógica pura (sin dependencias de Flutter)
+  - screens/ → pantallas
+  - widgets/ → componentes reutilizables
+  - TimerUiState → única fuente de verdad
+
+La UI nunca controla el tiempo.
+El runner nunca conoce widgets.
 
 ---
 
@@ -113,76 +119,70 @@ lib/
 
 ---
 
-## 🚀 Próximos pasos planeados
+## 🧩 Funcionamiento AMRAP
 
-- Pulir UX del temporizador (colores, animaciones)
-- Agregar sonido y vibración entre bloques
-- Implementar FOR TIME reutilizando el motor
-- Implementar EMOM y TABATA
-- Guardar configuraciones favoritas
-- Definir lógica de modo Premium (uso personal)
+Regla estructural:
+
+  Bloque 1 → solo trabajo
+  Bloque 2..N → descanso + trabajo
+
+El último bloque SÍ incluye su descanso si fue programado.
 
 ---
 
-## 🧠 Filosofía del proyecto
+## 🎯 Funcionalidades clave
+🔹 Countdown inicial
+  10 segundos antes de iniciar el entrenamiento.
+
+🔹 Temporizador circular
+    Disminuye visualmente conforme pasa el tiempo.
+    CustomPainter.
+    Colores por fase.
+
+🔹 Progreso global
+    Barra horizontal animada que representa el avance total del entrenamiento.
+
+🔹 Transiciones
+    Fade en texto superior.
+    Cambio suave de color.
+    Animaciones controladas con AnimatedSwitcher / AnimatedContainer.
+
+🔹 Pantalla final
+    Muestra:
+    Duración total
+    Amrap completados
+    Botón volver
+
+---
+
+## 🚫 Restricciones del proyecto
+
+🔹 No modificar lógica sin autorización.
+🔹 No mezclar UI con lógica.
+🔹 No duplicar cálculos.
+🔹 No inventar estados.
+🔹 Entregar archivos completos cuando se modifique algo.
+
+---
+
+## 🛣 Próximos pasos
+
+🔹 Pendientes para futura versión:
+🔹 Sonido en transición de fases
+🔹 Vibración opcional
+🔹 Historial de entrenamientos
+🔹 Guardado local
+🔹 Nuevos modos (EMOM, FOR TIME, TABATA)
+🔹 Modo oscuro mejorado
+🔹 Mejora tipográfica profesional
+
+---
+
+## 📌 Filosofía
 
 SmartWOD prioriza:
-- Código claro
-- Arquitectura limpia
-- Aprendizaje consciente
-- Escalabilidad
 
-Cada modo de entrenamiento debe ser
-**fácil de entender, reutilizar y mantener**.
- ##################################################### UPDATE
-
- # SMARTWOD 🏋️‍♂️⏱️
-
-SMARTWOD es una aplicación de temporizadores para entrenamiento
-funcional (estilo CrossFit), desarrollada en Flutter con prioridad en
-Android.
-
-Actualmente el proyecto se encuentra en una versión estable funcional,
-con arquitectura limpia y enfoque en mejorar la experiencia visual.
-
-------------------------------------------------------------------------
-
-## Estado actual (estable)
-
-✔ Configuración múltiple de bloques AMRAP\
-✔ Primer bloque solo trabajo\
-✔ Bloques posteriores: descanso + trabajo\
-✔ Countdown inicial de 10 segundos\
-✔ Runner secuencial estable\
-✔ Timer descendente correcto\
-✔ Cambio de color por fase\
-✔ Indicador "AMRAP X de N"\
-✔ Tiempo total calculado correctamente
-
-------------------------------------------------------------------------
-
-## Arquitectura
-
--   AmrapRunner desacoplado de UI\
--   TimerUiState como única fuente de verdad\
--   UI reactiva sin lógica de negocio\
--   Sin estados idle / paused / running
-
-------------------------------------------------------------------------
-
-## Estructura
-
-lib/ ├── core/ ├── screens/ ├── widgets/ ├── app/ └── main.dart
-
-------------------------------------------------------------------------
-
-## En desarrollo
-
--   Animación progresiva del círculo
--   Optimización visual
--   Espaciado responsivo
--   Mejora tipográfica
-
-------------------------------------------------------------------------
-
-Base estable confirmada.
+🔹 Arquitectura limpia
+🔹 Código claro
+🔹 Escalabilidad
+🔹 UX enfocada en entrenamiento real
