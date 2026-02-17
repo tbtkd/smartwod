@@ -8,10 +8,13 @@ class AmrapConfigScreen extends StatefulWidget {
   const AmrapConfigScreen({super.key});
 
   @override
-  State<AmrapConfigScreen> createState() => _AmrapConfigScreenState();
+  State<AmrapConfigScreen> createState() =>
+      _AmrapConfigScreenState();
 }
 
-class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
+class _AmrapConfigScreenState
+    extends State<AmrapConfigScreen> {
+
   final List<AmrapBlock> _blocks = [
     AmrapBlock(workSeconds: 60, restSeconds: null),
   ];
@@ -53,15 +56,14 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
       context: context,
       builder: (_) => DurationPickerDialog(
         initialSeconds: current.workSeconds,
+        type: DurationType.work,
         onTimeSelected: (newSeconds) {
-          if (newSeconds > 0) {
-            setState(() {
-              _blocks[index] = AmrapBlock(
-                workSeconds: newSeconds,
-                restSeconds: current.restSeconds,
-              );
-            });
-          }
+          setState(() {
+            _blocks[index] = AmrapBlock(
+              workSeconds: newSeconds,
+              restSeconds: current.restSeconds,
+            );
+          });
         },
       ),
     );
@@ -77,12 +79,14 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     showDialog(
       context: context,
       builder: (_) => DurationPickerDialog(
-        initialSeconds: current.restSeconds ?? 0,
+        initialSeconds: current.restSeconds ?? 5,
+        type: DurationType.rest,
         onTimeSelected: (newSeconds) {
           setState(() {
             _blocks[index] = AmrapBlock(
               workSeconds: current.workSeconds,
-              restSeconds: newSeconds > 0 ? newSeconds : null,
+              restSeconds:
+                  newSeconds > 0 ? newSeconds : null,
             );
           });
         },
@@ -102,7 +106,8 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: Colors.grey[900],
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(16),
         ),
         title: const Center(
           child: Text(
@@ -115,13 +120,16 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
           style: TextStyle(color: Colors.white70),
           textAlign: TextAlign.center,
         ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actionsAlignment:
+            MainAxisAlignment.spaceBetween,
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () =>
+                Navigator.pop(context),
             child: const Text(
               'Cancelar',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                  color: Colors.white70),
             ),
           ),
           TextButton(
@@ -133,7 +141,8 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
             },
             child: const Text(
               'Eliminar',
-              style: TextStyle(color: Colors.redAccent),
+              style: TextStyle(
+                  color: Colors.redAccent),
             ),
           ),
         ],
@@ -148,7 +157,10 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
   void _addBlock() {
     setState(() {
       _blocks.add(
-        AmrapBlock(workSeconds: 60, restSeconds: 15),
+        AmrapBlock(
+          workSeconds: 60,
+          restSeconds: 15,
+        ),
       );
     });
   }
@@ -161,7 +173,8 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => TimerScreen(blocks: _blocks),
+        builder: (_) =>
+            TimerScreen(blocks: _blocks),
       ),
     );
   }
@@ -180,7 +193,8 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
         centerTitle: true,
         title: const Text(
           'Configurar AMRAP',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+              fontWeight: FontWeight.w600),
         ),
       ),
       body: SafeArea(
@@ -190,83 +204,153 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
             // LISTA DE BLOQUES
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
                 itemCount: _blocks.length,
-                itemBuilder: (context, index) {
-                  final block = _blocks[index];
+                itemBuilder:
+                    (context, index) {
+                  final block =
+                      _blocks[index];
 
                   return AmrapBlockCard(
                     index: index,
-                    workTime: _formatTime(block.workSeconds),
-                    restTime: block.restSeconds != null &&
-                            block.restSeconds! > 0
-                        ? _formatTime(block.restSeconds!)
+                    workTime: _formatTime(
+                        block.workSeconds),
+                    restTime: block
+                                .restSeconds !=
+                            null &&
+                        block.restSeconds! > 0
+                        ? _formatTime(
+                            block.restSeconds!)
                         : null,
-                    onEditWork: () => _editWork(index),
-                    onEditRest: () => _editRest(index),
-                    onDelete: () => _confirmDelete(index),
+                    onEditWork: () =>
+                        _editWork(index),
+                    onEditRest: () =>
+                        _editRest(index),
+                    onDelete: () =>
+                        _confirmDelete(
+                            index),
                   );
                 },
               ),
             ),
 
-            // DURACIÓN TOTAL DINÁMICA
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                'Duración total · ${_formatTime(_totalSeconds)}',
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-
             // BOTÓN AÑADIR
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding:
+                  const EdgeInsets.symmetric(
+                      horizontal: 16),
               child: OutlinedButton(
                 onPressed: _addBlock,
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white24),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                style: OutlinedButton
+                    .styleFrom(
+                  side: const BorderSide(
+                      color:
+                          Colors.white24),
+                  padding:
+                      const EdgeInsets
+                          .symmetric(
+                              vertical: 14),
+                  shape:
+                      RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(
+                            14),
                   ),
                 ),
                 child: const Text(
                   '+ Añadir bloque',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(
+                      color:
+                          Colors.white70),
                 ),
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // BOTÓN EMPEZAR
+            // BOTÓN EMPEZAR REDISEÑADO
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ElevatedButton(
-                onPressed: _startWorkout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  elevation: 6,
-                  shadowColor: Colors.orange.withOpacity(0.4),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+              padding:
+                  const EdgeInsets.symmetric(
+                      horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      _startWorkout,
+                  style:
+                      ElevatedButton
+                          .styleFrom(
+                    backgroundColor:
+                        Colors.orange,
+                    elevation: 8,
+                    shadowColor: Colors
+                        .orange
+                        .withOpacity(0.4),
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
+                      vertical: 22,
+                      horizontal: 16,
+                    ),
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius
+                              .circular(20),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Empezar',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black,
+                  child: Column(
+                    mainAxisSize:
+                        MainAxisSize.min,
+                    children: [
+
+                      const Text(
+                        'Empezar',
+                        style:
+                            TextStyle(
+                          fontWeight:
+                              FontWeight
+                                  .w700,
+                          fontSize: 18,
+                          color:
+                              Colors.black,
+                          letterSpacing:
+                              0.5,
+                        ),
+                      ),
+
+                      const SizedBox(
+                          height: 8),
+
+                      Container(
+                        height: 1,
+                        width: 60,
+                        color: Colors.black
+                            .withOpacity(
+                                0.2),
+                      ),
+
+                      const SizedBox(
+                          height: 8),
+
+                      Text(
+                        'Duración total · ${_formatTime(_totalSeconds)}',
+                        style:
+                            const TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              FontWeight
+                                  .w500,
+                          color: Colors
+                              .black87,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
