@@ -1,114 +1,170 @@
 import 'package:flutter/material.dart';
 
-class TimePickerDialog extends StatefulWidget {
+class DurationPickerDialog extends StatefulWidget {
   final int initialSeconds;
-  final ValueChanged<int> onTimeSelected;
+  final void Function(int) onTimeSelected;
 
-  const TimePickerDialog({
+  const DurationPickerDialog({
     super.key,
     required this.initialSeconds,
     required this.onTimeSelected,
   });
 
   @override
-  State<TimePickerDialog> createState() => _TimePickerDialogState();
+  State<DurationPickerDialog> createState() =>
+      _DurationPickerDialogState();
 }
 
-class _TimePickerDialogState extends State<TimePickerDialog> {
-  late int _minutes;
-  late int _seconds;
+class _DurationPickerDialogState
+    extends State<DurationPickerDialog> {
+
+  late int minutes;
+  late int seconds;
 
   @override
   void initState() {
     super.initState();
-    _minutes = widget.initialSeconds ~/ 60;
-    _seconds = widget.initialSeconds % 60;
+    minutes = widget.initialSeconds ~/ 60;
+    seconds = widget.initialSeconds % 60;
+  }
+
+  void _confirm() {
+    final total = (minutes * 60) + seconds;
+    widget.onTimeSelected(total);
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Colors.black,
-      title: const Text(
-        'Seleccionar tiempo',
-        style: TextStyle(color: Colors.white),
+    return Dialog(
+      backgroundColor: Colors.grey[900],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: SizedBox(
+        height: 300,
+        child: Column(
+          children: [
+
+            const SizedBox(height: 20),
+
+            const Center(
+              child: Text(
+                'Seleccionar duración',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+
+                  _buildPicker(
+                    value: minutes,
+                    max: 59,
+                    onChanged: (val) =>
+                        setState(() => minutes = val),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  const Text(
+                    ':',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 28,
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  _buildPicker(
+                    value: seconds,
+                    max: 59,
+                    onChanged: (val) =>
+                        setState(() => seconds = val),
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pop(context),
+                    child: const Text(
+                      'Cancelar',
+                      style:
+                          TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _confirm,
+                    child: const Text(
+                      'Aceptar',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPicker({
+    required int value,
+    required int max,
+    required Function(int) onChanged,
+  }) {
+    return SizedBox(
+      width: 80,
+      child: Column(
         children: [
-          _NumberPicker(
-            label: 'min',
-            value: _minutes,
-            max: 99,
-            onChanged: (v) => setState(() => _minutes = v),
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_up,
+                color: Colors.white),
+            onPressed: () {
+              if (value < max) onChanged(value + 1);
+            },
           ),
-          const SizedBox(width: 16),
-          _NumberPicker(
-            label: 'seg',
-            value: _seconds,
-            max: 59,
-            onChanged: (v) => setState(() => _seconds = v),
+          Text(
+            value.toString().padLeft(2, '0'),
+            style: const TextStyle(
+              color: Colors.orange,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down,
+                color: Colors.white),
+            onPressed: () {
+              if (value > 0) onChanged(value - 1);
+            },
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-        ),
-        TextButton(
-          onPressed: () {
-            widget.onTimeSelected((_minutes * 60) + _seconds);
-            Navigator.pop(context);
-          },
-          child: const Text(
-            'Aceptar',
-            style: TextStyle(color: Colors.orange),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NumberPicker extends StatelessWidget {
-  final String label;
-  final int value;
-  final int max;
-  final ValueChanged<int> onChanged;
-
-  const _NumberPicker({
-    required this.label,
-    required this.value,
-    required this.max,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white)),
-        const SizedBox(height: 8),
-        IconButton(
-          onPressed: value < max ? () => onChanged(value + 1) : null,
-          icon: const Icon(Icons.keyboard_arrow_up),
-          color: Colors.white,
-        ),
-        Text(
-          value.toString().padLeft(2, '0'),
-          style: const TextStyle(
-            color: Colors.orange,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        IconButton(
-          onPressed: value > 0 ? () => onChanged(value - 1) : null,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          color: Colors.white,
-        ),
-      ],
     );
   }
 }

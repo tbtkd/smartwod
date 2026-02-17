@@ -2,72 +2,136 @@ import 'package:flutter/material.dart';
 
 class AmrapBlockCard extends StatelessWidget {
   final int index;
-  final int durationSeconds;
-  final VoidCallback onEditTime;
-  final VoidCallback onAddRest;
+  final String workTime;
+  final String? restTime;
+  final VoidCallback onEditWork;
+  final VoidCallback onEditRest;
+  final VoidCallback onDelete;
 
   const AmrapBlockCard({
     super.key,
     required this.index,
-    required this.durationSeconds,
-    required this.onEditTime,
-    required this.onAddRest,
+    required this.workTime,
+    required this.onEditWork,
+    required this.onEditRest,
+    required this.onDelete,
+    this.restTime,
   });
-
-  String _formatTime(int seconds) {
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
-  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
+          // HEADER CENTRADO + X
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'AMRAP ${index + 1}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'AMRAP ${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white),
-                onPressed: onEditTime,
+              GestureDetector(
+                onTap: onDelete,
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            _formatTime(durationSeconds),
-            style: const TextStyle(
-              color: Colors.orange,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onAddRest,
-            icon: const Icon(Icons.add, color: Colors.orange),
-            label: const Text(
-              'Agregar descanso',
-              style: TextStyle(color: Colors.orange),
-            ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+
+              // TRABAJO
+              Expanded(
+                child: GestureDetector(
+                  onTap: onEditWork,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Trabajo',
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          workTime,
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              // DESCANSO
+              if (restTime != null)
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onEditRest,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Descanso',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            restTime!,
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../core/amrap_block.dart';
 import '../widgets/duration_picker_dialog.dart';
+import '../screens/widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
 
 class AmrapConfigScreen extends StatefulWidget {
@@ -13,26 +13,76 @@ class AmrapConfigScreen extends StatefulWidget {
 
 class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
   final List<AmrapBlock> _blocks = [
-    const AmrapBlock(workSeconds: 60),
+    AmrapBlock(workSeconds: 60, restSeconds: null),
   ];
 
-  String _fmt(int s) {
-    final m = s ~/ 60;
-    final r = s % 60;
+  // =============================
+  // UTIL
+  // =============================
+
+  String _formatTime(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+
     return '${m.toString().padLeft(2, '0')}:'
-        '${r.toString().padLeft(2, '0')}';
+        '${s.toString().padLeft(2, '0')}';
   }
 
-  void _editWork(int i) {
+  int get _totalSeconds {
+    int total = 0;
+
+    for (int i = 0; i < _blocks.length; i++) {
+      total += _blocks[i].workSeconds;
+
+      if (i > 0) {
+        total += _blocks[i].restSeconds ?? 0;
+      }
+    }
+
+    return total;
+  }
+
+  // =============================
+  // EDITAR TRABAJO
+  // =============================
+
+  void _editWork(int index) {
+    final current = _blocks[index];
+
     showDialog(
       context: context,
       builder: (_) => DurationPickerDialog(
-        initialSeconds: _blocks[i].workSeconds,
-        onTimeSelected: (v) {
+        initialSeconds: current.workSeconds,
+        onTimeSelected: (newSeconds) {
+          if (newSeconds > 0) {
+            setState(() {
+              _blocks[index] = AmrapBlock(
+                workSeconds: newSeconds,
+                restSeconds: current.restSeconds,
+              );
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  // =============================
+  // EDITAR DESCANSO
+  // =============================
+
+  void _editRest(int index) {
+    final current = _blocks[index];
+
+    showDialog(
+      context: context,
+      builder: (_) => DurationPickerDialog(
+        initialSeconds: current.restSeconds ?? 0,
+        onTimeSelected: (newSeconds) {
           setState(() {
-            _blocks[i] = AmrapBlock(
-              workSeconds: v,
-              restSeconds: _blocks[i].restSeconds,
+            _blocks[index] = AmrapBlock(
+              workSeconds: current.workSeconds,
+              restSeconds: newSeconds > 0 ? newSeconds : null,
             );
           });
         },
@@ -40,33 +90,74 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     );
   }
 
-  void _editRest(int i) {
+  // =============================
+  // CONFIRMAR ELIMINACIÓN
+  // =============================
+
+  void _confirmDelete(int index) {
+    if (_blocks.length <= 1) return;
+
     showDialog(
       context: context,
-      builder: (_) => DurationPickerDialog(
-        initialSeconds: _blocks[i].restSeconds ?? 15,
-        onTimeSelected: (v) {
-          setState(() {
-            _blocks[i] = AmrapBlock(
-              workSeconds: _blocks[i].workSeconds,
-              restSeconds: v,
-            );
-          });
-        },
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Center(
+          child: Text(
+            'Eliminar bloque',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        content: const Text(
+          '¿Seguro que deseas eliminar este bloque?',
+          style: TextStyle(color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _blocks.removeAt(index);
+              });
+            },
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void _addAmrap() {
+  // =============================
+  // AÑADIR BLOQUE
+  // =============================
+
+  void _addBlock() {
     setState(() {
-      _blocks.add(const AmrapBlock(
-        restSeconds: 15,
-        workSeconds: 60,
-      ));
+      _blocks.add(
+        AmrapBlock(workSeconds: 60, restSeconds: 15),
+      );
     });
   }
 
-  void _start() {
+  // =============================
+  // INICIAR ENTRENAMIENTO
+  // =============================
+
+  void _startWorkout() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -75,96 +166,115 @@ class _AmrapConfigScreenState extends State<AmrapConfigScreen> {
     );
   }
 
+  // =============================
+  // BUILD
+  // =============================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurar AMRAP')),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _blocks.length,
-              itemBuilder: (_, i) {
-                final b = _blocks[i];
-                return Card(
-                  color: Colors.grey.shade900,
-                  margin: const EdgeInsets.all(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AMRAP ${i + 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (b.restSeconds != null) ...[
-                          const SizedBox(height: 12),
-                          const Text('Descanso',
-                              style: TextStyle(color: Colors.grey)),
-                          Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _fmt(b.restSeconds!),
-                                style: const TextStyle(
-                                    color: Colors.blue, fontSize: 20),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.white),
-                                onPressed: () => _editRest(i),
-                              ),
-                            ],
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        const Text('Trabajo',
-                            style: TextStyle(color: Colors.grey)),
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _fmt(b.workSeconds),
-                              style: const TextStyle(
-                                  color: Colors.orange, fontSize: 24),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit,
-                                  color: Colors.white),
-                              onPressed: () => _editWork(i),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Configurar AMRAP',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+
+            // LISTA DE BLOQUES
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                itemCount: _blocks.length,
+                itemBuilder: (context, index) {
+                  final block = _blocks[index];
+
+                  return AmrapBlockCard(
+                    index: index,
+                    workTime: _formatTime(block.workSeconds),
+                    restTime: block.restSeconds != null &&
+                            block.restSeconds! > 0
+                        ? _formatTime(block.restSeconds!)
+                        : null,
+                    onEditWork: () => _editWork(index),
+                    onEditRest: () => _editRest(index),
+                    onDelete: () => _confirmDelete(index),
+                  );
+                },
+              ),
+            ),
+
+            // DURACIÓN TOTAL DINÁMICA
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Duración total · ${_formatTime(_totalSeconds)}',
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+
+            // BOTÓN AÑADIR
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OutlinedButton(
+                onPressed: _addBlock,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                ElevatedButton(
-                  onPressed: _addAmrap,
-                  child: const Text('Añadir nuevo AMRAP'),
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _start,
-                  child: const Text('Empezar'),
+                child: const Text(
+                  '+ Añadir bloque',
+                  style: TextStyle(color: Colors.white70),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 16),
+
+            // BOTÓN EMPEZAR
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ElevatedButton(
+                onPressed: _startWorkout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  elevation: 6,
+                  shadowColor: Colors.orange.withOpacity(0.4),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  'Empezar',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
