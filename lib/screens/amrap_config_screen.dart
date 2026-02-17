@@ -19,6 +19,9 @@ class _AmrapConfigScreenState
     AmrapBlock(workSeconds: 60, restSeconds: null),
   ];
 
+  final ScrollController _scrollController =
+      ScrollController();
+
   // =============================
   // UTIL
   // =============================
@@ -151,7 +154,7 @@ class _AmrapConfigScreenState
   }
 
   // =============================
-  // AÑADIR BLOQUE
+  // AÑADIR BLOQUE CON AUTO SCROLL
   // =============================
 
   void _addBlock() {
@@ -163,6 +166,21 @@ class _AmrapConfigScreenState
         ),
       );
     });
+
+    Future.delayed(
+      const Duration(milliseconds: 200),
+      () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController
+                .position.maxScrollExtent,
+            duration:
+                const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      },
+    );
   }
 
   // =============================
@@ -177,6 +195,16 @@ class _AmrapConfigScreenState
             TimerScreen(blocks: _blocks),
       ),
     );
+  }
+
+  // =============================
+  // DISPOSE
+  // =============================
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   // =============================
@@ -204,6 +232,7 @@ class _AmrapConfigScreenState
             // LISTA DE BLOQUES
             Expanded(
               child: ListView.builder(
+                controller: _scrollController,
                 padding:
                     const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -253,12 +282,12 @@ class _AmrapConfigScreenState
                   padding:
                       const EdgeInsets
                           .symmetric(
-                              vertical: 14),
+                              vertical: 12),
                   shape:
                       RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(
-                            14),
+                            20),
                   ),
                 ),
                 child: const Text(
@@ -270,15 +299,16 @@ class _AmrapConfigScreenState
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // BOTÓN EMPEZAR REDISEÑADO
+            // BOTÓN EMPEZAR COMPACTO
             Padding(
               padding:
                   const EdgeInsets.symmetric(
                       horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
+                height: 52,
                 child: ElevatedButton(
                   onPressed:
                       _startWorkout,
@@ -287,67 +317,30 @@ class _AmrapConfigScreenState
                           .styleFrom(
                     backgroundColor:
                         Colors.orange,
-                    elevation: 8,
-                    shadowColor: Colors
-                        .orange
-                        .withOpacity(0.4),
-                    padding:
-                        const EdgeInsets
-                            .symmetric(
-                      vertical: 22,
-                      horizontal: 16,
-                    ),
+                    elevation: 4,
                     shape:
                         RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius
-                              .circular(20),
+                              .circular(30),
                     ),
                   ),
                   child: Column(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-
                       const Text(
                         'Empezar',
-                        style:
-                            TextStyle(
-                          fontWeight:
-                              FontWeight
-                                  .w700,
-                          fontSize: 18,
-                          color:
-                              Colors.black,
-                          letterSpacing:
-                              0.5,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Colors.white,
                         ),
                       ),
-
-                      const SizedBox(
-                          height: 8),
-
-                      Container(
-                        height: 1,
-                        width: 60,
-                        color: Colors.black
-                            .withOpacity(
-                                0.2),
-                      ),
-
-                      const SizedBox(
-                          height: 8),
-
                       Text(
-                        'Duración total · ${_formatTime(_totalSeconds)}',
-                        style:
-                            const TextStyle(
-                          fontSize: 13,
-                          fontWeight:
-                              FontWeight
-                                  .w500,
-                          color: Colors
-                              .black87,
+                        'Tiempo total ${_formatTime(_totalSeconds)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
                         ),
                       ),
                     ],
