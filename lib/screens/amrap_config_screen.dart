@@ -3,6 +3,7 @@ import '../core/amrap_block.dart';
 import '../widgets/duration_picker_dialog.dart';
 import '../screens/widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
+import 'workout_history_screen.dart'; // 🔥 IMPORT AGREGADO
 
 class AmrapConfigScreen extends StatefulWidget {
   const AmrapConfigScreen({super.key});
@@ -210,8 +211,7 @@ class _AmrapConfigScreenState
       () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
-            _scrollController
-                .position.maxScrollExtent,
+            _scrollController.position.maxScrollExtent,
             duration:
                 const Duration(milliseconds: 300),
             curve: Curves.easeOut,
@@ -220,10 +220,6 @@ class _AmrapConfigScreenState
       },
     );
   }
-
-  // =============================
-  // INICIAR ENTRENAMIENTO
-  // =============================
 
   void _startWorkout() {
     Navigator.push(
@@ -241,10 +237,6 @@ class _AmrapConfigScreenState
     super.dispose();
   }
 
-  // =============================
-  // BUILD
-  // =============================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,6 +250,20 @@ class _AmrapConfigScreenState
           style:
               TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const WorkoutHistoryScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -323,7 +329,6 @@ class _AmrapConfigScreenState
 
             const SizedBox(height: 14),
 
-            // 🔥 BOTÓN EMPEZAR CORREGIDO
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16),

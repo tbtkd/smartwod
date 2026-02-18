@@ -6,6 +6,8 @@ import '../core/amrap_block.dart';
 import '../widgets/central_timer.dart';
 import '../utils/feedback_service.dart';
 import '../utils/workout_persistence_service.dart';
+import '../utils/workout_history_service.dart';
+import '../models/workout_history_entry.dart';
 import 'workout_finished_screen.dart';
 
 class TimerScreen extends StatefulWidget {
@@ -45,7 +47,7 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   // =============================
-  // RESTORE
+  // RESTORE WORKOUT
   // =============================
 
   Future<void> _restoreWorkout() async {
@@ -55,20 +57,32 @@ class _TimerScreenState extends State<TimerScreen> {
     final blocksData = data['blocks'] as List;
     if (blocksData.length != widget.blocks.length) return;
 
-    // Restauración básica
     _trainingStarted = true;
-    _enableWakelock();
+    await _enableWakelock();
     _runner.start();
   }
 
   // =============================
-  // UPDATE
+  // RUNNER UPDATE
   // =============================
 
-  void _onUpdate(TimerUiState state) {
+  void _onUpdate(TimerUiState state) async {
     if (state.phase == TimerPhase.finished) {
-      WorkoutPersistenceService.clearWorkout();
-      _disableWakelock();
+
+      // Guardar en historial
+      await WorkoutHistoryService.addEntry(
+        WorkoutHistoryEntry(
+          date: DateTime.now(),
+          totalSeconds: _runner.totalWorkoutSeconds,
+          totalBlocks: state.totalRounds,
+          blocks: widget.blocks,
+        ),
+      );
+
+      await WorkoutPersistenceService.clearWorkout();
+      await _disableWakelock();
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
@@ -88,7 +102,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
     // Guardar estado activo
     if (state.phase != TimerPhase.paused) {
-      WorkoutPersistenceService.saveWorkout(
+      await WorkoutPersistenceService.saveWorkout(
         blocks: widget.blocks,
         index: state.currentRound - 1,
         phase: state.phase,
@@ -134,7 +148,7 @@ class _TimerScreenState extends State<TimerScreen> {
         _isCountingDown = false;
         _trainingStarted = true;
 
-        _enableWakelock();
+        await _enableWakelock();
         _runner.start();
         return false;
       }
@@ -196,8 +210,8 @@ class _TimerScreenState extends State<TimerScreen> {
     );
 
     if (shouldExit == true) {
-      WorkoutPersistenceService.clearWorkout();
-      _disableWakelock();
+      await WorkoutPersistenceService.clearWorkout();
+      await _disableWakelock();
       _runner.dispose();
       return true;
     }
@@ -210,7 +224,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
     for (int i = 0; i < widget.blocks.length; i++) {
       total += widget.blocks[i].workSeconds;
-
       if (i > 0) {
         total += widget.blocks[i].restSeconds ?? 0;
       }
@@ -283,9 +296,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 CentralTimer(
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
@@ -293,25 +304,19 @@ class _TimerScreenState extends State<TimerScreen> {
                   totalSeconds: _runner.currentBlockTotalSeconds,
                   onTap: _onCentralTap,
                 ),
-
                 const SizedBox(height: 24),
-
                 if (_uiState != null)
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: LinearProgressIndicator(
                       value: _runner.globalProgress,
                       minHeight: 6,
                       backgroundColor: Colors.white12,
                       valueColor:
-                          const AlwaysStoppedAnimation<Color>(
-                              Colors.orange),
+                          const AlwaysStoppedAnimation<Color>(Colors.orange),
                     ),
                   ),
-
                 const SizedBox(height: 12),
-
                 Text(
                   'Tiempo total · ${_formatTotalTime()}',
                   style: const TextStyle(
