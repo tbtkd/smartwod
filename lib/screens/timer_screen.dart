@@ -5,6 +5,7 @@ import '../core/timer_ui_state.dart';
 import '../core/amrap_block.dart';
 import '../widgets/central_timer.dart';
 import '../utils/feedback_service.dart';
+import '../utils/workout_persistence_service.dart';
 import 'workout_finished_screen.dart';
 
 class TimerScreen extends StatefulWidget {
@@ -39,10 +40,34 @@ class _TimerScreenState extends State<TimerScreen> {
       blocks: widget.blocks,
       onUpdate: _onUpdate,
     );
+
+    _restoreWorkout();
   }
+
+  // =============================
+  // RESTORE
+  // =============================
+
+  Future<void> _restoreWorkout() async {
+    final data = await WorkoutPersistenceService.loadWorkout();
+    if (data == null) return;
+
+    final blocksData = data['blocks'] as List;
+    if (blocksData.length != widget.blocks.length) return;
+
+    // Restauración básica
+    _trainingStarted = true;
+    _enableWakelock();
+    _runner.start();
+  }
+
+  // =============================
+  // UPDATE
+  // =============================
 
   void _onUpdate(TimerUiState state) {
     if (state.phase == TimerPhase.finished) {
+      WorkoutPersistenceService.clearWorkout();
       _disableWakelock();
 
       Navigator.pushReplacement(
@@ -60,6 +85,17 @@ class _TimerScreenState extends State<TimerScreen> {
     setState(() {
       _uiState = state;
     });
+
+    // Guardar estado activo
+    if (state.phase != TimerPhase.paused) {
+      WorkoutPersistenceService.saveWorkout(
+        blocks: widget.blocks,
+        index: state.currentRound - 1,
+        phase: state.phase,
+        phaseDuration: _runner.currentBlockTotalSeconds,
+        phaseStartTime: DateTime.now(),
+      );
+    }
   }
 
   // =============================
@@ -119,7 +155,7 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   // =============================
-  // PROTECCIÓN DE SALIDA
+  // EXIT PROTECTION
   // =============================
 
   Future<bool> _onWillPop() async {
@@ -160,6 +196,7 @@ class _TimerScreenState extends State<TimerScreen> {
     );
 
     if (shouldExit == true) {
+      WorkoutPersistenceService.clearWorkout();
       _disableWakelock();
       _runner.dispose();
       return true;
