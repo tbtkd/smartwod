@@ -1,81 +1,113 @@
 # SMARTWOD
 
-Aplicación móvil desarrollada en Flutter para la creación y ejecución de
-entrenamientos tipo AMRAP (As Many Rounds As Possible).
+SMARTWOD es una aplicación móvil desarrollada en Flutter para la
+creación y ejecución de entrenamientos funcionales tipo WOD, comenzando
+con modalidad AMRAP (As Many Rounds As Possible) y diseñada para escalar
+a múltiples formatos como EMOM, Tabata y For Time.
 
 ------------------------------------------------------------------------
 
-## 📌 Estado actual del proyecto
+## 🚀 Visión del Proyecto
 
-SMARTWOD se encuentra en fase de **Beta Técnica Interna**.
+SMARTWOD busca convertirse en una herramienta profesional para atletas y
+entrenadores que desean:
 
-El sistema es funcional, estable y modular, con refinamientos recientes
-en experiencia de usuario, animaciones y arquitectura.
+-   Crear entrenamientos personalizados
+-   Ejecutarlos con precisión temporal real
+-   Registrar historial completo
+-   Analizar estadísticas acumuladas
+-   Escalar a múltiples modalidades de WOD
 
-Actualmente incluye:
+La aplicación está construida con enfoque en estabilidad, precisión y
+escalabilidad futura.
 
--   Configuración dinámica de bloques AMRAP
--   Soporte para múltiples bloques con descanso opcional
--   Selector avanzado de tiempo con scroll (minutos y segundos)
--   Validación de mínimos (15s trabajo / 5s descanso)
--   AnimatedList con inserción y eliminación animada
+------------------------------------------------------------------------
+
+## 🏗 Estado Actual
+
+**Fase:** Beta Técnica Interna Avanzada\
+**Motor:** Estable y preciso\
+**Arquitectura:** Modular y preparada para expansión
+
+### Funcionalidades implementadas
+
+#### 🏋️ AMRAP
+
+-   Configuración dinámica de bloques
+-   Descanso opcional por bloque
+-   Selector avanzado de tiempo (minutos/segundos)
+-   Validaciones mínimas de duración
 -   Cálculo automático del tiempo total
--   Motor de ejecución desacoplado de la UI
--   Sistema de sonido activo (cambio de fase y finalización)
+-   AnimatedList con transiciones suaves
+
+#### ⏱ Motor de ejecución
+
+-   Runner desacoplado de la UI
+-   Máquina de estados controlada
+-   Precisión temporal basada en referencia real (anti-drift)
+-   Countdown previo al inicio
+-   Pausa inteligente
 -   Barra de progreso global
--   Pantalla final con resumen del entrenamiento
+
+#### 🔊 Audio
+
+-   Sonido en cambio de fase
+-   Sonido al finalizar entrenamiento
+-   Sistema pre-cargado para reducir latencia
+-   Pendiente refinamiento fino de sincronización
+
+#### 💾 Persistencia
+
+-   Guardado automático del entrenamiento activo
+-   Restauración básica al reabrir la app
+-   Limpieza automática al finalizar
+
+#### 📊 Historial y estadísticas
+
+-   Registro automático de entrenamientos completados
+-   Historial ordenado por fecha
+-   Estadísticas acumuladas:
+    -   Total de entrenamientos
+    -   Tiempo total acumulado
+    -   Entrenamiento más largo
 
 ------------------------------------------------------------------------
 
-## 🏗 Arquitectura del proyecto
+## 🧠 Arquitectura
 
-Estructura actual:
+Estructura modular organizada por responsabilidades:
 
-lib/ ├── core/ │ ├── amrap_runner.dart │ ├── amrap_block.dart │ └──
-timer_ui_state.dart │ ├── screens/ │ ├── amrap_config_screen.dart │ ├──
-timer_screen.dart │ ├── workout_finished_screen.dart │ └── widgets/ │
-└── amrap_block_card.dart │ ├── widgets/ │ ├── central_timer.dart │ └──
-duration_picker_dialog.dart │ └── utils/ └── feedback_service.dart
+lib/ ├── core/ (lógica de negocio) ├── models/ (entidades) ├── screens/
+(UI) ├── widgets/ (componentes reutilizables) └── utils/ (servicios y
+persistencia)
 
-------------------------------------------------------------------------
-
-## 🔁 Flujo de la aplicación
-
-1.  Configuración del entrenamiento
-2.  Fase de preparación (countdown)
-3.  Ejecución de bloques:
-    -   Trabajo
-    -   Descanso
-4.  Finalización automática
-5.  Pantalla de resumen
+Diseñada para evolucionar hacia separación clara de capas: - Domain -
+Data - Presentation
 
 ------------------------------------------------------------------------
 
-## 🔊 Sistema de sonido
+## 📈 Roadmap
 
-El sistema de sonido está activo y gestionado desde:
-
-utils/feedback_service.dart
-
-Actualmente se ejecuta en:
-
--   Cambio de fase (work ↔ rest)
--   Finalización del entrenamiento
-
-Nota: Puede requerir optimización futura para evitar posibles desfases
-en dispositivos específicos.
+-   Refactor arquitectónico por capas
+-   Migración de almacenamiento a base de datos local (Hive / Isar)
+-   Implementación de EMOM
+-   Implementación de Tabata
+-   Implementación de For Time
+-   Plantillas guardadas
+-   Configuración avanzada de sonido
+-   Optimización completa de sincronización de audio
+-   Preparación para publicación en tiendas
 
 ------------------------------------------------------------------------
 
-## 🚀 Próximas mejoras planeadas
+## 🛠 Tecnologías
 
--   Persistencia local de configuración
--   Historial de entrenamientos
--   Guardado de plantillas
--   Configuración personalizada de sonidos
--   Desacoplamiento completo del sistema de audio
--   Preparación para publicación en tienda
+-   Flutter
+-   Dart
+-   SharedPreferences (temporal)
+-   Arquitectura modular preparada para escalabilidad
 
 ------------------------------------------------------------------------
 
-Proyecto desarrollado en Flutter.
+SMARTWOD es un proyecto en evolución con enfoque en calidad técnica,
+estabilidad y crecimiento sostenible.

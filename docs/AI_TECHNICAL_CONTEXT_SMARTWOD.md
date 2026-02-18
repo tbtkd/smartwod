@@ -1,19 +1,19 @@
-# SMARTWOD --- CONTEXTO TÉCNICO PARA IA
+# SMARTWOD --- CONTEXTO TÉCNICO Y PLAN DE EVOLUCIÓN
 
 ## 1. IDENTIDAD DEL PROYECTO
 
 Nombre: SMARTWOD\
 Tipo: Aplicación móvil Flutter\
-Estado actual: Beta Técnica Interna\
-Arquitectura: Modular por capas
+Estado actual: Beta Técnica Interna Avanzada\
+Arquitectura: Modular, en transición hacia separación por capas
 
 ------------------------------------------------------------------------
 
 ## 2. ARQUITECTURA ACTUAL
 
-### Core
+### Core (Dominio funcional actual)
 
-Contiene la lógica de negocio principal.
+Contiene la lógica principal del entrenamiento.
 
 -   amrap_runner.dart → Motor del entrenamiento
 -   amrap_block.dart → Modelo de bloque
@@ -26,14 +26,24 @@ Responsabilidades del runner:
 -   Progreso global
 -   Transición automática entre bloques
 -   Integración con sistema de sonido
+-   Precisión temporal basada en referencia real (anti-drift)
+
+------------------------------------------------------------------------
+
+### Models
+
+-   workout_history_entry.dart → Entidad de historial
 
 ------------------------------------------------------------------------
 
 ### Screens
 
+-   home_screen.dart → Pantalla principal
 -   amrap_config_screen.dart → Configuración dinámica
 -   timer_screen.dart → Ejecución del entrenamiento
 -   workout_finished_screen.dart → Resumen final
+-   workout_history_screen.dart → Historial global
+-   workout_stats_screen.dart → Estadísticas acumuladas
 
 ------------------------------------------------------------------------
 
@@ -42,39 +52,108 @@ Responsabilidades del runner:
 -   central_timer.dart → Componente visual principal del contador
 -   duration_picker_dialog.dart → Selector avanzado de tiempo
 -   amrap_block_card.dart → Tarjeta de configuración de bloque
+-   wod_button.dart → Botón reutilizable para modos WOD
 
 ------------------------------------------------------------------------
 
-### Utils
+### Utils (Capa de servicios actual)
 
 -   feedback_service.dart → Gestión de sonido
+-   workout_persistence_service.dart → Persistencia de entrenamiento
+    activo
+-   workout_history_service.dart → Persistencia de historial
 
-El sistema de sonido actualmente:
-
--   Se ejecuta en cambio de fase
--   Se ejecuta al finalizar entrenamiento
--   Está integrado directamente con el runner
+Persistencia actual basada en SharedPreferences.
 
 ------------------------------------------------------------------------
 
 ## 3. ESTADO TÉCNICO ACTUAL
 
-✔ Arquitectura modular ✔ Runner estable ✔ UI refinada con animaciones ✔
-AnimatedList funcional ✔ Selector con scroll optimizado ✔ Sistema de
-sonido activo ✔ Flujo completo estable
+✔ Runner estable\
+✔ Precisión temporal mejorada\
+✔ UI refinada con animaciones\
+✔ Persistencia activa\
+✔ Historial funcional\
+✔ Estadísticas acumuladas\
+✔ Arquitectura modular preparada para expansión
 
 ------------------------------------------------------------------------
 
-## 4. ÁREAS DE MEJORA FUTURA
+## 4. PLAN DE MIGRACIÓN ARQUITECTÓNICA
 
+El crecimiento del proyecto requiere separación clara de
+responsabilidades.
+
+### Objetivo
+
+Transicionar hacia una arquitectura por capas:
+
+-   Domain (lógica pura de negocio)
+-   Data (persistencia)
+-   Presentation (UI)
+
+------------------------------------------------------------------------
+
+### Fase 1 --- Abstracción de dominio
+
+-   Crear interfaz base WorkoutRunner
 -   Desacoplar sonido mediante inyección de dependencia
--   Implementar debounce en eventos de audio
--   Añadir persistencia local
--   Añadir gestión de estado global
--   Implementar pruebas unitarias
--   Preparación para escalabilidad
+-   Crear entidad WorkoutResult independiente del runner
 
 ------------------------------------------------------------------------
 
-Este documento refleja el estado real del proyecto en su versión Beta
-Técnica Interna.
+### Fase 2 --- Repositorios
+
+-   Reemplazar servicios estáticos por repositorios inyectables
+-   Introducir WorkoutHistoryRepository
+-   Separar acceso a almacenamiento del resto de la app
+
+------------------------------------------------------------------------
+
+### Fase 3 --- Migración de almacenamiento
+
+Migrar de SharedPreferences a:
+
+-   Hive (recomendado por simplicidad) o
+-   Isar (si se requiere alto rendimiento y escalabilidad)
+
+Ventajas:
+
+-   Paginación
+-   Consultas eficientes
+-   Escalabilidad sin límite práctico
+-   Mejor rendimiento con grandes volúmenes de datos
+
+------------------------------------------------------------------------
+
+### Fase 4 --- Escalabilidad funcional
+
+Implementación futura de:
+
+-   EMOM
+-   Tabata
+-   For Time
+-   MIX
+-   Plantillas guardadas
+-   Estadísticas avanzadas
+-   Filtros por tipo de WOD
+
+------------------------------------------------------------------------
+
+## 5. CONSIDERACIONES DE ESCALABILIDAD
+
+Actualmente SharedPreferences es suficiente para uso normal.
+
+Riesgos potenciales a largo plazo:
+
+-   JSON grande puede afectar tiempos de carga
+-   Decodificación completa en memoria
+-   No soporta consultas parciales
+
+Recomendación: Migrar antes de superar \~5,000 entrenamientos
+almacenados.
+
+------------------------------------------------------------------------
+
+Este documento refleja el estado técnico actual y la hoja de ruta
+estructural para evolución sostenible del proyecto SMARTWOD.
