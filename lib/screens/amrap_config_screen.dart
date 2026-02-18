@@ -22,29 +22,28 @@ class _AmrapConfigScreenState
   final ScrollController _scrollController =
       ScrollController();
 
+  final GlobalKey<AnimatedListState> _listKey =
+      GlobalKey<AnimatedListState>();
+
   // =============================
-  // UTIL
+  // UTILIDADES
   // =============================
 
   String _formatTime(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
-
     return '${m.toString().padLeft(2, '0')}:'
         '${s.toString().padLeft(2, '0')}';
   }
 
   int get _totalSeconds {
     int total = 0;
-
     for (int i = 0; i < _blocks.length; i++) {
       total += _blocks[i].workSeconds;
-
       if (i > 0) {
         total += _blocks[i].restSeconds ?? 0;
       }
     }
-
     return total;
   }
 
@@ -98,7 +97,7 @@ class _AmrapConfigScreenState
   }
 
   // =============================
-  // CONFIRMAR ELIMINACIÓN
+  // ELIMINAR BLOQUE
   // =============================
 
   void _confirmDelete(int index) {
@@ -109,8 +108,7 @@ class _AmrapConfigScreenState
       builder: (_) => AlertDialog(
         backgroundColor: Colors.grey[900],
         shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16),
         ),
         title: const Center(
           child: Text(
@@ -127,25 +125,60 @@ class _AmrapConfigScreenState
             MainAxisAlignment.spaceBetween,
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(context),
+            onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancelar',
-              style: TextStyle(
-                  color: Colors.white70),
+              style:
+                  TextStyle(color: Colors.white70),
             ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() {
-                _blocks.removeAt(index);
-              });
+
+              final removedBlock =
+                  _blocks[index];
+
+              _listKey.currentState?.removeItem(
+                index,
+                (context, animation) {
+                  return SizeTransition(
+                    sizeFactor: animation,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: AmrapBlockCard(
+                        index: index,
+                        workTime: _formatTime(
+                            removedBlock
+                                .workSeconds),
+                        restTime:
+                            removedBlock.restSeconds !=
+                                        null &&
+                                    removedBlock
+                                            .restSeconds! >
+                                        0
+                                ? _formatTime(
+                                    removedBlock
+                                        .restSeconds!)
+                                : null,
+                        onEditWork: () {},
+                        onEditRest: () {},
+                        onDelete: () {},
+                      ),
+                    ),
+                  );
+                },
+                duration:
+                    const Duration(milliseconds: 300),
+              );
+
+              _blocks.removeAt(index);
             },
             child: const Text(
               'Eliminar',
               style: TextStyle(
-                  color: Colors.redAccent),
+                color: Colors.redAccent,
+              ),
             ),
           ),
         ],
@@ -154,21 +187,25 @@ class _AmrapConfigScreenState
   }
 
   // =============================
-  // AÑADIR BLOQUE CON AUTO SCROLL
+  // AÑADIR BLOQUE
   // =============================
 
   void _addBlock() {
-    setState(() {
-      _blocks.add(
-        AmrapBlock(
-          workSeconds: 60,
-          restSeconds: 15,
-        ),
-      );
-    });
+    final newBlock = AmrapBlock(
+      workSeconds: 60,
+      restSeconds: 15,
+    );
+
+    _blocks.add(newBlock);
+
+    _listKey.currentState?.insertItem(
+      _blocks.length - 1,
+      duration:
+          const Duration(milliseconds: 300),
+    );
 
     Future.delayed(
-      const Duration(milliseconds: 200),
+      const Duration(milliseconds: 250),
       () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -197,10 +234,6 @@ class _AmrapConfigScreenState
     );
   }
 
-  // =============================
-  // DISPOSE
-  // =============================
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -221,61 +254,82 @@ class _AmrapConfigScreenState
         centerTitle: true,
         title: const Text(
           'Configurar AMRAP',
-          style: TextStyle(
-              fontWeight: FontWeight.w600),
+          style:
+              TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       body: SafeArea(
         child: Column(
           children: [
 
-            // LISTA DE BLOQUES
+            // LISTA
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
+              child: AnimatedList(
+                key: _listKey,
+                controller:
+                    _scrollController,
                 padding:
                     const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
-                itemCount: _blocks.length,
+                initialItemCount:
+                    _blocks.length,
                 itemBuilder:
-                    (context, index) {
+                    (context, index,
+                        animation) {
+
                   final block =
                       _blocks[index];
 
-                  return AmrapBlockCard(
-                    index: index,
-                    workTime: _formatTime(
-                        block.workSeconds),
-                    restTime: block
-                                .restSeconds !=
-                            null &&
-                        block.restSeconds! > 0
-                        ? _formatTime(
-                            block.restSeconds!)
-                        : null,
-                    onEditWork: () =>
-                        _editWork(index),
-                    onEditRest: () =>
-                        _editRest(index),
-                    onDelete: () =>
-                        _confirmDelete(
-                            index),
+                  return SizeTransition(
+                    sizeFactor:
+                        animation,
+                    child:
+                        FadeTransition(
+                      opacity:
+                          animation,
+                      child:
+                          AmrapBlockCard(
+                        index: index,
+                        workTime:
+                            _formatTime(
+                                block
+                                    .workSeconds),
+                        restTime: block
+                                    .restSeconds !=
+                                null &&
+                            block
+                                    .restSeconds! >
+                                0
+                            ? _formatTime(
+                                block
+                                    .restSeconds!)
+                            : null,
+                        onEditWork:
+                            () => _editWork(
+                                index),
+                        onEditRest:
+                            () => _editRest(
+                                index),
+                        onDelete:
+                            () => _confirmDelete(
+                                index),
+                      ),
+                    ),
                   );
                 },
               ),
             ),
 
-            // BOTÓN AÑADIR
+            // AÑADIR BLOQUE
             Padding(
               padding:
                   const EdgeInsets.symmetric(
                       horizontal: 16),
               child: OutlinedButton(
                 onPressed: _addBlock,
-                style: OutlinedButton
-                    .styleFrom(
+                style: OutlinedButton.styleFrom(
                   side: const BorderSide(
                       color:
                           Colors.white24),
@@ -287,7 +341,7 @@ class _AmrapConfigScreenState
                       RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(
-                            20),
+                            30),
                   ),
                 ),
                 child: const Text(
@@ -301,15 +355,16 @@ class _AmrapConfigScreenState
 
             const SizedBox(height: 14),
 
-            // BOTÓN EMPEZAR COMPACTO
+            // BOTÓN EMPEZAR
             Padding(
               padding:
                   const EdgeInsets.symmetric(
                       horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
+                height: 56,
+                child:
+                    ElevatedButton(
                   onPressed:
                       _startWorkout,
                   style:
@@ -317,7 +372,6 @@ class _AmrapConfigScreenState
                           .styleFrom(
                     backgroundColor:
                         Colors.orange,
-                    elevation: 4,
                     shape:
                         RoundedRectangleBorder(
                       borderRadius:
@@ -326,21 +380,29 @@ class _AmrapConfigScreenState
                     ),
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center,
                     children: [
                       const Text(
                         'Empezar',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Colors.white,
+                        style:
+                            TextStyle(
+                          fontWeight:
+                              FontWeight
+                                  .w600,
+                          fontSize: 16,
+                          color: Colors
+                              .white,
                         ),
                       ),
                       Text(
                         'Tiempo total ${_formatTime(_totalSeconds)}',
-                        style: const TextStyle(
+                        style:
+                            const TextStyle(
                           fontSize: 12,
-                          color: Colors.white70,
+                          color: Colors
+                              .white70,
                         ),
                       ),
                     ],

@@ -75,7 +75,6 @@ class _TimerScreenState extends State<TimerScreen> {
         _runner.start();
         return false;
       }
-
       return true;
     });
   }
@@ -107,7 +106,7 @@ class _TimerScreenState extends State<TimerScreen> {
     final s = total % 60;
 
     return '${m.toString().padLeft(2, '0')}:'
-           '${s.toString().padLeft(2, '0')}';
+        '${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -150,7 +149,7 @@ class _TimerScreenState extends State<TimerScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 250),
                 child: Text(
                   topLabel,
                   key: ValueKey(topLabel),

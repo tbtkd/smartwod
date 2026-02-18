@@ -1,188 +1,81 @@
-# SmartWOD 🏋️‍♂️
+# SMARTWOD
 
-SmartWOD es una aplicación móvil desarrollada en Flutter enfocada en temporizadores para entrenamientos funcionales estilo CrossFit.
+Aplicación móvil desarrollada en Flutter para la creación y ejecución de
+entrenamientos tipo AMRAP (As Many Rounds As Possible).
 
-Actualmente el proyecto se encuentra en una base funcional estable, con arquitectura desacoplada y enfoque fuerte en claridad estructural.
+------------------------------------------------------------------------
 
----
+## 📌 Estado actual del proyecto
 
-## 🚦 Estado actual del proyecto
+SMARTWOD se encuentra en fase de **Beta Técnica Interna**.
 
-✔ Configuración dinámica de bloques AMRAP
-✔ Primer bloque solo trabajo
-✔ Bloques posteriores: descanso + trabajo
-✔ Countdown inicial de 10 segundos
-✔ Temporizador circular decreciente (CustomPainter)
-✔ Transiciones suaves entre fases
-✔ Cambio de color por fase (trabajo / descanso)
-✔ Indicador "Amrap X de N"
-✔ Barra de progreso global del entrenamiento
-✔ Pantalla final profesional
-✔ Cálculo correcto de tiempos totales (incluye último descanso)
-✔ Separación estricta lógica / UI
+El sistema es funcional, estable y modular, con refinamientos recientes
+en experiencia de usuario, animaciones y arquitectura.
 
-El flujo actual es:
+Actualmente incluye:
 
+-   Configuración dinámica de bloques AMRAP
+-   Soporte para múltiples bloques con descanso opcional
+-   Selector avanzado de tiempo con scroll (minutos y segundos)
+-   Validación de mínimos (15s trabajo / 5s descanso)
+-   AnimatedList con inserción y eliminación animada
+-   Cálculo automático del tiempo total
+-   Motor de ejecución desacoplado de la UI
+-   Sistema de sonido activo (cambio de fase y finalización)
+-   Barra de progreso global
+-   Pantalla final con resumen del entrenamiento
 
-Home
- └── AMRAP
-      └── Configuración
-            └── Countdown
-                  └── Ejecución
-                        └── Pantalla final
+------------------------------------------------------------------------
 
+## 🏗 Arquitectura del proyecto
 
-## 🧠 Arquitectura
+Estructura actual:
 
-Separación estricta de responsabilidades:
+lib/ ├── core/ │ ├── amrap_runner.dart │ ├── amrap_block.dart │ └──
+timer_ui_state.dart │ ├── screens/ │ ├── amrap_config_screen.dart │ ├──
+timer_screen.dart │ ├── workout_finished_screen.dart │ └── widgets/ │
+└── amrap_block_card.dart │ ├── widgets/ │ ├── central_timer.dart │ └──
+duration_picker_dialog.dart │ └── utils/ └── feedback_service.dart
 
-  - core/ → lógica pura (sin dependencias de Flutter)
-  - screens/ → pantallas
-  - widgets/ → componentes reutilizables
-  - TimerUiState → única fuente de verdad
+------------------------------------------------------------------------
 
-La UI nunca controla el tiempo.
-El runner nunca conoce widgets.
+## 🔁 Flujo de la aplicación
 
----
+1.  Configuración del entrenamiento
+2.  Fase de preparación (countdown)
+3.  Ejecución de bloques:
+    -   Trabajo
+    -   Descanso
+4.  Finalización automática
+5.  Pantalla de resumen
 
-## 📌 Regla principal del proyecto
+------------------------------------------------------------------------
 
-> **Todo el desarrollo se realiza únicamente dentro de la carpeta `lib/`.**
+## 🔊 Sistema de sonido
 
-No modificar carpetas de plataforma (`android/`, `ios/`, etc.)
-a menos que sea estrictamente necesario.
+El sistema de sonido está activo y gestionado desde:
 
----
+utils/feedback_service.dart
 
-## 📁 Estructura del proyecto
+Actualmente se ejecuta en:
 
-```
-lib/
-│
-├── main.dart
-│   # Punto de entrada de la app
-│
-├── app/
-│   └── smartwod_app.dart
-│   # Configuración general (MaterialApp, tema)
-│
-├── screens/
-│   ├── home_screen.dart
-│   │   # Pantalla principal con modos de entrenamiento
-│   │
-│   ├── amrap_config_screen.dart
-│   │   # Configuración dinámica del AMRAP por bloques
-│   │
-│   └── timer_screen.dart
-│       # Ejecución real del entrenamiento
-│
-├── widgets/
-│   └── wod_button.dart
-│   # Botón reutilizable de los modos
-│
-├── core/
-│   ├── amrap_block.dart
-│   │   # Modelo de bloque (trabajo / descanso)
-│   │
-│   ├── timer_engine.dart
-│   │   # Motor genérico de conteo de tiempo
-│   │
-│   └── amrap_runner.dart
-│       # Controlador que ejecuta bloques en secuencia
-│
-└── utils/
-    └── constants.dart
-    # Reservado para constantes futuras
-```
+-   Cambio de fase (work ↔ rest)
+-   Finalización del entrenamiento
 
----
+Nota: Puede requerir optimización futura para evitar posibles desfases
+en dispositivos específicos.
 
-## ▶️ Flujo de desarrollo recomendado
+------------------------------------------------------------------------
 
-1. Iniciar emulador Android
-2. Ejecutar:
-   ```bash
-   flutter run
-   ```
-3. Modificar únicamente archivos dentro de `lib/`
-4. Guardar → Hot Reload automático
+## 🚀 Próximas mejoras planeadas
 
----
+-   Persistencia local de configuración
+-   Historial de entrenamientos
+-   Guardado de plantillas
+-   Configuración personalizada de sonidos
+-   Desacoplamiento completo del sistema de audio
+-   Preparación para publicación en tienda
 
-## 🚫 Cosas que NO hacer
+------------------------------------------------------------------------
 
-- ❌ No modificar `MainActivity.kt`
-- ❌ No editar archivos Gradle sin motivo
-- ❌ No mezclar Dart con código nativo
-- ❌ No ejecutar lógica de tiempo desde la UI
-
----
-
-## 🧩 Funcionamiento AMRAP
-
-Regla estructural:
-
-  Bloque 1 → solo trabajo
-  Bloque 2..N → descanso + trabajo
-
-El último bloque SÍ incluye su descanso si fue programado.
-
----
-
-## 🎯 Funcionalidades clave
-🔹 Countdown inicial
-  10 segundos antes de iniciar el entrenamiento.
-
-🔹 Temporizador circular
-    Disminuye visualmente conforme pasa el tiempo.
-    CustomPainter.
-    Colores por fase.
-
-🔹 Progreso global
-    Barra horizontal animada que representa el avance total del entrenamiento.
-
-🔹 Transiciones
-    Fade en texto superior.
-    Cambio suave de color.
-    Animaciones controladas con AnimatedSwitcher / AnimatedContainer.
-
-🔹 Pantalla final
-    Muestra:
-    Duración total
-    Amrap completados
-    Botón volver
-
----
-
-## 🚫 Restricciones del proyecto
-
-🔹 No modificar lógica sin autorización.
-🔹 No mezclar UI con lógica.
-🔹 No duplicar cálculos.
-🔹 No inventar estados.
-🔹 Entregar archivos completos cuando se modifique algo.
-
----
-
-## 🛣 Próximos pasos
-
-🔹 Pendientes para futura versión:
-🔹 Sonido en transición de fases
-🔹 Vibración opcional
-🔹 Historial de entrenamientos
-🔹 Guardado local
-🔹 Nuevos modos (EMOM, FOR TIME, TABATA)
-🔹 Modo oscuro mejorado
-🔹 Mejora tipográfica profesional
-
----
-
-## 📌 Filosofía
-
-SmartWOD prioriza:
-
-🔹 Arquitectura limpia
-🔹 Código claro
-🔹 Escalabilidad
-🔹 UX enfocada en entrenamiento real
+Proyecto desarrollado en Flutter.
