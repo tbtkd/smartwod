@@ -29,6 +29,11 @@ class FeedbackService {
     _initialized = true;
   }
 
+  /// 🔥 Inicializa audio context antes de iniciar el entrenamiento
+  static Future<void> preload() async {
+    await _ensureInit();
+  }
+
   static Future<void> playPhaseChange() async {
     await _ensureInit();
     await _phasePlayer.stop();

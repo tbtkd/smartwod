@@ -149,17 +149,14 @@ class _AmrapConfigScreenState
                       child: AmrapBlockCard(
                         index: index,
                         workTime: _formatTime(
-                            removedBlock
-                                .workSeconds),
+                            removedBlock.workSeconds),
                         restTime:
                             removedBlock.restSeconds !=
                                         null &&
-                                    removedBlock
-                                            .restSeconds! >
+                                    removedBlock.restSeconds! >
                                         0
                                 ? _formatTime(
-                                    removedBlock
-                                        .restSeconds!)
+                                    removedBlock.restSeconds!)
                                 : null,
                         onEditWork: () {},
                         onEditRest: () {},
@@ -172,7 +169,9 @@ class _AmrapConfigScreenState
                     const Duration(milliseconds: 300),
               );
 
-              _blocks.removeAt(index);
+              setState(() {
+                _blocks.removeAt(index);
+              });
             },
             child: const Text(
               'Eliminar',
@@ -196,7 +195,9 @@ class _AmrapConfigScreenState
       restSeconds: 15,
     );
 
-    _blocks.add(newBlock);
+    setState(() {
+      _blocks.add(newBlock);
+    });
 
     _listKey.currentState?.insertItem(
       _blocks.length - 1,
@@ -262,59 +263,34 @@ class _AmrapConfigScreenState
         child: Column(
           children: [
 
-            // LISTA
             Expanded(
               child: AnimatedList(
                 key: _listKey,
-                controller:
-                    _scrollController,
-                padding:
-                    const EdgeInsets.symmetric(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
-                initialItemCount:
-                    _blocks.length,
-                itemBuilder:
-                    (context, index,
-                        animation) {
-
-                  final block =
-                      _blocks[index];
+                initialItemCount: _blocks.length,
+                itemBuilder: (context, index, animation) {
+                  final block = _blocks[index];
 
                   return SizeTransition(
-                    sizeFactor:
-                        animation,
-                    child:
-                        FadeTransition(
-                      opacity:
-                          animation,
-                      child:
-                          AmrapBlockCard(
+                    sizeFactor: animation,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: AmrapBlockCard(
                         index: index,
                         workTime:
-                            _formatTime(
-                                block
-                                    .workSeconds),
-                        restTime: block
-                                    .restSeconds !=
-                                null &&
-                            block
-                                    .restSeconds! >
-                                0
-                            ? _formatTime(
-                                block
-                                    .restSeconds!)
+                            _formatTime(block.workSeconds),
+                        restTime: block.restSeconds != null &&
+                                block.restSeconds! > 0
+                            ? _formatTime(block.restSeconds!)
                             : null,
-                        onEditWork:
-                            () => _editWork(
-                                index),
-                        onEditRest:
-                            () => _editRest(
-                                index),
-                        onDelete:
-                            () => _confirmDelete(
-                                index),
+                        onEditWork: () => _editWork(index),
+                        onEditRest: () => _editRest(index),
+                        onDelete: () =>
+                            _confirmDelete(index),
                       ),
                     ),
                   );
@@ -322,87 +298,71 @@ class _AmrapConfigScreenState
               ),
             ),
 
-            // AÑADIR BLOQUE
             Padding(
               padding:
-                  const EdgeInsets.symmetric(
-                      horizontal: 16),
+                  const EdgeInsets.symmetric(horizontal: 16),
               child: OutlinedButton(
                 onPressed: _addBlock,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(
-                      color:
-                          Colors.white24),
-                  padding:
-                      const EdgeInsets
-                          .symmetric(
-                              vertical: 12),
-                  shape:
-                      RoundedRectangleBorder(
+                      color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12),
+                  shape: RoundedRectangleBorder(
                     borderRadius:
-                        BorderRadius.circular(
-                            30),
+                        BorderRadius.circular(30),
                   ),
                 ),
                 child: const Text(
                   '+ Añadir bloque',
-                  style: TextStyle(
-                      color:
-                          Colors.white70),
+                  style:
+                      TextStyle(color: Colors.white70),
                 ),
               ),
             ),
 
             const SizedBox(height: 14),
 
-            // BOTÓN EMPEZAR
+            // 🔥 BOTÓN EMPEZAR CORREGIDO
             Padding(
               padding:
-                  const EdgeInsets.symmetric(
-                      horizontal: 16),
+                  const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,
-                child:
-                    ElevatedButton(
-                  onPressed:
-                      _startWorkout,
-                  style:
-                      ElevatedButton
-                          .styleFrom(
+                child: ElevatedButton(
+                  onPressed: _startWorkout,
+                  style: ButtonStyle(
                     backgroundColor:
-                        Colors.orange,
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(30),
+                        MaterialStateProperty.all<Color>(
+                            Colors.orange),
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(
+                            Colors.white),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(30),
+                      ),
                     ),
                   ),
                   child: Column(
                     mainAxisAlignment:
-                        MainAxisAlignment
-                            .center,
+                        MainAxisAlignment.center,
                     children: [
                       const Text(
                         'Empezar',
-                        style:
-                            TextStyle(
+                        style: TextStyle(
                           fontWeight:
-                              FontWeight
-                                  .w600,
+                              FontWeight.w600,
                           fontSize: 16,
-                          color: Colors
-                              .white,
                         ),
                       ),
                       Text(
                         'Tiempo total ${_formatTime(_totalSeconds)}',
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors
-                              .white70,
+                          color: Colors.white70,
                         ),
                       ),
                     ],

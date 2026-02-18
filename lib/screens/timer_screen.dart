@@ -3,6 +3,7 @@ import '../core/amrap_runner.dart';
 import '../core/timer_ui_state.dart';
 import '../core/amrap_block.dart';
 import '../widgets/central_timer.dart';
+import '../utils/feedback_service.dart';
 import 'workout_finished_screen.dart';
 
 class TimerScreen extends StatefulWidget {
@@ -28,6 +29,9 @@ class _TimerScreenState extends State<TimerScreen> {
   @override
   void initState() {
     super.initState();
+
+    // 🔥 Preload de audio para evitar retraso inicial
+    FeedbackService.preload();
 
     _runner = AmrapRunner(
       blocks: widget.blocks,
