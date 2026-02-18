@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../core/amrap_runner.dart';
 import '../core/timer_ui_state.dart';
 import '../core/amrap_block.dart';
@@ -26,11 +27,12 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
 
+  bool _trainingStarted = false;
+
   @override
   void initState() {
     super.initState();
 
-    // 🔥 Preload de audio para evitar retraso inicial
     FeedbackService.preload();
 
     _runner = AmrapRunner(
@@ -41,6 +43,8 @@ class _TimerScreenState extends State<TimerScreen> {
 
   void _onUpdate(TimerUiState state) {
     if (state.phase == TimerPhase.finished) {
+      _disableWakelock();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -57,6 +61,22 @@ class _TimerScreenState extends State<TimerScreen> {
       _uiState = state;
     });
   }
+
+  // =============================
+  // WAKELOCK
+  // =============================
+
+  Future<void> _enableWakelock() async {
+    await WakelockPlus.enable();
+  }
+
+  Future<void> _disableWakelock() async {
+    await WakelockPlus.disable();
+  }
+
+  // =============================
+  // COUNTDOWN
+  // =============================
 
   void _startCountdown() {
     if (_isCountingDown) return;
@@ -76,6 +96,9 @@ class _TimerScreenState extends State<TimerScreen> {
 
       if (_countdownSeconds <= 0) {
         _isCountingDown = false;
+        _trainingStarted = true;
+
+        _enableWakelock();
         _runner.start();
         return false;
       }
@@ -93,6 +116,56 @@ class _TimerScreenState extends State<TimerScreen> {
       if (_uiState!.isFinished) return;
       _runner.togglePause();
     }
+  }
+
+  // =============================
+  // PROTECCIÓN DE SALIDA
+  // =============================
+
+  Future<bool> _onWillPop() async {
+    if (!_trainingStarted) return true;
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Salir del entrenamiento',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '¿Seguro que deseas abandonar el entrenamiento?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Salir',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldExit == true) {
+      _disableWakelock();
+      _runner.dispose();
+      return true;
+    }
+
+    return false;
   }
 
   String _formatTotalTime() {
@@ -115,6 +188,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   void dispose() {
+    _disableWakelock();
     _runner.dispose();
     super.dispose();
   }
@@ -132,74 +206,84 @@ class _TimerScreenState extends State<TimerScreen> {
                 ? 'Descanso'
                 : 'Amrap ${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
         backgroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final allowExit = await _onWillPop();
+              if (allowExit) {
+                Navigator.pop(context);
+              }
+            },
+          ),
+          title: const Text(
+            'AMRAP',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
-        title: const Text(
-          'AMRAP',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: Text(
-                  topLabel,
-                  key: ValueKey(topLabel),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isRest ? Colors.blue : Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              CentralTimer(
-                uiState: _uiState,
-                isCountingDown: _isCountingDown,
-                countdownSeconds: _countdownSeconds,
-                totalSeconds: _runner.currentBlockTotalSeconds,
-                onTap: _onCentralTap,
-              ),
-
-              const SizedBox(height: 24),
-
-              if (_uiState != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: LinearProgressIndicator(
-                    value: _runner.globalProgress,
-                    minHeight: 6,
-                    backgroundColor: Colors.white12,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.orange),
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: Text(
+                    topLabel,
+                    key: ValueKey(topLabel),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isRest ? Colors.blue : Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 32),
 
-              Text(
-                'Tiempo total · ${_formatTotalTime()}',
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 14,
+                CentralTimer(
+                  uiState: _uiState,
+                  isCountingDown: _isCountingDown,
+                  countdownSeconds: _countdownSeconds,
+                  totalSeconds: _runner.currentBlockTotalSeconds,
+                  onTap: _onCentralTap,
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 24),
+
+                if (_uiState != null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 40),
+                    child: LinearProgressIndicator(
+                      value: _runner.globalProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.white12,
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(
+                              Colors.orange),
+                    ),
+                  ),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  'Tiempo total · ${_formatTotalTime()}',
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
