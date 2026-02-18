@@ -11,14 +11,16 @@ class AmrapRunner {
 
   int _index = 0;
   TimerUiState? _state;
-
-  bool _isPaused = false;
   int _elapsedSeconds = 0;
 
   AmrapRunner({
     required List<AmrapBlock> blocks,
     required this.onUpdate,
   }) : _blocks = blocks;
+
+  // -------------------------------------------------------
+  // GETTERS
+  // -------------------------------------------------------
 
   int get totalWorkoutSeconds {
     int total = 0;
@@ -59,12 +61,18 @@ class AmrapRunner {
     return current.workSeconds;
   }
 
+  // -------------------------------------------------------
+  // PUBLIC API
+  // -------------------------------------------------------
+
   void start() {
     if (_blocks.isEmpty) return;
 
+    // Protección si start() es llamado más de una vez
+    _timer?.cancel();
+
     _index = 0;
     _elapsedSeconds = 0;
-    _isPaused = false;
 
     _state = TimerUiState(
       remainingSeconds: _blocks.first.workSeconds,
@@ -74,16 +82,54 @@ class AmrapRunner {
     );
 
     onUpdate(_state!);
-    _tick();
+    _startTick();
   }
 
-  void _tick() {
+  void togglePause() {
+    if (_state == null) return;
+
+    // No permitir pausa en descanso ni finalizado
+    if (_state!.phase == TimerPhase.rest ||
+        _state!.phase == TimerPhase.finished) {
+      return;
+    }
+
+    if (_state!.phase == TimerPhase.paused) {
+      _state = TimerUiState(
+        remainingSeconds: _state!.remainingSeconds,
+        currentRound: _state!.currentRound,
+        totalRounds: _state!.totalRounds,
+        phase: TimerPhase.work,
+      );
+    } else if (_state!.phase == TimerPhase.work) {
+      _state = TimerUiState(
+        remainingSeconds: _state!.remainingSeconds,
+        currentRound: _state!.currentRound,
+        totalRounds: _state!.totalRounds,
+        phase: TimerPhase.paused,
+      );
+    }
+
+    onUpdate(_state!);
+  }
+
+  void dispose() {
+    _timer?.cancel();
+  }
+
+  // -------------------------------------------------------
+  // INTERNAL ENGINE
+  // -------------------------------------------------------
+
+  void _startTick() {
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_state == null) return;
 
-      if (_isPaused && _state!.phase != TimerPhase.rest) {
+      // Solo avanzamos si estamos en fases activas
+      if (_state!.phase != TimerPhase.work &&
+          _state!.phase != TimerPhase.rest) {
         return;
       }
 
@@ -107,90 +153,63 @@ class AmrapRunner {
     });
   }
 
-void _nextPhase() {
-  if (_state == null) return;
-
-  final current = _blocks[_index];
-
-  // 🔁 Si venimos de descanso → iniciar trabajo
-  if (_state!.phase == TimerPhase.rest) {
-    _state = TimerUiState(
-      remainingSeconds: current.workSeconds,
-      currentRound: _index + 1,
-      totalRounds: _blocks.length,
-      phase: TimerPhase.work,
-    );
-
-    onUpdate(_state!);
-
-    // 🔥 SONIDO INMEDIATO
-    FeedbackService.playPhaseChange();
-
-    return;
-  }
-
-  _index++;
-
-  // 🏁 Final del entrenamiento
-  if (_index >= _blocks.length) {
-    _timer?.cancel();
-
-    _state = TimerUiState(
-      remainingSeconds: 0,
-      currentRound: _blocks.length,
-      totalRounds: _blocks.length,
-      phase: TimerPhase.finished,
-    );
-
-    onUpdate(_state!);
-
-    FeedbackService.playWorkoutFinished();
-
-    return;
-  }
-
-  final next = _blocks[_index];
-
-  if (next.restSeconds != null && next.restSeconds! > 0) {
-    _state = TimerUiState(
-      remainingSeconds: next.restSeconds!,
-      currentRound: _index + 1,
-      totalRounds: _blocks.length,
-      phase: TimerPhase.rest,
-    );
-  } else {
-    _state = TimerUiState(
-      remainingSeconds: next.workSeconds,
-      currentRound: _index + 1,
-      totalRounds: _blocks.length,
-      phase: TimerPhase.work,
-    );
-  }
-
-  onUpdate(_state!);
-
-  // 🔥 SONIDO INMEDIATO
-  FeedbackService.playPhaseChange();
-}
-
-
-  void togglePause() {
+  void _nextPhase() {
     if (_state == null) return;
-    if (_state!.phase == TimerPhase.rest) return;
 
-    _isPaused = !_isPaused;
+    final current = _blocks[_index];
 
-    _state = TimerUiState(
-      remainingSeconds: _state!.remainingSeconds,
-      currentRound: _state!.currentRound,
-      totalRounds: _state!.totalRounds,
-      phase: _isPaused ? TimerPhase.paused : TimerPhase.work,
-    );
+    // 🔁 Si venimos de descanso → iniciar trabajo del mismo bloque
+    if (_state!.phase == TimerPhase.rest) {
+      _state = TimerUiState(
+        remainingSeconds: current.workSeconds,
+        currentRound: _index + 1,
+        totalRounds: _blocks.length,
+        phase: TimerPhase.work,
+      );
+
+      onUpdate(_state!);
+      FeedbackService.playPhaseChange();
+      return;
+    }
+
+    // Si venimos de trabajo → avanzar índice
+    _index++;
+
+    // 🏁 Final del entrenamiento
+    if (_index >= _blocks.length) {
+      _timer?.cancel();
+
+      _state = TimerUiState(
+        remainingSeconds: 0,
+        currentRound: _blocks.length,
+        totalRounds: _blocks.length,
+        phase: TimerPhase.finished,
+      );
+
+      onUpdate(_state!);
+      FeedbackService.playWorkoutFinished();
+      return;
+    }
+
+    final next = _blocks[_index];
+
+    if (next.restSeconds != null && next.restSeconds! > 0) {
+      _state = TimerUiState(
+        remainingSeconds: next.restSeconds!,
+        currentRound: _index + 1,
+        totalRounds: _blocks.length,
+        phase: TimerPhase.rest,
+      );
+    } else {
+      _state = TimerUiState(
+        remainingSeconds: next.workSeconds,
+        currentRound: _index + 1,
+        totalRounds: _blocks.length,
+        phase: TimerPhase.work,
+      );
+    }
 
     onUpdate(_state!);
-  }
-
-  void dispose() {
-    _timer?.cancel();
+    FeedbackService.playPhaseChange();
   }
 }
