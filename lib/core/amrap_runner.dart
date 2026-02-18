@@ -11,16 +11,20 @@ class AmrapRunner {
 
   int _index = 0;
   TimerUiState? _state;
+
   int _elapsedSeconds = 0;
+
+  DateTime? _phaseStartTime;
+  int _phaseDuration = 0;
 
   AmrapRunner({
     required List<AmrapBlock> blocks,
     required this.onUpdate,
   }) : _blocks = blocks;
 
-  // -------------------------------------------------------
+  // =============================
   // GETTERS
-  // -------------------------------------------------------
+  // =============================
 
   int get totalWorkoutSeconds {
     int total = 0;
@@ -38,15 +42,12 @@ class AmrapRunner {
 
   double get globalProgress {
     if (totalWorkoutSeconds == 0) return 0;
-    return (_elapsedSeconds / totalWorkoutSeconds).clamp(0.0, 1.0);
+    return (_elapsedSeconds / totalWorkoutSeconds)
+        .clamp(0.0, 1.0);
   }
 
   int get currentBlockTotalSeconds {
     if (_blocks.isEmpty) return 1;
-
-    if (_state == null) {
-      return _blocks.first.workSeconds;
-    }
 
     if (_index >= _blocks.length) {
       return _blocks.last.workSeconds;
@@ -54,28 +55,32 @@ class AmrapRunner {
 
     final current = _blocks[_index];
 
-    if (_state!.phase == TimerPhase.rest) {
+    if (_state?.phase == TimerPhase.rest) {
       return current.restSeconds ?? current.workSeconds;
     }
 
     return current.workSeconds;
   }
 
-  // -------------------------------------------------------
+  // =============================
   // PUBLIC API
-  // -------------------------------------------------------
+  // =============================
 
   void start() {
     if (_blocks.isEmpty) return;
 
-    // Protección si start() es llamado más de una vez
     _timer?.cancel();
 
     _index = 0;
     _elapsedSeconds = 0;
 
+    final first = _blocks.first;
+
+    _phaseDuration = first.workSeconds;
+    _phaseStartTime = DateTime.now();
+
     _state = TimerUiState(
-      remainingSeconds: _blocks.first.workSeconds,
+      remainingSeconds: first.workSeconds,
       currentRound: 1,
       totalRounds: _blocks.length,
       phase: TimerPhase.work,
@@ -88,20 +93,26 @@ class AmrapRunner {
   void togglePause() {
     if (_state == null) return;
 
-    // No permitir pausa en descanso ni finalizado
     if (_state!.phase == TimerPhase.rest ||
         _state!.phase == TimerPhase.finished) {
       return;
     }
 
     if (_state!.phase == TimerPhase.paused) {
+      // Reanudar
+      _phaseStartTime = DateTime.now()
+          .subtract(Duration(
+              seconds: _phaseDuration -
+                  _state!.remainingSeconds));
+
       _state = TimerUiState(
         remainingSeconds: _state!.remainingSeconds,
         currentRound: _state!.currentRound,
         totalRounds: _state!.totalRounds,
         phase: TimerPhase.work,
       );
-    } else if (_state!.phase == TimerPhase.work) {
+    } else {
+      // Pausar
       _state = TimerUiState(
         remainingSeconds: _state!.remainingSeconds,
         currentRound: _state!.currentRound,
@@ -117,29 +128,35 @@ class AmrapRunner {
     _timer?.cancel();
   }
 
-  // -------------------------------------------------------
-  // INTERNAL ENGINE
-  // -------------------------------------------------------
+  // =============================
+  // ENGINE PRECISO
+  // =============================
 
   void _startTick() {
     _timer?.cancel();
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer = Timer.periodic(
+        const Duration(milliseconds: 200), (_) {
       if (_state == null) return;
 
-      // Solo avanzamos si estamos en fases activas
       if (_state!.phase != TimerPhase.work &&
           _state!.phase != TimerPhase.rest) {
         return;
       }
 
-      final currentSecond = _state!.remainingSeconds;
+      final now = DateTime.now();
+      final elapsed =
+          now.difference(_phaseStartTime!).inSeconds;
 
-      if (currentSecond > 1) {
-        _elapsedSeconds++;
+      final remaining =
+          (_phaseDuration - elapsed).clamp(0, _phaseDuration);
+
+      if (remaining > 0) {
+        _elapsedSeconds =
+            totalWorkoutSeconds - _remainingTotalEstimate();
 
         _state = TimerUiState(
-          remainingSeconds: currentSecond - 1,
+          remainingSeconds: remaining,
           currentRound: _state!.currentRound,
           totalRounds: _state!.totalRounds,
           phase: _state!.phase,
@@ -147,10 +164,26 @@ class AmrapRunner {
 
         onUpdate(_state!);
       } else {
-        _elapsedSeconds++;
         _nextPhase();
       }
     });
+  }
+
+  int _remainingTotalEstimate() {
+    int remaining = 0;
+
+    // fase actual
+    remaining += _state?.remainingSeconds ?? 0;
+
+    // fases futuras
+    for (int i = _index + 1; i < _blocks.length; i++) {
+      remaining += _blocks[i].workSeconds;
+      if (i > 0) {
+        remaining += _blocks[i].restSeconds ?? 0;
+      }
+    }
+
+    return remaining;
   }
 
   void _nextPhase() {
@@ -158,8 +191,10 @@ class AmrapRunner {
 
     final current = _blocks[_index];
 
-    // 🔁 Si venimos de descanso → iniciar trabajo del mismo bloque
     if (_state!.phase == TimerPhase.rest) {
+      _phaseDuration = current.workSeconds;
+      _phaseStartTime = DateTime.now();
+
       _state = TimerUiState(
         remainingSeconds: current.workSeconds,
         currentRound: _index + 1,
@@ -172,10 +207,8 @@ class AmrapRunner {
       return;
     }
 
-    // Si venimos de trabajo → avanzar índice
     _index++;
 
-    // 🏁 Final del entrenamiento
     if (_index >= _blocks.length) {
       _timer?.cancel();
 
@@ -193,7 +226,11 @@ class AmrapRunner {
 
     final next = _blocks[_index];
 
-    if (next.restSeconds != null && next.restSeconds! > 0) {
+    if (next.restSeconds != null &&
+        next.restSeconds! > 0) {
+      _phaseDuration = next.restSeconds!;
+      _phaseStartTime = DateTime.now();
+
       _state = TimerUiState(
         remainingSeconds: next.restSeconds!,
         currentRound: _index + 1,
@@ -201,6 +238,9 @@ class AmrapRunner {
         phase: TimerPhase.rest,
       );
     } else {
+      _phaseDuration = next.workSeconds;
+      _phaseStartTime = DateTime.now();
+
       _state = TimerUiState(
         remainingSeconds: next.workSeconds,
         currentRound: _index + 1,
