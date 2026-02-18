@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/workout_history_service.dart';
 import '../models/workout_history_entry.dart';
+import 'workout_stats_screen.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
@@ -51,6 +52,20 @@ class _WorkoutHistoryScreenState
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('Historial'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const WorkoutStatsScreen(),
+                ),
+              );
+            },
+          )
+        ],
       ),
       body: _history.isEmpty
           ? const Center(

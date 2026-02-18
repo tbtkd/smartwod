@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/wod_button.dart';
 import 'amrap_config_screen.dart';
+import 'workout_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // AMRAP (modo funcional completo)
+            // AMRAP
             WodButton(
               label: 'AMRAP',
               color: Colors.orange,
@@ -34,7 +35,8 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const AmrapConfigScreen(),
+                    builder: (_) =>
+                        const AmrapConfigScreen(),
                   ),
                 );
               },
@@ -42,7 +44,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // FOR TIME (placeholder)
+            // FOR TIME
             WodButton(
               label: 'FOR TIME',
               color: Colors.blueGrey,
@@ -53,7 +55,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // EMOM (placeholder)
+            // EMOM
             WodButton(
               label: 'EMOM',
               color: Colors.purple,
@@ -64,7 +66,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // TABATA (placeholder)
+            // TABATA
             WodButton(
               label: 'TABATA',
               color: Colors.green,
@@ -75,12 +77,29 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // MIX (futuro / premium)
+            // MIX
             WodButton(
               label: 'MIX',
               color: Colors.grey,
               onPressed: () {
                 _showComingSoon(context);
+              },
+            ),
+
+            const SizedBox(height: 25),
+
+            // 🔥 HISTORIAL GLOBAL
+            WodButton(
+              label: 'HISTORIAL',
+              color: Colors.white24,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const WorkoutHistoryScreen(),
+                  ),
+                );
               },
             ),
           ],
@@ -89,7 +108,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Diálogo simple para modos aún no implementados
   static void _showComingSoon(BuildContext context) {
     showDialog(
       context: context,
@@ -108,4 +126,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-  
