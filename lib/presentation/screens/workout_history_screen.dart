@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../utils/workout_history_service.dart';
-import '../models/workout_history_entry.dart';
-import 'workout_stats_screen.dart';
+
+import '../../data/repositories/workout_history_repository_impl.dart';
+import '../../domain/entities/workout_result.dart';
+import '../../domain/enums/workout_type.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
@@ -14,7 +15,8 @@ class WorkoutHistoryScreen extends StatefulWidget {
 class _WorkoutHistoryScreenState
     extends State<WorkoutHistoryScreen> {
 
-  List<WorkoutHistoryEntry> _history = [];
+  final _repository = WorkoutHistoryRepositoryImpl();
+  List<WorkoutResult> _history = [];
 
   @override
   void initState() {
@@ -23,8 +25,7 @@ class _WorkoutHistoryScreenState
   }
 
   Future<void> _load() async {
-    final data =
-        await WorkoutHistoryService.loadHistory();
+    final data = await _repository.loadAll();
     setState(() {
       _history = data;
     });
@@ -37,12 +38,19 @@ class _WorkoutHistoryScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year} '
-        '${date.hour.toString().padLeft(2, '0')}:'
-        '${date.minute.toString().padLeft(2, '0')}';
+  String _typeToString(WorkoutType type) {
+    switch (type) {
+      case WorkoutType.amrap:
+        return 'AMRAP';
+      case WorkoutType.emom:
+        return 'EMOM';
+      case WorkoutType.tabata:
+        return 'TABATA';
+      case WorkoutType.forTime:
+        return 'FOR TIME';
+      case WorkoutType.mix:
+        return 'MIX';
+    }
   }
 
   @override
@@ -52,27 +60,12 @@ class _WorkoutHistoryScreenState
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('Historial'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const WorkoutStatsScreen(),
-                ),
-              );
-            },
-          )
-        ],
       ),
       body: _history.isEmpty
           ? const Center(
               child: Text(
                 'No hay entrenamientos aún',
-                style:
-                    TextStyle(color: Colors.white54),
+                style: TextStyle(color: Colors.white54),
               ),
             )
           : ListView.builder(
@@ -87,12 +80,12 @@ class _WorkoutHistoryScreenState
                       vertical: 8),
                   child: ListTile(
                     title: Text(
-                      'AMRAP · ${entry.totalBlocks} bloques',
-                      style: const TextStyle(
-                          color: Colors.white),
+                      _typeToString(entry.type),
+                      style:
+                          const TextStyle(color: Colors.white),
                     ),
                     subtitle: Text(
-                      '${_formatDate(entry.date)}\nDuración: ${_formatTime(entry.totalSeconds)}',
+                      'Duración: ${_formatTime(entry.totalSeconds)}',
                       style: const TextStyle(
                           color: Colors.white70),
                     ),

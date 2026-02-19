@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../core/amrap_block.dart';
-import '../widgets/duration_picker_dialog.dart';
-import '../screens/widgets/amrap_block_card.dart';
+import '../../core/amrap_block.dart';
+import '../../widgets/duration_picker_dialog.dart';
+import '../widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
 import 'workout_history_screen.dart'; // 🔥 IMPORT AGREGADO
 

@@ -1,6 +1,10 @@
+// # Configuración general (MaterialApp, tema)
+
 import 'package:flutter/material.dart';
 import '../presentation/screens/home_screen.dart';
 
+// Este widget define la configuración GENERAL de la app
+// Tema, título y pantalla inicial
 class SmartWodApp extends StatelessWidget {
   const SmartWodApp({super.key});
 
@@ -8,12 +12,8 @@ class SmartWodApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SMARTWOD',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        useMaterial3: true,
-      ),
+      title: 'SmartWOD',
+      theme: ThemeData.dark(),
       home: const HomeScreen(),
     );
   }

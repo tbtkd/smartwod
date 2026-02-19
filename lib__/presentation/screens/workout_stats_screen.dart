@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../utils/workout_history_service.dart';
-import '../models/workout_history_entry.dart';
+import '../../utils/workout_history_service.dart';
+import '../../models/workout_history_entry.dart';
 
 class WorkoutStatsScreen extends StatefulWidget {
   const WorkoutStatsScreen({super.key});

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/wod_button.dart';
+
+import '../../widgets/wod_button.dart';
 import 'amrap_config_screen.dart';
 import 'workout_history_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
