@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/workout_history_repository_impl.dart';
 import '../../domain/entities/workout_result.dart';
-import '../../domain/enums/workout_type.dart';
 import 'workout_detail_screen.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {

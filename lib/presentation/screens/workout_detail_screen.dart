@@ -22,14 +22,12 @@ class _WorkoutDetailScreenState
   final _repository = WorkoutHistoryRepositoryImpl();
 
   late TextEditingController _noteController;
-  late TextEditingController _nameController;
 
   @override
   void initState() {
     super.initState();
     _noteController =
         TextEditingController(text: widget.result.note ?? '');
-    _nameController = TextEditingController();
   }
 
   String _format(int seconds) {
@@ -61,6 +59,12 @@ class _WorkoutDetailScreenState
     if (widget.result.blocks == null) return 0;
     return widget.result.blocks!
         .fold(0, (sum, b) => sum + (b.restSeconds ?? 0));
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -237,36 +241,6 @@ class _WorkoutDetailScreenState
                   ],
                 ),
               ),
-
-            const SizedBox(height: 18),
-
-            /// 🔥 NOMBRE
-            _SectionCard(
-              child: TextField(
-                controller:
-                    _nameController,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-                cursorColor: Colors.orange,
-                decoration:
-                    const InputDecoration(
-                  border: InputBorder.none,
-                  hintText:
-                      'Ponle un nombre a tu entrenamiento',
-                  hintStyle:
-                      TextStyle(
-                    color: Colors.black45,
-                    fontSize: 14,
-                  ),
-                  isDense: true,
-                  contentPadding:
-                      EdgeInsets.symmetric(
-                          vertical: 4),
-                ),
-              ),
-            ),
 
             const SizedBox(height: 18),
 
