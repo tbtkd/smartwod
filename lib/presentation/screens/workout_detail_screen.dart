@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/workout_result.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
-import '../../core/amrap_block.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final WorkoutResult result;
@@ -21,19 +20,22 @@ class _WorkoutDetailScreenState
     extends State<WorkoutDetailScreen> {
 
   final _repository = WorkoutHistoryRepositoryImpl();
+
   late TextEditingController _noteController;
+  late TextEditingController _nameController;
 
   @override
   void initState() {
     super.initState();
     _noteController =
-        TextEditingController(text: widget.result.note);
+        TextEditingController(text: widget.result.note ?? '');
+    _nameController = TextEditingController();
   }
 
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:'
+    return '${m.toString().padLeft(2, '0')} : '
         '${s.toString().padLeft(2, '0')}';
   }
 
@@ -63,137 +65,236 @@ class _WorkoutDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final blocks = widget.result.blocks;
+    final blocks = widget.result.blocks ?? [];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
         backgroundColor: Colors.black,
+        elevation: 0,
         title: const Text('Detalle AMRAP'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
           children: [
 
-            const Text(
-              'Duración total',
-              style:
-                  TextStyle(color: Colors.white54),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _format(widget.result.totalSeconds),
-              style: const TextStyle(
-                color: Colors.orange,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+            /// 🔥 HEADER COMPACTO
+            Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 18,
+                horizontal: 20,
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              'Trabajo: ${_format(_totalWorkTime())}',
-              style: const TextStyle(
-                color: Colors.white70,
-              ),
-            ),
-
-            Text(
-              'Descanso: ${_format(_totalRestTime())}',
-              style: const TextStyle(
-                color: Colors.white38,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'Fecha',
-              style:
-                  TextStyle(color: Colors.white54),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.result.date
-                  .toLocal()
-                  .toString()
-                  .split('.')
-                  .first,
-              style: const TextStyle(
+              decoration: BoxDecoration(
                 color: Colors.white,
-              ),
-            ),
-
-            if (blocks != null) ...[
-              const SizedBox(height: 30),
-              const Text(
-                'Desglose',
-                style:
-                    TextStyle(color: Colors.white54),
-              ),
-              const SizedBox(height: 12),
-              ...blocks
-                  .asMap()
-                  .entries
-                  .expand((entry) {
-                final index = entry.key;
-                final block = entry.value;
-
-                final List<Widget> rows = [];
-
-                rows.add(
-                  _DetailRow(
-                    label:
-                        'AMRAP ${index + 1}',
-                    seconds:
-                        block.workSeconds,
+                borderRadius:
+                    BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black
+                        .withOpacity(0.05),
+                    blurRadius: 10,
                   ),
-                );
+                ],
+              ),
+              child: Column(
+                children: [
 
-                if (block.restSeconds != null &&
-                    block.restSeconds! > 0) {
-                  rows.add(
-                    _DetailRow(
-                      label: 'Descanso',
-                      seconds:
-                          block.restSeconds!,
+                  Text(
+                    _format(
+                        widget.result.totalSeconds),
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight:
+                          FontWeight.bold,
+                      color: Colors.orange,
                     ),
-                  );
-                }
+                  ),
 
-                return rows;
-              }).toList(),
-            ],
+                  const SizedBox(height: 4),
 
-            const SizedBox(height: 30),
+                  const Text(
+                    'Tiempo total',
+                    style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13),
+                  ),
 
-            const Text(
-              'Nota',
-              style:
-                  TextStyle(color: Colors.white54),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceBetween,
+                    children: [
+                      _MiniStat(
+                        label: 'Trabajo',
+                        value: _format(
+                            _totalWorkTime()),
+                      ),
+                      _MiniStat(
+                        label: 'Descanso',
+                        value: _format(
+                            _totalRestTime()),
+                      ),
+                      _MiniStat(
+                        label: 'Fecha',
+                        value: widget
+                            .result.date
+                            .toLocal()
+                            .toString()
+                            .split(' ')
+                            .first,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
 
-            TextField(
-              controller: _noteController,
-              maxLines: 4,
-              style:
-                  const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
+            const SizedBox(height: 18),
+
+            /// 🔥 DESGLOSE
+            if (blocks.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F9F9),
                   borderRadius:
-                      BorderRadius.circular(12),
+                      BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.black12,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+
+                    const Text(
+                      'Desglose',
+                      style: TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    SizedBox(
+                      height: blocks.length > 3
+                          ? 150
+                          : null,
+                      child: ListView.builder(
+                        physics: blocks.length > 3
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: blocks.length,
+                        itemBuilder:
+                            (context, index) {
+                          final block =
+                              blocks[index];
+
+                          return Padding(
+                            padding:
+                                const EdgeInsets
+                                    .only(
+                                        bottom:
+                                            12),
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment
+                                      .start,
+                              children: [
+
+                                _BulletRow(
+                                  color: Colors.orange,
+                                  text:
+                                      'AMRAP ${index + 1}: '
+                                      '${block.workSeconds} segundos',
+                                ),
+
+                                if (block.restSeconds !=
+                                        null &&
+                                    block.restSeconds! >
+                                        0)
+                                  _BulletRow(
+                                    color: Colors.grey,
+                                    text:
+                                        'Descanso ${index + 1}: '
+                                        '${block.restSeconds} segundos',
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 18),
+
+            /// 🔥 NOMBRE
+            _SectionCard(
+              child: TextField(
+                controller:
+                    _nameController,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+                cursorColor: Colors.orange,
+                decoration:
+                    const InputDecoration(
+                  border: InputBorder.none,
+                  hintText:
+                      'Ponle un nombre a tu entrenamiento',
+                  hintStyle:
+                      TextStyle(
+                    color: Colors.black45,
+                    fontSize: 14,
+                  ),
+                  isDense: true,
+                  contentPadding:
+                      EdgeInsets.symmetric(
+                          vertical: 4),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
+
+            /// 🔥 NOTAS
+            _SectionCard(
+              child: TextField(
+                controller:
+                    _noteController,
+                maxLines: 3,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+                cursorColor: Colors.orange,
+                decoration:
+                    const InputDecoration(
+                  border: InputBorder.none,
+                  hintText:
+                      'Escribe tus notas aquí...',
+                  hintStyle:
+                      TextStyle(
+                          color: Colors.black45),
+                  isDense: true,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             SizedBox(
               width: double.infinity,
@@ -205,7 +306,8 @@ class _WorkoutDetailScreenState
                       Colors.orange,
                 ),
                 child: const Text(
-                    'Guardar nota'),
+                  'Guardar cambios',
+                ),
               ),
             ),
           ],
@@ -215,54 +317,95 @@ class _WorkoutDetailScreenState
   }
 }
 
-class _DetailRow extends StatelessWidget {
+class _MiniStat extends StatelessWidget {
   final String label;
-  final int seconds;
+  final String value;
 
-  const _DetailRow({
+  const _MiniStat({
     required this.label,
-    required this.seconds,
+    required this.value,
   });
 
-  String _format(int s) {
-    final m = s ~/ 60;
-    final r = s % 60;
-    return '${m.toString().padLeft(2, '0')}:'
-        '${r.toString().padLeft(2, '0')}';
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight:
+                FontWeight.bold,
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    );
   }
+}
+
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+
+  const _SectionCard({
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin:
-          const EdgeInsets.only(bottom: 8),
       padding:
-          const EdgeInsets.all(12),
+          const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: Colors.white,
         borderRadius:
-            BorderRadius.circular(12),
+            BorderRadius.circular(16),
       ),
-      child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment
-                .spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-                color: Colors.white),
+      child: child,
+    );
+  }
+}
+
+class _BulletRow extends StatelessWidget {
+  final Color color;
+  final String text;
+
+  const _BulletRow({
+    required this.color,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
           ),
-          Text(
-            _format(seconds),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
             style: const TextStyle(
-              color: Colors.orange,
-              fontWeight:
-                  FontWeight.bold,
+              color: Colors.black87,
+              fontSize: 14,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
