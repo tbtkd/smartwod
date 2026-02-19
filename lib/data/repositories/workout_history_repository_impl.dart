@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
+import '../../core/amrap_block.dart';
 import 'workout_history_repository.dart';
 
 class WorkoutHistoryRepositoryImpl
@@ -13,8 +14,8 @@ class WorkoutHistoryRepositoryImpl
   @override
   Future<void> save(WorkoutResult result) async {
     final prefs = await SharedPreferences.getInstance();
-
     final raw = prefs.getString(_key);
+
     List<Map<String, dynamic>> list = [];
 
     if (raw != null && raw.isNotEmpty) {
@@ -26,6 +27,11 @@ class WorkoutHistoryRepositoryImpl
       'type': result.type.index,
       'date': result.date.toIso8601String(),
       'totalSeconds': result.totalSeconds,
+      'note': result.note,
+      'blocks': result.blocks?.map((b) => {
+        'workSeconds': b.workSeconds,
+        'restSeconds': b.restSeconds,
+      }).toList(),
     });
 
     await prefs.setString(_key, jsonEncode(list));
@@ -40,43 +46,59 @@ class WorkoutHistoryRepositoryImpl
 
     final decoded = jsonDecode(raw) as List;
 
-    final results = <WorkoutResult>[];
+    return decoded.map((e) {
+      final blocksRaw = e['blocks'] as List?;
 
-    for (final e in decoded) {
-      try {
-        final typeIndex = e['type'];
+      final blocks = blocksRaw?.map((b) {
+        return AmrapBlock(
+          workSeconds: b['workSeconds'],
+          restSeconds: b['restSeconds'],
+        );
+      }).toList();
 
-        final WorkoutType type =
-            (typeIndex is int &&
-                    typeIndex >= 0 &&
-                    typeIndex < WorkoutType.values.length)
-                ? WorkoutType.values[typeIndex]
-                : WorkoutType.amrap;
-
-        final int seconds =
+      return WorkoutResult(
+        type: WorkoutType.values[
+            (e['type'] is int) ? e['type'] : 0],
+        date: DateTime.tryParse(e['date']) ??
+            DateTime.now(),
+        totalSeconds:
             (e['totalSeconds'] is int)
                 ? e['totalSeconds']
-                : 0;
+                : 0,
+        note: e['note'] is String
+            ? e['note']
+            : null,
+        blocks: blocks,
+      );
+    }).toList();
+  }
 
-        final DateTime date =
-            (e['date'] != null)
-                ? DateTime.tryParse(e['date']) ??
-                    DateTime.now()
-                : DateTime.now();
+  Future<void> update(WorkoutResult result) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key);
 
-        results.add(
-          WorkoutResult(
-            type: type,
-            date: date,
-            totalSeconds: seconds,
-          ),
-        );
-      } catch (_) {
-        // Ignora entradas corruptas
+    if (raw == null) return;
+
+    final decoded = jsonDecode(raw) as List;
+
+    final updated = decoded.map((e) {
+      if (e['date'] ==
+          result.date.toIso8601String()) {
+        return {
+          'type': result.type.index,
+          'date': result.date.toIso8601String(),
+          'totalSeconds': result.totalSeconds,
+          'note': result.note,
+          'blocks': result.blocks?.map((b) => {
+            'workSeconds': b.workSeconds,
+            'restSeconds': b.restSeconds,
+          }).toList(),
+        };
       }
-    }
+      return e;
+    }).toList();
 
-    return results;
+    await prefs.setString(_key, jsonEncode(updated));
   }
 
   @override

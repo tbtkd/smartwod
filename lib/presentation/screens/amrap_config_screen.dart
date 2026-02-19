@@ -3,7 +3,6 @@ import '../../core/amrap_block.dart';
 import '../../widgets/duration_picker_dialog.dart';
 import '../widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
-import 'workout_history_screen.dart'; // 🔥 IMPORT AGREGADO
 
 class AmrapConfigScreen extends StatefulWidget {
   const AmrapConfigScreen({super.key});
@@ -250,20 +249,6 @@ class _AmrapConfigScreenState
           style:
               TextStyle(fontWeight: FontWeight.w600),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const WorkoutHistoryScreen(),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         child: Column(

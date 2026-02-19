@@ -63,9 +63,11 @@ class _TimerScreenState extends State<TimerScreen> {
         WorkoutResult(
           type: WorkoutType.amrap,
           date: DateTime.now(),
-          totalSeconds: _runner.elapsedSeconds,
+          totalSeconds: _runner.totalWorkoutSeconds,
+          blocks: widget.blocks,
         ),
       );
+
 
       await _disableWakelock();
 

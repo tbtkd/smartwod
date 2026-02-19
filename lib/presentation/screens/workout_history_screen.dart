@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
+import 'workout_detail_screen.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
@@ -32,26 +33,17 @@ class _WorkoutHistoryScreenState
     });
   }
 
+  int get totalWorkouts => _history.length;
+
+  int get totalTimeSeconds =>
+      _history.fold(
+          0, (sum, e) => sum + e.totalSeconds);
+
   String _formatTime(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
     return '${m.toString().padLeft(2, '0')}:'
         '${s.toString().padLeft(2, '0')}';
-  }
-
-  String _typeToString(WorkoutType type) {
-    switch (type) {
-      case WorkoutType.amrap:
-        return 'AMRAP';
-      case WorkoutType.emom:
-        return 'EMOM';
-      case WorkoutType.tabata:
-        return 'TABATA';
-      case WorkoutType.forTime:
-        return 'FOR TIME';
-      case WorkoutType.mix:
-        return 'MIX';
-    }
   }
 
   @override
@@ -65,35 +57,189 @@ class _WorkoutHistoryScreenState
       body: _history.isEmpty
           ? const Center(
               child: Text(
-                'No hay entrenamientos aún',
-                style: TextStyle(color: Colors.white54),
+                'Aún no hay entrenamientos',
+                style:
+                    TextStyle(color: Colors.white54),
               ),
             )
-          : ListView.builder(
-              itemCount: _history.length,
-              itemBuilder: (context, index) {
-                final entry = _history[index];
+          : Column(
+              children: [
 
-                return Card(
-                  color: Colors.grey[900],
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8),
-                  child: ListTile(
-                    title: Text(
-                      _typeToString(entry.type),
-                      style:
-                          const TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      'Duración: ${_formatTime(entry.totalSeconds)}',
-                      style: const TextStyle(
-                          color: Colors.white70),
-                    ),
+                // RESUMEN
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius:
+                        BorderRadius.circular(16),
                   ),
-                );
-              },
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceAround,
+                    children: [
+                      _StatItem(
+                        label: 'Entrenamientos',
+                        value:
+                            totalWorkouts.toString(),
+                      ),
+                      _StatItem(
+                        label: 'Tiempo total',
+                        value: _formatTime(
+                            totalTimeSeconds),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: ListView.builder(
+                    padding:
+                        const EdgeInsets.symmetric(
+                            horizontal: 16),
+                    itemCount: _history.length,
+                    itemBuilder: (context, index) {
+                      final item =
+                          _history[index];
+
+                      return GestureDetector(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  WorkoutDetailScreen(
+                                result: item,
+                              ),
+                            ),
+                          );
+                          _load();
+                        },
+                        child: Container(
+                          margin:
+                              const EdgeInsets.only(
+                                  bottom: 12),
+                          padding:
+                              const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius:
+                                BorderRadius.circular(
+                                    14),
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment
+                                    .spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment
+                                        .start,
+                                children: [
+                                  Text(
+                                    'AMRAP',
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.white,
+                                      fontWeight:
+                                          FontWeight
+                                              .w600,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                      height: 4),
+                                  Text(
+                                    item.date
+                                        .toLocal()
+                                        .toString()
+                                        .split(
+                                            '.')
+                                        .first,
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors
+                                              .white38,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment
+                                        .end,
+                                children: [
+                                  Text(
+                                    _formatTime(
+                                        item.totalSeconds),
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.orange,
+                                      fontWeight:
+                                          FontWeight
+                                              .bold,
+                                    ),
+                                  ),
+                                  if (item.note !=
+                                          null &&
+                                      item.note!
+                                          .isNotEmpty)
+                                    const Icon(
+                                      Icons
+                                          .sticky_note_2,
+                                      size: 16,
+                                      color:
+                                          Colors.white38,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.orange,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }
