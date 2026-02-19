@@ -25,6 +25,9 @@ class AmrapRunner implements WorkoutRunner {
   })  : _blocks = blocks,
         _audioService = audioService;
 
+  // 🔥 NUEVO GETTER CORRECTO
+  int get elapsedSeconds => _elapsedSeconds;
+
   int get totalWorkoutSeconds {
     int total = 0;
 
@@ -91,14 +94,24 @@ class AmrapRunner implements WorkoutRunner {
         final elapsed =
             now.difference(_phaseStartTime!).inSeconds;
 
-        final totalDuration =
-            currentBlockTotalSeconds;
+        final totalDuration = currentBlockTotalSeconds;
+        final remaining = totalDuration - elapsed;
 
-        final remaining =
-            totalDuration - elapsed;
+        // 🔥 CÁLCULO REAL DEL TIEMPO GLOBAL
+        final totalElapsed =
+            (_blocks
+                    .take(_index)
+                    .fold<int>(0, (sum, block) {
+              final work = block.workSeconds;
+              final rest = block.restSeconds ?? 0;
+              return sum + work + rest;
+            })) +
+                (totalDuration - remaining);
+
+        _elapsedSeconds = totalElapsed.clamp(
+            0, totalWorkoutSeconds);
 
         if (remaining > 0) {
-          _elapsedSeconds++;
           _state = TimerUiState(
             remainingSeconds: remaining,
             currentRound: _state!.currentRound,
@@ -107,7 +120,6 @@ class AmrapRunner implements WorkoutRunner {
           );
           onUpdate(_state!);
         } else {
-          _elapsedSeconds++;
           _nextPhase();
         }
       },

@@ -63,7 +63,7 @@ class _TimerScreenState extends State<TimerScreen> {
         WorkoutResult(
           type: WorkoutType.amrap,
           date: DateTime.now(),
-          totalSeconds: _runner.totalWorkoutSeconds,
+          totalSeconds: _runner.elapsedSeconds,
         ),
       );
 

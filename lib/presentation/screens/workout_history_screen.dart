@@ -26,6 +26,7 @@ class _WorkoutHistoryScreenState
 
   Future<void> _load() async {
     final data = await _repository.loadAll();
+    if (!mounted) return;
     setState(() {
       _history = data;
     });
