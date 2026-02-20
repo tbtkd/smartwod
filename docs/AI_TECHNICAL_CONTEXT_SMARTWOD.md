@@ -1,159 +1,112 @@
-# SMARTWOD --- CONTEXTO TÉCNICO Y PLAN DE EVOLUCIÓN
+# SMARTWOD --- CONTEXTO TÉCNICO Y PLAN ESTRUCTURAL
 
 ## 1. IDENTIDAD DEL PROYECTO
 
-Nombre: SMARTWOD\
-Tipo: Aplicación móvil Flutter\
-Estado actual: Beta Técnica Interna Avanzada\
-Arquitectura: Modular, en transición hacia separación por capas
+Nombre: SMARTWOD  
+Tipo: Aplicación móvil Flutter  
+Estado actual: Beta Técnica Interna Avanzada  
+Enfoque actual: Estabilización estructural y desacoplamiento de dominio  
 
 ------------------------------------------------------------------------
 
-## 2. ARQUITECTURA ACTUAL
+## 2. PRIORIDADES TÉCNICAS ACTUALES
 
-### Core (Dominio funcional actual)
+Orden de implementación definido:
 
-Contiene la lógica principal del entrenamiento.
+1. Sincronización precisa de sonido
+2. Abstracción de WorkoutRunner
+3. Implementación de Clean Architecture real
+4. Migración de almacenamiento
+5. Expansión funcional (EMOM, Tabata, For Time)
 
--   amrap_runner.dart → Motor del entrenamiento
--   amrap_block.dart → Modelo de bloque
--   timer_ui_state.dart → Estado del temporizador
-
-Responsabilidades del runner:
-
--   Control de fases (work / rest / paused / finished)
--   Manejo de pausa (solo en trabajo)
--   Progreso global
--   Transición automática entre bloques
--   Integración con sistema de sonido
--   Precisión temporal basada en referencia real (anti-drift)
+Las métricas avanzadas se posponen para versión futura.
 
 ------------------------------------------------------------------------
 
-### Models
+## 3. OBJETIVO INMEDIATO — SINCRONIZACIÓN DE SONIDO
 
--   workout_history_entry.dart → Entidad de historial
+Problema actual:
 
-------------------------------------------------------------------------
+- Posible desfase perceptible en ciertos dispositivos.
+- Audio acoplado directamente al runner.
+- Dependencia directa del FeedbackService.
 
-### Screens
+Objetivos técnicos:
 
--   home_screen.dart → Pantalla principal
--   amrap_config_screen.dart → Configuración dinámica
--   timer_screen.dart → Ejecución del entrenamiento
--   workout_finished_screen.dart → Resumen final
--   workout_history_screen.dart → Historial global
--   workout_stats_screen.dart → Estadísticas acumuladas
-
-------------------------------------------------------------------------
-
-### Widgets
-
--   central_timer.dart → Componente visual principal del contador
--   duration_picker_dialog.dart → Selector avanzado de tiempo
--   amrap_block_card.dart → Tarjeta de configuración de bloque
--   wod_button.dart → Botón reutilizable para modos WOD
+- Garantizar precisión inferior a 100ms.
+- Evitar bloqueo del hilo principal.
+- Implementar interfaz SoundEngine.
+- Inyectar dependencia en el runner.
+- Preparar arquitectura para múltiples perfiles de sonido.
 
 ------------------------------------------------------------------------
 
-### Utils (Capa de servicios actual)
+## 4. ABSTRACCIÓN DEL RUNNER
 
--   feedback_service.dart → Gestión de sonido
--   workout_persistence_service.dart → Persistencia de entrenamiento
-    activo
--   workout_history_service.dart → Persistencia de historial
+Se implementará una interfaz base:
 
-Persistencia actual basada en SharedPreferences.
+abstract class WorkoutRunner {
+  Stream<TimerUiState> get stream;
+  void start();
+  void pause();
+  void dispose();
+}
 
-------------------------------------------------------------------------
+Objetivo:
 
-## 3. ESTADO TÉCNICO ACTUAL
-
-✔ Runner estable\
-✔ Precisión temporal mejorada\
-✔ UI refinada con animaciones\
-✔ Persistencia activa\
-✔ Historial funcional\
-✔ Estadísticas acumuladas\
-✔ Arquitectura modular preparada para expansión
+- Desacoplar TimerScreen del tipo específico de entrenamiento.
+- Permitir implementación futura de:
+  - EmomRunner
+  - ForTimeRunner
+  - TabataRunner
 
 ------------------------------------------------------------------------
 
-## 4. PLAN DE MIGRACIÓN ARQUITECTÓNICA
+## 5. MIGRACIÓN A CLEAN ARCHITECTURE
 
-El crecimiento del proyecto requiere separación clara de
-responsabilidades.
+Separación definitiva en:
 
-### Objetivo
+Domain:
+- Entidades
+- Interfaces de runner
+- Interfaces de repositorio
 
-Transicionar hacia una arquitectura por capas:
+Data:
+- Implementaciones de repositorios
+- Persistencia
 
--   Domain (lógica pura de negocio)
--   Data (persistencia)
--   Presentation (UI)
+Presentation:
+- Screens
+- Widgets
+- ViewModels (futuro)
 
-------------------------------------------------------------------------
-
-### Fase 1 --- Abstracción de dominio
-
--   Crear interfaz base WorkoutRunner
--   Desacoplar sonido mediante inyección de dependencia
--   Crear entidad WorkoutResult independiente del runner
-
-------------------------------------------------------------------------
-
-### Fase 2 --- Repositorios
-
--   Reemplazar servicios estáticos por repositorios inyectables
--   Introducir WorkoutHistoryRepository
--   Separar acceso a almacenamiento del resto de la app
+Se eliminarán servicios estáticos.
 
 ------------------------------------------------------------------------
 
-### Fase 3 --- Migración de almacenamiento
+## 6. ESCALABILIDAD FUTURA
 
-Migrar de SharedPreferences a:
+Fases posteriores:
 
--   Hive (recomendado por simplicidad) o
--   Isar (si se requiere alto rendimiento y escalabilidad)
-
-Ventajas:
-
--   Paginación
--   Consultas eficientes
--   Escalabilidad sin límite práctico
--   Mejor rendimiento con grandes volúmenes de datos
-
-------------------------------------------------------------------------
-
-### Fase 4 --- Escalabilidad funcional
-
-Implementación futura de:
-
--   EMOM
--   Tabata
--   For Time
--   MIX
--   Plantillas guardadas
--   Estadísticas avanzadas
--   Filtros por tipo de WOD
+- EMOM
+- Tabata
+- For Time
+- MIX
+- Plantillas
+- Métricas avanzadas
+- Exportación / Compartir
+- Publicación en tienda
 
 ------------------------------------------------------------------------
 
-## 5. CONSIDERACIONES DE ESCALABILIDAD
+## 7. DECISIÓN ESTRATÉGICA
 
-Actualmente SharedPreferences es suficiente para uso normal.
+SMARTWOD evoluciona hacia:
 
-Riesgos potenciales a largo plazo:
+- Dominio desacoplado
+- Audio desacoplado
+- Persistencia escalable
+- Runner extensible
+- Arquitectura sostenible
 
--   JSON grande puede afectar tiempos de carga
--   Decodificación completa en memoria
--   No soporta consultas parciales
-
-Recomendación: Migrar antes de superar \~5,000 entrenamientos
-almacenados.
-
-------------------------------------------------------------------------
-
-Este documento refleja el estado técnico actual y la hoja de ruta
-estructural para evolución sostenible del proyecto SMARTWOD.
+El foco actual es robustez estructural antes de expansión funcional.
