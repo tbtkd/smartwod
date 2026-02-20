@@ -3,19 +3,16 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../core/timer_ui_state.dart';
 import '../../core/amrap_block.dart';
+import '../../core/audio/sound_engine.dart';
 
 import '../../domain/runners/amrap_runner.dart';
 import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
 
-import '../../core/audio/feedback_audio_service.dart';
-
 import '../../data/repositories/workout_history_repository_impl.dart';
 
 import '../../widgets/central_timer.dart';
-
 import 'workout_finished_screen.dart';
-
 
 class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
@@ -31,23 +28,28 @@ class TimerScreen extends StatefulWidget {
 
 class _TimerScreenState extends State<TimerScreen> {
   late final AmrapRunner _runner;
+  late final SoundEngine _soundEngine;
+
   final _historyRepository = WorkoutHistoryRepositoryImpl();
 
   TimerUiState? _uiState;
 
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
-
   bool _trainingStarted = false;
+
+  bool _countdownRunning = false;
 
   @override
   void initState() {
     super.initState();
 
+    _soundEngine = SoundEngine();
+
     _runner = AmrapRunner(
       blocks: widget.blocks,
       onUpdate: _onUpdate,
-      audioService: FeedbackAudioService(),
+      soundEngine: _soundEngine,
     );
   }
 
@@ -57,8 +59,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
   void _onUpdate(TimerUiState state) async {
     if (state.phase == TimerPhase.finished) {
-
-      // Guardar resultado en historial (nuevo modelo desacoplado)
       await _historyRepository.save(
         WorkoutResult(
           type: WorkoutType.amrap,
@@ -67,7 +67,6 @@ class _TimerScreenState extends State<TimerScreen> {
           blocks: widget.blocks,
         ),
       );
-
 
       await _disableWakelock();
 
@@ -85,6 +84,8 @@ class _TimerScreenState extends State<TimerScreen> {
 
       return;
     }
+
+    if (!mounted) return;
 
     setState(() {
       _uiState = state;
@@ -104,37 +105,51 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 
   // =============================
-  // COUNTDOWN
+  // COUNTDOWN INICIAL
   // =============================
 
-  void _startCountdown() {
-    if (_isCountingDown) return;
+  Future<void> _startCountdown() async {
+    if (_isCountingDown ||
+        _trainingStarted ||
+        _countdownRunning) return;
+
+    _countdownRunning = true;
+
+    await _soundEngine.init();
 
     setState(() {
       _isCountingDown = true;
       _countdownSeconds = 10;
     });
 
-    Future.doWhile(() async {
+    while (_countdownSeconds > 0 && mounted) {
       await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+
+      if (!mounted) return;
+
+      final nextValue = _countdownSeconds - 1;
 
       setState(() {
-        _countdownSeconds--;
+        _countdownSeconds = nextValue;
       });
 
-      if (_countdownSeconds <= 0) {
-        _isCountingDown = false;
-        _trainingStarted = true;
-
-        await _enableWakelock();
-        _runner.start();
-
-        return false;
+      // 🔥 SOLO cuando llega exactamente a 3
+      if (nextValue == 3) {
+        await _soundEngine.playCountdown();
       }
+    }
 
-      return true;
+    if (!mounted) return;
+
+    setState(() {
+      _isCountingDown = false;
+      _trainingStarted = true;
     });
+
+    await _enableWakelock();
+    await _runner.start();
+
+    _countdownRunning = false;
   }
 
   void _onCentralTap() {
@@ -223,6 +238,10 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
+  // =============================
+  // UI
+  // =============================
+
   @override
   Widget build(BuildContext context) {
     final bool isRest =
@@ -276,9 +295,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 CentralTimer(
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
@@ -286,23 +303,21 @@ class _TimerScreenState extends State<TimerScreen> {
                   totalSeconds: _runner.currentBlockTotalSeconds,
                   onTap: _onCentralTap,
                 ),
-
                 const SizedBox(height: 24),
-
                 if (_uiState != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 40),
                     child: LinearProgressIndicator(
                       value: _runner.globalProgress,
                       minHeight: 6,
                       backgroundColor: Colors.white12,
                       valueColor:
-                          const AlwaysStoppedAnimation<Color>(Colors.orange),
+                          const AlwaysStoppedAnimation<Color>(
+                              Colors.orange),
                     ),
                   ),
-
                 const SizedBox(height: 12),
-
                 Text(
                   'Tiempo total · ${_formatTotalTime()}',
                   style: const TextStyle(

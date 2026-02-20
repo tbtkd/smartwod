@@ -54,15 +54,14 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  assets:
-    -  assets/sounds/beep_countdown.mp3
-    -  assets/sounds/phase_change.mp3
-    -  assets/sounds/workout_finished.mp3
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    -  assets/audio/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

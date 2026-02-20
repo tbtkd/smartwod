@@ -1,13 +1,15 @@
 import 'dart:async';
-import '../services/workout_audio_service.dart';
-import '../../core/timer_ui_state.dart';
+
 import '../../core/amrap_block.dart';
+import '../../core/timer_ui_state.dart';
+import '../../core/audio/sound_engine.dart';
+
 import 'workout_runner.dart';
 
 class AmrapRunner implements WorkoutRunner {
   final List<AmrapBlock> _blocks;
   final void Function(TimerUiState) onUpdate;
-  final WorkoutAudioService _audioService;
+  final SoundEngine _soundEngine;
 
   Timer? _timer;
 
@@ -18,26 +20,25 @@ class AmrapRunner implements WorkoutRunner {
   DateTime? _phaseStartTime;
   int _elapsedSeconds = 0;
 
+  bool _countdownTriggered = false;
+
   AmrapRunner({
     required List<AmrapBlock> blocks,
     required this.onUpdate,
-    required WorkoutAudioService audioService,
+    required SoundEngine soundEngine,
   })  : _blocks = blocks,
-        _audioService = audioService;
+        _soundEngine = soundEngine;
 
-  // 🔥 NUEVO GETTER CORRECTO
   int get elapsedSeconds => _elapsedSeconds;
 
   int get totalWorkoutSeconds {
     int total = 0;
-
     for (int i = 0; i < _blocks.length; i++) {
       total += _blocks[i].workSeconds;
       if (i > 0) {
         total += _blocks[i].restSeconds ?? 0;
       }
     }
-
     return total;
   }
 
@@ -60,12 +61,13 @@ class AmrapRunner implements WorkoutRunner {
   }
 
   @override
-  void start() {
+  Future<void> start() async {
     if (_blocks.isEmpty) return;
 
     _index = 0;
     _elapsedSeconds = 0;
     _isPaused = false;
+    _countdownTriggered = false;
 
     _phaseStartTime = DateTime.now();
 
@@ -97,19 +99,24 @@ class AmrapRunner implements WorkoutRunner {
         final totalDuration = currentBlockTotalSeconds;
         final remaining = totalDuration - elapsed;
 
-        // 🔥 CÁLCULO REAL DEL TIEMPO GLOBAL
+        // 🔥 Countdown final 3-2-1 (work y rest)
+        if (remaining <= 3 &&
+            remaining > 0 &&
+            !_countdownTriggered) {
+          _countdownTriggered = true;
+          _soundEngine.playCountdown();
+        }
+
         final totalElapsed =
-            (_blocks
-                    .take(_index)
-                    .fold<int>(0, (sum, block) {
-              final work = block.workSeconds;
-              final rest = block.restSeconds ?? 0;
-              return sum + work + rest;
-            })) +
+            (_blocks.take(_index).fold<int>(0, (sum, block) {
+                  final work = block.workSeconds;
+                  final rest = block.restSeconds ?? 0;
+                  return sum + work + rest;
+                })) +
                 (totalDuration - remaining);
 
-        _elapsedSeconds = totalElapsed.clamp(
-            0, totalWorkoutSeconds);
+        _elapsedSeconds =
+            totalElapsed.clamp(0, totalWorkoutSeconds);
 
         if (remaining > 0) {
           _state = TimerUiState(
@@ -118,6 +125,7 @@ class AmrapRunner implements WorkoutRunner {
             totalRounds: _state!.totalRounds,
             phase: _state!.phase,
           );
+
           onUpdate(_state!);
         } else {
           _nextPhase();
@@ -126,11 +134,14 @@ class AmrapRunner implements WorkoutRunner {
     );
   }
 
-  void _nextPhase() async {
+  Future<void> _nextPhase() async {
     if (_state == null) return;
+
+    _countdownTriggered = false;
 
     final current = _blocks[_index];
 
+    // 🔥 Si estaba en descanso → pasa a work
     if (_state!.phase == TimerPhase.rest) {
       _phaseStartTime = DateTime.now();
 
@@ -142,10 +153,10 @@ class AmrapRunner implements WorkoutRunner {
       );
 
       onUpdate(_state!);
-      await _audioService.playPhaseChange();
       return;
     }
 
+    // 🔥 Si estaba en work → siguiente bloque
     _index++;
 
     if (_index >= _blocks.length) {
@@ -159,12 +170,12 @@ class AmrapRunner implements WorkoutRunner {
       );
 
       onUpdate(_state!);
-      await _audioService.playWorkoutFinished();
+
+      await _soundEngine.playWorkoutFinished();
       return;
     }
 
     final next = _blocks[_index];
-
     _phaseStartTime = DateTime.now();
 
     if (next.restSeconds != null &&
@@ -185,7 +196,6 @@ class AmrapRunner implements WorkoutRunner {
     }
 
     onUpdate(_state!);
-    await _audioService.playPhaseChange();
   }
 
   @override
@@ -203,9 +213,8 @@ class AmrapRunner implements WorkoutRunner {
       remainingSeconds: _state!.remainingSeconds,
       currentRound: _state!.currentRound,
       totalRounds: _state!.totalRounds,
-      phase: _isPaused
-          ? TimerPhase.paused
-          : TimerPhase.work,
+      phase:
+          _isPaused ? TimerPhase.paused : TimerPhase.work,
     );
 
     onUpdate(_state!);
@@ -214,5 +223,6 @@ class AmrapRunner implements WorkoutRunner {
   @override
   void dispose() {
     _timer?.cancel();
+    _soundEngine.dispose();
   }
 }
