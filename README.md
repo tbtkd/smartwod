@@ -3,9 +3,8 @@
 SMARTWOD es una aplicación móvil desarrollada en Flutter para la creación
 y ejecución precisa de entrenamientos funcionales tipo WOD.
 
-Actualmente se encuentra estable en modalidad AMRAP y preparada para
-escalar hacia múltiples formatos como EMOM, Tabata y For Time.
-
+Versión actual: 0.1.0-beta
+Estado: Pruebas en entorno real (AMRAP)
 ---
 
 ## 🚀 Visión del Proyecto
