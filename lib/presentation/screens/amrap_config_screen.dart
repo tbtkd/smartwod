@@ -186,7 +186,7 @@ class _AmrapConfigScreenState
   }
 
   // =============================
-  // AÑADIR BLOQUE
+  // AÑADIR AMRAP
   // =============================
 
   void _addBlock() {
@@ -305,7 +305,7 @@ class _AmrapConfigScreenState
                   ),
                 ),
                 child: const Text(
-                  '+ Añadir bloque',
+                  '+ Añadir AMRAP',
                   style:
                       TextStyle(color: Colors.white70),
                 ),
