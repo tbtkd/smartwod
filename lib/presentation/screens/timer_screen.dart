@@ -38,8 +38,6 @@ class _TimerScreenState extends State<TimerScreen> {
   int _countdownSeconds = 10;
   bool _trainingStarted = false;
 
-  bool _countdownRunning = false;
-
   @override
   void initState() {
     super.initState();
@@ -109,11 +107,7 @@ class _TimerScreenState extends State<TimerScreen> {
   // =============================
 
   Future<void> _startCountdown() async {
-    if (_isCountingDown ||
-        _trainingStarted ||
-        _countdownRunning) return;
-
-    _countdownRunning = true;
+    if (_isCountingDown || _trainingStarted) return;
 
     await _soundEngine.init();
 
@@ -133,7 +127,6 @@ class _TimerScreenState extends State<TimerScreen> {
         _countdownSeconds = nextValue;
       });
 
-      // 🔥 SOLO cuando llega exactamente a 3
       if (nextValue == 3) {
         await _soundEngine.playCountdown();
       }
@@ -148,8 +141,6 @@ class _TimerScreenState extends State<TimerScreen> {
 
     await _enableWakelock();
     await _runner.start();
-
-    _countdownRunning = false;
   }
 
   void _onCentralTap() {
@@ -169,7 +160,7 @@ class _TimerScreenState extends State<TimerScreen> {
   // =============================
 
   Future<bool> _onWillPop() async {
-    if (!_trainingStarted) return true;
+    if (_uiState == null) return true;
 
     final shouldExit = await showDialog<bool>(
       context: context,
@@ -263,15 +254,6 @@ class _TimerScreenState extends State<TimerScreen> {
           backgroundColor: Colors.black,
           elevation: 0,
           centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              final allowExit = await _onWillPop();
-              if (allowExit) {
-                Navigator.pop(context);
-              }
-            },
-          ),
           title: const Text(
             'AMRAP',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -314,7 +296,8 @@ class _TimerScreenState extends State<TimerScreen> {
                       backgroundColor: Colors.white12,
                       valueColor:
                           const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF00E5FF),), // 🔥 cyan brillante
+                            Color(0xFF00E5FF),
+                          ),
                     ),
                   ),
                 const SizedBox(height: 12),

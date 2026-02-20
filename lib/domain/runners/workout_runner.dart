@@ -1,5 +1,5 @@
 abstract class WorkoutRunner {
-  void start();
+  Future<void> start();
   void togglePause();
   void dispose();
 }

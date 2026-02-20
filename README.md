@@ -1,117 +1,133 @@
 # SMARTWOD
 
 SMARTWOD es una aplicación móvil desarrollada en Flutter para la creación
-y ejecución de entrenamientos funcionales tipo WOD, comenzando con modalidad
-AMRAP (As Many Rounds As Possible) y diseñada para escalar a múltiples formatos
-como EMOM, Tabata y For Time.
+y ejecución precisa de entrenamientos funcionales tipo WOD.
 
-------------------------------------------------------------------------
+Actualmente se encuentra estable en modalidad AMRAP y preparada para
+escalar hacia múltiples formatos como EMOM, Tabata y For Time.
+
+---
 
 ## 🚀 Visión del Proyecto
 
-SMARTWOD busca convertirse en una herramienta profesional para atletas y
-entrenadores que desean:
+SMARTWOD busca convertirse en una herramienta profesional para atletas
+y entrenadores que necesitan:
 
-- Crear entrenamientos personalizados
-- Ejecutarlos con precisión temporal real
-- Registrar historial completo
-- Escalar a múltiples modalidades de WOD
-- Mantener arquitectura sólida y sostenible
+- Precisión temporal real
+- Ejecución estable sin drift
+- Flujo correcto de trabajo y descanso
+- Registro automático de entrenamientos
+- Arquitectura preparada para escalar
 
-La aplicación está construida con enfoque en estabilidad, precisión,
-modularidad y crecimiento estructural.
+El enfoque principal es robustez estructural antes de expansión funcional.
 
-------------------------------------------------------------------------
+---
 
 ## 🏗 Estado Actual
 
-**Fase:** Beta Técnica Interna Avanzada  
-**Motor:** Estable con precisión temporal anti-drift  
-**Arquitectura:** Modular, en transición a separación por capas  
+**Fase:** Beta Técnica Interna Estable  
+**Modalidad activa:** AMRAP completamente funcional  
+**Motor temporal:** Estable y sin drift perceptible  
+**Audio:** Sincronizado y desacoplado  
 
-### Funcionalidades implementadas
+---
 
-#### 🏋️ AMRAP
+## 🏋️ AMRAP – Implementación Actual
+
+### Flujo correcto de bloques
+
+El sistema implementa el siguiente orden estructural:
+
+W1 → (sin descanso)  
+D1 → descanso del bloque 2  
+W2 → trabajo del bloque 2  
+D2 → descanso del bloque 3  
+W3 → trabajo del bloque 3  
+FIN
+
+El descanso pertenece siempre al siguiente bloque.
+
+---
+
+### Funcionalidades activas
 
 - Configuración dinámica de bloques
 - Descanso opcional por bloque
-- Selector avanzado de tiempo (minutos/segundos)
-- Validaciones mínimas de duración
-- Cálculo automático del tiempo total
-- AnimatedList con transiciones suaves
+- Cálculo automático de tiempo total
+- Countdown inicial sincronizado (3-2-1)
+- Countdown automático en final de cada fase de trabajo
+- Pausa funcional (solo en fase Work)
+- Rest no permite pausa
+- Barra de progreso global precisa
+- Persistencia automática al finalizar
+- Registro en historial
 
-#### ⏱ Motor de ejecución
+---
+
+## ⏱ Motor de ejecución
 
 - Runner desacoplado de la UI
-- Máquina de estados controlada
-- Precisión temporal basada en referencia real
-- Countdown previo al inicio
-- Pausa inteligente
-- Barra de progreso global
+- Máquina de estados clara (work / rest / paused / finished)
+- Cálculo temporal basado en DateTime (compatible con background)
+- Sin reinicio incorrecto al pausar
+- Sin adelantamiento de barra
+- Sin desfases acumulativos
 
-#### 🔊 Audio
+---
 
-- Sonido en cambio de fase
-- Sonido al finalizar entrenamiento
-- Sistema pre-cargado
-- Optimización de sincronización en proceso
-- Plan de desacoplamiento mediante inyección de dependencia
+## 🔊 Sistema de Audio
 
-#### 💾 Persistencia
+Implementado mediante `SoundEngine`:
 
-- Guardado automático del entrenamiento activo
-- Restauración básica al reabrir la app
-- Registro automático en historial
-- Persistencia basada en SharedPreferences (temporal)
+- Countdown 3-2-1 sincronizado
+- Sonido de finalización ("Well Done") funcional
+- Sin duplicaciones
+- Sin cortes prematuros
+- Pre-carga de assets
+- ReleaseMode.stop
 
-#### 📊 Historial
+Audio desacoplado e inyectado en el Runner.
 
-- Registro de entrenamientos completados
-- Vista detallada con desglose por bloques
-- Notas editables por entrenamiento
+---
 
-------------------------------------------------------------------------
+## 💾 Persistencia
 
-## 🧠 Arquitectura
+- Guardado automático al finalizar entrenamiento
+- Registro en historial
+- Implementación actual basada en repositorio local
 
-Estructura actual modular organizada por responsabilidades:
+---
+
+## 🧠 Arquitectura Actual
+
+Separación estructural clara:
 
 lib/
 ├── core/
-├── models/
-├── screens/
-├── widgets/
-└── utils/
+├── data/
+├── domain/
+├── presentation/
+└── widgets/
 
-El proyecto está en transición hacia arquitectura por capas:
+Separación por capas en progreso real:
 
-- Domain
-- Data
-- Presentation
+- Domain → Runner, Entidades
+- Data → Repositorios
+- Presentation → Screens y UI
+- Core → Estado y motor temporal
 
-------------------------------------------------------------------------
+---
 
-## 📈 Roadmap Prioritario
+## 📈 Próximos Pasos
 
-1. Optimización completa de sincronización de audio
-2. Abstracción de WorkoutRunner base
-3. Implementación Clean Architecture real
-4. Migración de almacenamiento a Hive / Isar
-5. Implementación de EMOM
-6. Implementación de Tabata
-7. Implementación de For Time
-8. Estadísticas avanzadas (versión futura)
+1. Abstracción completa de WorkoutRunner base
+2. Implementación de EMOM
+3. Implementación de Tabata
+4. Implementación de For Time
+5. Migración futura de persistencia (Hive / Isar)
+6. Métricas avanzadas
 
-------------------------------------------------------------------------
+---
 
-## 🛠 Tecnologías
-
-- Flutter
-- Dart
-- SharedPreferences (temporal)
-- Arquitectura modular en evolución
-
-------------------------------------------------------------------------
-
-SMARTWOD es un proyecto en evolución con enfoque en calidad técnica,
-precisión temporal y crecimiento estructural sostenible.
+SMARTWOD se está construyendo con enfoque en precisión, estabilidad
+y crecimiento sostenible.

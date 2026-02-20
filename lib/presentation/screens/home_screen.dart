@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repository = WorkoutHistoryRepositoryImpl();
+    final repository = WorkoutHistoryRepositoryImpl(); // va ligada al debug boton para eliminar registros
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -151,7 +151,7 @@ class HomeScreen extends StatelessWidget {
               },
               child: const Text('Limpiar historial (Debug)'),
             ),
-            */
+             *///cierre comentario debug boton */
           ],
         ),
       ),

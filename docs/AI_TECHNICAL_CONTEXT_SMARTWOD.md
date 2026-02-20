@@ -1,112 +1,107 @@
-# SMARTWOD --- CONTEXTO TÉCNICO Y PLAN ESTRUCTURAL
+# SMARTWOD — CONTEXTO TÉCNICO ACTUAL
+
+---
 
 ## 1. IDENTIDAD DEL PROYECTO
 
 Nombre: SMARTWOD  
-Tipo: Aplicación móvil Flutter  
-Estado actual: Beta Técnica Interna Avanzada  
-Enfoque actual: Estabilización estructural y desacoplamiento de dominio  
+Plataforma: Flutter  
+Estado actual: Beta Técnica Estable  
+Modo activo: AMRAP completamente funcional  
 
-------------------------------------------------------------------------
+Enfoque actual:
+Consolidación estructural antes de expansión funcional.
 
-## 2. PRIORIDADES TÉCNICAS ACTUALES
+---
 
-Orden de implementación definido:
+## 2. ESTADO REAL DEL MOTOR AMRAP
 
-1. Sincronización precisa de sonido
-2. Abstracción de WorkoutRunner
-3. Implementación de Clean Architecture real
-4. Migración de almacenamiento
-5. Expansión funcional (EMOM, Tabata, For Time)
+### Flujo correcto implementado
 
-Las métricas avanzadas se posponen para versión futura.
+El orden real es:
 
-------------------------------------------------------------------------
+W1 → sin descanso  
+D1 → descanso bloque 2  
+W2 → trabajo bloque 2  
+D2 → descanso bloque 3  
+W3 → trabajo bloque 3  
+FIN
 
-## 3. OBJETIVO INMEDIATO — SINCRONIZACIÓN DE SONIDO
+El descanso pertenece siempre al bloque siguiente.
 
-Problema actual:
+---
 
-- Posible desfase perceptible en ciertos dispositivos.
-- Audio acoplado directamente al runner.
-- Dependencia directa del FeedbackService.
+### Motor temporal
 
-Objetivos técnicos:
+- Basado en DateTime (no Stopwatch)
+- Permite precisión real incluso si la app va a background
+- Cálculo periódico con Timer de 250ms
+- Sin drift acumulativo
+- Sin reinicios al pausar
+- Pausa no permitida en fase rest
+- Barra global sincronizada con tiempo real
 
-- Garantizar precisión inferior a 100ms.
-- Evitar bloqueo del hilo principal.
-- Implementar interfaz SoundEngine.
-- Inyectar dependencia en el runner.
-- Preparar arquitectura para múltiples perfiles de sonido.
+---
 
-------------------------------------------------------------------------
+## 3. SISTEMA DE AUDIO
 
-## 4. ABSTRACCIÓN DEL RUNNER
+Implementación actual:
 
-Se implementará una interfaz base:
+- SoundEngine inyectado en AmrapRunner
+- AudioPlayer con ReleaseMode.stop
+- Countdown único disparado al llegar a 3 segundos
+- Well Done reproducido después de emitir estado finished
+- No se modifica esta lógica sin análisis previo
 
-abstract class WorkoutRunner {
-  Stream<TimerUiState> get stream;
-  void start();
-  void pause();
-  void dispose();
-}
+Audio ya sincronizado y estable.
 
-Objetivo:
+---
 
-- Desacoplar TimerScreen del tipo específico de entrenamiento.
-- Permitir implementación futura de:
-  - EmomRunner
-  - ForTimeRunner
-  - TabataRunner
-
-------------------------------------------------------------------------
-
-## 5. MIGRACIÓN A CLEAN ARCHITECTURE
-
-Separación definitiva en:
+## 4. ESTRUCTURA ACTUAL
 
 Domain:
+- AmrapRunner
+- WorkoutRunner (interfaz)
 - Entidades
-- Interfaces de runner
-- Interfaces de repositorio
+
+Core:
+- TimerUiState
+- TimerPhase
 
 Data:
-- Implementaciones de repositorios
-- Persistencia
+- WorkoutHistoryRepositoryImpl
 
 Presentation:
-- Screens
-- Widgets
-- ViewModels (futuro)
+- TimerScreen
+- ConfigScreen
+- HistoryScreen
 
-Se eliminarán servicios estáticos.
+Widgets:
+- CentralTimer
+- WodButton
 
-------------------------------------------------------------------------
+---
 
-## 6. ESCALABILIDAD FUTURA
+## 5. DECISIONES TÉCNICAS CONSOLIDADAS
 
-Fases posteriores:
-
-- EMOM
-- Tabata
-- For Time
-- MIX
-- Plantillas
-- Métricas avanzadas
-- Exportación / Compartir
-- Publicación en tienda
-
-------------------------------------------------------------------------
-
-## 7. DECISIÓN ESTRATÉGICA
-
-SMARTWOD evoluciona hacia:
-
-- Dominio desacoplado
+- DateTime se mantiene sobre Stopwatch
 - Audio desacoplado
-- Persistencia escalable
-- Runner extensible
-- Arquitectura sostenible
+- Runner independiente de UI
+- No usar variables redundantes
+- No instanciar dependencias dentro de build()
+- Limpieza de código muerto realizada
 
-El foco actual es robustez estructural antes de expansión funcional.
+---
+
+## 6. PRÓXIMA EVOLUCIÓN
+
+1. Convertir WorkoutRunner en base extensible
+2. Implementar EmomRunner
+3. Implementar TabataRunner
+4. Implementar ForTimeRunner
+5. Introducir Clean Architecture formal
+6. Migrar almacenamiento a solución más robusta
+
+---
+
+SMARTWOD prioriza estabilidad estructural antes de expansión funcional.
