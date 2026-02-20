@@ -28,14 +28,16 @@ class _DurationPickerDialogState
   late FixedExtentScrollController _minuteController;
   late FixedExtentScrollController _secondController;
 
-  int get minTotal =>
-      widget.type == DurationType.work ? 15 : 5;
+  bool get isWork =>
+      widget.type == DurationType.work;
 
-  int get secondStep =>
-      widget.type == DurationType.work ? 15 : 5;
+  int get minTotal =>
+      isWork ? 60 : 5; // 5 min trabajo / 5 seg descanso
+
+  int get secondStep => 5; // 🔥 Siempre de 5 en 5
 
   int get maxMinutes =>
-      widget.type == DurationType.work ? 100 : 5;
+      isWork ? 100 : 5;
 
   List<int> get secondValues {
     List<int> values = [];
@@ -58,8 +60,9 @@ class _DurationPickerDialogState
 
     if (!secondValues.contains(seconds)) {
       seconds = secondValues.firstWhere(
-          (e) => e >= seconds,
-          orElse: () => secondValues.last);
+        (e) => e >= seconds,
+        orElse: () => secondValues.last,
+      );
     }
 
     _minuteController =
@@ -77,11 +80,11 @@ class _DurationPickerDialogState
     super.dispose();
   }
 
-  void _setPreset(int total) {
-    if (total >= minTotal) {
+  void _setPreset(int totalSeconds) {
+    if (totalSeconds >= minTotal) {
       setState(() {
-        minutes = total ~/ 60;
-        seconds = total % 60;
+        minutes = totalSeconds ~/ 60;
+        seconds = totalSeconds % 60;
 
         if (!secondValues.contains(seconds)) {
           seconds = secondValues.first;
@@ -106,7 +109,6 @@ class _DurationPickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    final isWork = widget.type == DurationType.work;
 
     return Dialog(
       backgroundColor: Colors.grey[900],
@@ -125,7 +127,7 @@ class _DurationPickerDialogState
                 Center(
                   child: Text(
                     isWork
-                        ? 'Configurar AMRAP'
+                        ? 'Configurar Trabajo'
                         : 'Configurar Descanso',
                     style: const TextStyle(
                       color: Colors.white,
@@ -156,7 +158,6 @@ class _DurationPickerDialogState
                   MainAxisAlignment.center,
               children: [
 
-                // MINUTOS
                 _buildWheel(
                   label: 'min',
                   controller: _minuteController,
@@ -179,7 +180,6 @@ class _DurationPickerDialogState
 
                 const SizedBox(width: 18),
 
-                // SEGUNDOS
                 _buildWheel(
                   label: 'seg',
                   controller: _secondController,
@@ -202,10 +202,12 @@ class _DurationPickerDialogState
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: isWork
-                  ? [15, 30, 45, 60, 90, 120, 180]
+                  // 🔥 Trabajo en MINUTOS
+                  ? [300, 600, 900, 1500, 1800]
                       .map((e) => _presetChip(e))
                       .toList()
-                  : [5, 10, 15, 20, 30, 45, 60]
+                  // 🔥 Descanso en SEGUNDOS
+                  : [5, 10, 15, 20, 30, 45]
                       .map((e) => _presetChip(e))
                       .toList(),
             ),
