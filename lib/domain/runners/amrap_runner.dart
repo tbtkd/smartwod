@@ -38,12 +38,15 @@ class AmrapRunner implements WorkoutRunner {
 
   int get totalWorkoutSeconds {
     int total = 0;
+
     for (int i = 0; i < _blocks.length; i++) {
       total += _blocks[i].workSeconds;
+
       if (i > 0) {
         total += _blocks[i].restSeconds ?? 0;
       }
     }
+
     return total;
   }
 
@@ -113,6 +116,7 @@ class AmrapRunner implements WorkoutRunner {
         final totalDuration = currentBlockTotalSeconds;
         final remaining = totalDuration - elapsedInPhase;
 
+        // 🔥 Countdown final
         if (remaining <= 3 &&
             remaining > 0 &&
             !_countdownTriggered) {
@@ -120,23 +124,40 @@ class AmrapRunner implements WorkoutRunner {
           _soundEngine.playCountdown();
         }
 
-        // cálculo global correcto
+        // =============================
+        // 🔥 CÁLCULO GLOBAL CORREGIDO
+        // =============================
+
         int previousTime = 0;
 
+        // bloques completamente terminados
         for (int i = 0; i < _index; i++) {
-          previousTime += _blocks[i].workSeconds;
-          if (i > 0) {
-            previousTime += _blocks[i].restSeconds ?? 0;
+          if (i == 0) {
+            previousTime += _blocks[i].workSeconds;
+          } else {
+            previousTime += (_blocks[i].restSeconds ?? 0);
+            previousTime += _blocks[i].workSeconds;
           }
         }
 
+        int currentProgress = 0;
+
         if (_state!.phase == TimerPhase.rest) {
-          previousTime += _blocks[_index].workSeconds;
+          currentProgress = elapsedInPhase;
+        } else if (_state!.phase == TimerPhase.work) {
+          if (_index > 0) {
+            currentProgress +=
+                (_blocks[_index].restSeconds ?? 0);
+          }
+
+          currentProgress += elapsedInPhase;
         }
 
         _elapsedSeconds =
-            (previousTime + elapsedInPhase)
+            (previousTime + currentProgress)
                 .clamp(0, totalWorkoutSeconds);
+
+        // =============================
 
         if (remaining > 0) {
           _state = TimerUiState(
@@ -155,7 +176,7 @@ class AmrapRunner implements WorkoutRunner {
   }
 
   // =============================
-  // NEXT PHASE (MODELO FINAL CORRECTO)
+  // NEXT PHASE
   // =============================
 
   Future<void> _nextPhase() async {
@@ -164,13 +185,9 @@ class AmrapRunner implements WorkoutRunner {
     _countdownTriggered = false;
     _pausedAccumulated = 0;
 
-    // 🔥 Si estamos en WORK
     if (_state!.phase == TimerPhase.work) {
-
-      // avanzar bloque
       _index++;
 
-      // fin total
       if (_index >= _blocks.length) {
         _timer?.cancel();
 
@@ -182,13 +199,13 @@ class AmrapRunner implements WorkoutRunner {
         );
 
         onUpdate(_state!);
+
         await _soundEngine.playWorkoutFinished();
         return;
       }
 
       final nextBlock = _blocks[_index];
 
-      // si tiene descanso → ir a REST primero
       if (nextBlock.restSeconds != null &&
           nextBlock.restSeconds! > 0) {
 
@@ -205,7 +222,6 @@ class AmrapRunner implements WorkoutRunner {
         return;
       }
 
-      // si no tiene descanso → ir directo a WORK
       _phaseStartTime = DateTime.now();
 
       _state = TimerUiState(
@@ -216,10 +232,7 @@ class AmrapRunner implements WorkoutRunner {
       );
 
       onUpdate(_state!);
-    }
-
-    // 🔥 Si estamos en REST → ahora sí ejecutar WORK
-    else if (_state!.phase == TimerPhase.rest) {
+    } else if (_state!.phase == TimerPhase.rest) {
 
       final currentBlock = _blocks[_index];
 
@@ -237,7 +250,7 @@ class AmrapRunner implements WorkoutRunner {
   }
 
   // =============================
-  // PAUSE (NO EN REST)
+  // PAUSE
   // =============================
 
   @override

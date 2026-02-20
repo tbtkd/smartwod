@@ -314,7 +314,7 @@ class _TimerScreenState extends State<TimerScreen> {
                       backgroundColor: Colors.white12,
                       valueColor:
                           const AlwaysStoppedAnimation<Color>(
-                              Colors.orange),
+                              Color(0xFF00E5FF),), // 🔥 cyan brillante
                     ),
                   ),
                 const SizedBox(height: 12),
