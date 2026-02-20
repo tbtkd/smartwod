@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -29,6 +31,7 @@ class TimerScreen extends StatefulWidget {
 class _TimerScreenState extends State<TimerScreen> {
   late final AmrapRunner _runner;
   late final SoundEngine _soundEngine;
+  late final StreamSubscription<TimerUiState> _subscription;
 
   final _historyRepository = WorkoutHistoryRepositoryImpl();
 
@@ -46,9 +49,10 @@ class _TimerScreenState extends State<TimerScreen> {
 
     _runner = AmrapRunner(
       blocks: widget.blocks,
-      onUpdate: _onUpdate,
       soundEngine: _soundEngine,
     );
+
+    _subscription = _runner.stream.listen(_onUpdate);
   }
 
   // =============================
@@ -224,6 +228,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   void dispose() {
+    _subscription.cancel();
     _disableWakelock();
     _runner.dispose();
     super.dispose();

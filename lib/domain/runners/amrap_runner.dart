@@ -3,13 +3,14 @@ import 'dart:async';
 import '../../core/amrap_block.dart';
 import '../../core/timer_ui_state.dart';
 import '../../core/audio/sound_engine.dart';
-
 import 'workout_runner.dart';
 
 class AmrapRunner implements WorkoutRunner {
   final List<AmrapBlock> _blocks;
-  final void Function(TimerUiState) onUpdate;
   final SoundEngine _soundEngine;
+
+  final StreamController<TimerUiState> _controller =
+      StreamController.broadcast();
 
   Timer? _timer;
 
@@ -27,10 +28,21 @@ class AmrapRunner implements WorkoutRunner {
 
   AmrapRunner({
     required List<AmrapBlock> blocks,
-    required this.onUpdate,
     required SoundEngine soundEngine,
   })  : _blocks = blocks,
         _soundEngine = soundEngine;
+
+  // =============================
+  // STREAM
+  // =============================
+
+  @override
+  Stream<TimerUiState> get stream => _controller.stream;
+
+  void _emit(TimerUiState state) {
+    _state = state;
+    _controller.add(state);
+  }
 
   // =============================
   // TOTAL TIME
@@ -82,14 +94,15 @@ class AmrapRunner implements WorkoutRunner {
 
     _phaseStartTime = DateTime.now();
 
-    _state = TimerUiState(
-      remainingSeconds: _blocks[0].workSeconds,
-      currentRound: 1,
-      totalRounds: _blocks.length,
-      phase: TimerPhase.work,
+    _emit(
+      TimerUiState(
+        remainingSeconds: _blocks[0].workSeconds,
+        currentRound: 1,
+        totalRounds: _blocks.length,
+        phase: TimerPhase.work,
+      ),
     );
 
-    onUpdate(_state!);
     _startTicker();
   }
 
@@ -116,7 +129,6 @@ class AmrapRunner implements WorkoutRunner {
         final totalDuration = currentBlockTotalSeconds;
         final remaining = totalDuration - elapsedInPhase;
 
-        // 🔥 Countdown final
         if (remaining <= 3 &&
             remaining > 0 &&
             !_countdownTriggered) {
@@ -124,13 +136,8 @@ class AmrapRunner implements WorkoutRunner {
           _soundEngine.playCountdown();
         }
 
-        // =============================
-        // 🔥 CÁLCULO GLOBAL CORREGIDO
-        // =============================
-
         int previousTime = 0;
 
-        // bloques completamente terminados
         for (int i = 0; i < _index; i++) {
           if (i == 0) {
             previousTime += _blocks[i].workSeconds;
@@ -157,17 +164,15 @@ class AmrapRunner implements WorkoutRunner {
             (previousTime + currentProgress)
                 .clamp(0, totalWorkoutSeconds);
 
-        // =============================
-
         if (remaining > 0) {
-          _state = TimerUiState(
-            remainingSeconds: remaining,
-            currentRound: _index + 1,
-            totalRounds: _blocks.length,
-            phase: _state!.phase,
+          _emit(
+            TimerUiState(
+              remainingSeconds: remaining,
+              currentRound: _index + 1,
+              totalRounds: _blocks.length,
+              phase: _state!.phase,
+            ),
           );
-
-          onUpdate(_state!);
         } else {
           _nextPhase();
         }
@@ -191,14 +196,14 @@ class AmrapRunner implements WorkoutRunner {
       if (_index >= _blocks.length) {
         _timer?.cancel();
 
-        _state = TimerUiState(
-          remainingSeconds: 0,
-          currentRound: _blocks.length,
-          totalRounds: _blocks.length,
-          phase: TimerPhase.finished,
+        _emit(
+          TimerUiState(
+            remainingSeconds: 0,
+            currentRound: _blocks.length,
+            totalRounds: _blocks.length,
+            phase: TimerPhase.finished,
+          ),
         );
-
-        onUpdate(_state!);
 
         await _soundEngine.playWorkoutFinished();
         return;
@@ -208,44 +213,42 @@ class AmrapRunner implements WorkoutRunner {
 
       if (nextBlock.restSeconds != null &&
           nextBlock.restSeconds! > 0) {
-
         _phaseStartTime = DateTime.now();
 
-        _state = TimerUiState(
-          remainingSeconds: nextBlock.restSeconds!,
-          currentRound: _index + 1,
-          totalRounds: _blocks.length,
-          phase: TimerPhase.rest,
+        _emit(
+          TimerUiState(
+            remainingSeconds: nextBlock.restSeconds!,
+            currentRound: _index + 1,
+            totalRounds: _blocks.length,
+            phase: TimerPhase.rest,
+          ),
         );
-
-        onUpdate(_state!);
         return;
       }
 
       _phaseStartTime = DateTime.now();
 
-      _state = TimerUiState(
-        remainingSeconds: nextBlock.workSeconds,
-        currentRound: _index + 1,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.work,
+      _emit(
+        TimerUiState(
+          remainingSeconds: nextBlock.workSeconds,
+          currentRound: _index + 1,
+          totalRounds: _blocks.length,
+          phase: TimerPhase.work,
+        ),
       );
-
-      onUpdate(_state!);
     } else if (_state!.phase == TimerPhase.rest) {
-
       final currentBlock = _blocks[_index];
 
       _phaseStartTime = DateTime.now();
 
-      _state = TimerUiState(
-        remainingSeconds: currentBlock.workSeconds,
-        currentRound: _index + 1,
-        totalRounds: _blocks.length,
-        phase: TimerPhase.work,
+      _emit(
+        TimerUiState(
+          remainingSeconds: currentBlock.workSeconds,
+          currentRound: _index + 1,
+          totalRounds: _blocks.length,
+          phase: TimerPhase.work,
+        ),
       );
-
-      onUpdate(_state!);
     }
   }
 
@@ -267,28 +270,31 @@ class AmrapRunner implements WorkoutRunner {
           .difference(_phaseStartTime!)
           .inSeconds;
 
-      _state = TimerUiState(
-        remainingSeconds: _state!.remainingSeconds,
-        currentRound: _state!.currentRound,
-        totalRounds: _state!.totalRounds,
-        phase: TimerPhase.paused,
+      _emit(
+        TimerUiState(
+          remainingSeconds: _state!.remainingSeconds,
+          currentRound: _state!.currentRound,
+          totalRounds: _state!.totalRounds,
+          phase: TimerPhase.paused,
+        ),
       );
     } else {
       _phaseStartTime = DateTime.now();
 
-      _state = TimerUiState(
-        remainingSeconds: _state!.remainingSeconds,
-        currentRound: _state!.currentRound,
-        totalRounds: _state!.totalRounds,
-        phase: _phaseBeforePause ?? TimerPhase.work,
+      _emit(
+        TimerUiState(
+          remainingSeconds: _state!.remainingSeconds,
+          currentRound: _state!.currentRound,
+          totalRounds: _state!.totalRounds,
+          phase: _phaseBeforePause ?? TimerPhase.work,
+        ),
       );
     }
-
-    onUpdate(_state!);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _controller.close();
   }
 }
