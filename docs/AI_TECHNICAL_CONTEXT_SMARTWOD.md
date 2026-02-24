@@ -18,23 +18,21 @@ Consolidación estructural antes de expansión funcional.
 
 ### Flujo correcto implementado
 
-El orden real es:
-
 W1 → sin descanso  
 D1 → descanso bloque 2  
 W2 → trabajo bloque 2  
 D2 → descanso bloque 3  
 W3 → trabajo bloque 3  
-FIN
+FIN  
 
 El descanso pertenece siempre al bloque siguiente.
 
 ---
 
-### Motor temporal
+## 3. MOTOR TEMPORAL
 
 - Basado en DateTime (no Stopwatch)
-- Permite precisión real incluso si la app va a background
+- Compatible con background
 - Cálculo periódico con Timer de 250ms
 - Sin drift acumulativo
 - Sin reinicios al pausar
@@ -43,21 +41,25 @@ El descanso pertenece siempre al bloque siguiente.
 
 ---
 
-## 3. SISTEMA DE AUDIO
+## 4. SISTEMA DE AUDIO
 
 Implementación actual:
 
 - SoundEngine inyectado en AmrapRunner
-- AudioPlayer con ReleaseMode.stop
-- Countdown único disparado al llegar a 3 segundos
-- Well Done reproducido después de emitir estado finished
-- No se modifica esta lógica sin análisis previo
+- Dos AudioPlayer separados
+- ReleaseMode.stop
+- Countdown disparado únicamente cuando remaining == 3
+- countdown_1.wav contiene 3-2-1 completo
+- No se utilizan comparaciones <=
+- No se corta el audio manualmente
+- No hay duplicaciones ni loops
+- Well Done reproducido al finalizar estado finished
 
-Audio ya sincronizado y estable.
+Audio sincronizado y estable.
 
 ---
 
-## 4. ESTRUCTURA ACTUAL
+## 5. ESTRUCTURA ACTUAL
 
 Domain:
 - AmrapRunner
@@ -82,26 +84,37 @@ Widgets:
 
 ---
 
-## 5. DECISIONES TÉCNICAS CONSOLIDADAS
+## 6. DECISIONES TÉCNICAS CONSOLIDADAS
 
 - DateTime se mantiene sobre Stopwatch
 - Audio desacoplado
 - Runner independiente de UI
-- No usar variables redundantes
+- Countdown centralizado
 - No instanciar dependencias dentro de build()
 - Limpieza de código muerto realizada
+- Arquitectura preparada para múltiples runners
 
 ---
 
-## 6. PRÓXIMA EVOLUCIÓN
+## 7. PRÓXIMA EVOLUCIÓN ESTRUCTURAL
 
-1. Convertir WorkoutRunner en base extensible
-2. Implementar EmomRunner
-3. Implementar TabataRunner
-4. Implementar ForTimeRunner
-5. Introducir Clean Architecture formal
-6. Migrar almacenamiento a solución más robusta
+Fase 2 – Arquitectura Escalable
+
+1. Crear BaseRunner abstracto
+2. Extraer PhaseEngine reutilizable
+3. Unificar lógica temporal para EMOM / TABATA / FOR TIME
+4. Agregar pruebas unitarias del motor
+
+Fase 3 – Nuevos modos
+
+- EMOM
+- Tabata
+- ForTime
+- Mixed
+
+Todos reutilizando el mismo CoreTimerEngine.
 
 ---
 
 SMARTWOD prioriza estabilidad estructural antes de expansión funcional.
+El motor AMRAP se considera consolidado en versión beta técnica.
