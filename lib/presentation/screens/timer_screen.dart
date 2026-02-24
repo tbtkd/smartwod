@@ -15,6 +15,7 @@ import '../../data/repositories/workout_history_repository_impl.dart';
 
 import '../../widgets/central_timer.dart';
 import 'workout_finished_screen.dart';
+import '../../core/timer_phase.dart';
 
 class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
@@ -287,7 +288,7 @@ class _TimerScreenState extends State<TimerScreen> {
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
                   countdownSeconds: _countdownSeconds,
-                  totalSeconds: _runner.currentBlockTotalSeconds,
+                  totalSeconds: _uiState?.phaseTotalSeconds ?? 0,
                   onTap: _onCentralTap,
                 ),
                 const SizedBox(height: 24),
