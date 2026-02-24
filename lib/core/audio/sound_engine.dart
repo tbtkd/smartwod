@@ -55,6 +55,15 @@ class SoundEngine {
     }
   }
 
+  // 🔥 CRÍTICO: cortar countdown inmediatamente
+  Future<void> stopCountdown() async {
+    try {
+      await _countdownPlayer.stop();
+    } catch (e) {
+      print('Stop countdown error: $e');
+    }
+  }
+
   Future<void> dispose() async {
     await _countdownPlayer.dispose();
     await _finishPlayer.dispose();

@@ -83,51 +83,49 @@ class AmrapRunner implements WorkoutRunner {
     _startTicker();
   }
 
-void _startTicker() {
-  _timer?.cancel();
+  void _startTicker() {
+    _timer?.cancel();
 
-  _timer = Timer.periodic(
-    const Duration(milliseconds: 250),
-    (_) {
-      if (_isPaused || _phaseStartTime == null) return;
+    _timer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) {
+        if (_isPaused || _phaseStartTime == null) return;
 
-      final now = DateTime.now();
+        final now = DateTime.now();
 
-      final elapsedThisPhase =
-          _elapsedBeforePause +
-              now.difference(_phaseStartTime!).inSeconds;
+        final elapsedThisPhase =
+            _elapsedBeforePause +
+                now.difference(_phaseStartTime!).inSeconds;
 
-      final remaining =
-          _currentPhaseDuration - elapsedThisPhase;
+        final remaining =
+            _currentPhaseDuration - elapsedThisPhase;
 
-      // 🔥 Si terminó fase, cambiar inmediatamente
-      if (remaining <= 0) {
-        _lastAnnouncedSecond = null;
-        _nextPhase();
-        return;
-      }
-
-      // 🔥 Solo si el segundo cambió realmente
-      if (_lastAnnouncedSecond != remaining) {
-
-        // 🔥 Solo anunciar 3-2-1
-        if (remaining <= 3 &&
-            remaining > 0 &&
-            remaining < _currentPhaseDuration) {
-
-          _soundEngine.playCountdown();
+        // 🔥 Si terminó fase → cortar countdown y cambiar
+        if (remaining <= 0) {
+          _lastAnnouncedSecond = null;
+          _soundEngine.stopCountdown();
+          _nextPhase();
+          return;
         }
 
-        _lastAnnouncedSecond = remaining;
-      }
+        // 🔥 Countdown solo cuando cambia el segundo
+        if (_lastAnnouncedSecond != remaining) {
+          if (remaining <= 3 &&
+              remaining > 0 &&
+              remaining < _currentPhaseDuration) {
+            _soundEngine.playCountdown();
+          }
 
-      _globalElapsed =
-          _calculateGlobalElapsed(elapsedThisPhase);
+          _lastAnnouncedSecond = remaining;
+        }
 
-      _emitState(remainingOverride: remaining);
-    },
-  );
-}
+        _globalElapsed =
+            _calculateGlobalElapsed(elapsedThisPhase);
+
+        _emitState(remainingOverride: remaining);
+      },
+    );
+  }
 
   int _calculateGlobalElapsed(
       int currentPhaseElapsed) {
