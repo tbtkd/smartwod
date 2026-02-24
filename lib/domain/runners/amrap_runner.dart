@@ -28,17 +28,13 @@ class AmrapRunner implements WorkoutRunner {
   int _globalElapsed = 0;
   int _currentPhaseDuration = 0;
 
-  int? _lastAnnouncedSecond;
+  int? _lastSecondAnnounced;
 
   AmrapRunner({
     required List<AmrapBlock> blocks,
     required SoundEngine soundEngine,
   })  : _blocks = blocks,
         _soundEngine = soundEngine;
-
-  // =============================
-  // TOTAL
-  // =============================
 
   @override
   int get totalWorkoutSeconds {
@@ -59,10 +55,6 @@ class AmrapRunner implements WorkoutRunner {
         .clamp(0.0, 1.0);
   }
 
-  // =============================
-  // START
-  // =============================
-
   @override
   Future<void> start() async {
     if (_blocks.isEmpty) return;
@@ -72,7 +64,7 @@ class AmrapRunner implements WorkoutRunner {
     _isPaused = false;
     _elapsedBeforePause = 0;
     _globalElapsed = 0;
-    _lastAnnouncedSecond = null;
+    _lastSecondAnnounced = null;
 
     _currentPhaseDuration =
         _blocks[_index].workSeconds;
@@ -83,52 +75,47 @@ class AmrapRunner implements WorkoutRunner {
     _startTicker();
   }
 
-  void _startTicker() {
-    _timer?.cancel();
+void _startTicker() {
+  _timer?.cancel();
 
-    _timer = Timer.periodic(
-      const Duration(milliseconds: 250),
-      (_) {
-        if (_isPaused || _phaseStartTime == null) return;
+  _timer = Timer.periodic(
+    const Duration(milliseconds: 250),
+    (_) {
+      if (_isPaused || _phaseStartTime == null) return;
 
-        final now = DateTime.now();
+      final now = DateTime.now();
 
-        final elapsedThisPhase =
-            _elapsedBeforePause +
-                now.difference(_phaseStartTime!).inSeconds;
+      final elapsed =
+          _elapsedBeforePause +
+              now.difference(_phaseStartTime!).inSeconds;
 
-        final remaining =
-            _currentPhaseDuration - elapsedThisPhase;
+      final remaining =
+          _currentPhaseDuration - elapsed;
 
-        // 🔥 Si terminó fase → cortar countdown y cambiar
-        if (remaining <= 0) {
-          _lastAnnouncedSecond = null;
-          _soundEngine.stopCountdown();
-          _nextPhase();
-          return;
+      if (remaining < 0) {
+        _lastSecondAnnounced = null;
+        _nextPhase();
+        return;
+      }
+
+      // 🔥 EXACTAMENTE como countdown inicial
+      if (_lastSecondAnnounced != remaining) {
+        if (remaining == 3) {
+          _soundEngine.playCountdown();
         }
 
-        // 🔥 Countdown solo cuando cambia el segundo
-        if (_lastAnnouncedSecond != remaining) {
-          if (remaining <= 3 &&
-              remaining > 0 &&
-              remaining < _currentPhaseDuration) {
-            _soundEngine.playCountdown();
-          }
+        _lastSecondAnnounced = remaining;
+      }
 
-          _lastAnnouncedSecond = remaining;
-        }
+      _globalElapsed =
+          _calculateGlobalElapsed(elapsed);
 
-        _globalElapsed =
-            _calculateGlobalElapsed(elapsedThisPhase);
+      _emitState(remainingOverride: remaining);
+    },
+  );
+}
 
-        _emitState(remainingOverride: remaining);
-      },
-    );
-  }
-
-  int _calculateGlobalElapsed(
-      int currentPhaseElapsed) {
+  int _calculateGlobalElapsed(int currentPhaseElapsed) {
     int total = 0;
 
     for (int i = 0; i < _index; i++) {
@@ -140,8 +127,7 @@ class AmrapRunner implements WorkoutRunner {
 
     total += currentPhaseElapsed;
 
-    return total.clamp(
-        0, totalWorkoutSeconds);
+    return total.clamp(0, totalWorkoutSeconds);
   }
 
   void _emitState({int? remainingOverride}) {
@@ -163,13 +149,9 @@ class AmrapRunner implements WorkoutRunner {
     );
   }
 
-  // =============================
-  // NEXT PHASE
-  // =============================
-
   Future<void> _nextPhase() async {
     _elapsedBeforePause = 0;
-    _lastAnnouncedSecond = null;
+    _lastSecondAnnounced = null;
 
     if (_phase == TimerPhase.work) {
       _index++;
@@ -213,10 +195,6 @@ class AmrapRunner implements WorkoutRunner {
     _phaseStartTime = DateTime.now();
     _emitState();
   }
-
-  // =============================
-  // PAUSE
-  // =============================
 
   @override
   void togglePause() {
