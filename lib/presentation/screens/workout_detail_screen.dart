@@ -96,7 +96,7 @@ class _WorkoutDetailScreenState
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black
-                        .withOpacity(0.05),
+                        .withValues(alpha: 0.05),
                     blurRadius: 10,
                   ),
                 ],

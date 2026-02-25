@@ -324,12 +324,12 @@ class _AmrapConfigScreenState
                   onPressed: _startWorkout,
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(
+                        WidgetStateProperty.all<Color>(
                             Colors.orange),
                     foregroundColor:
-                        MaterialStateProperty.all<Color>(
+                        WidgetStateProperty.all<Color>(
                             Colors.white),
-                    shape: MaterialStateProperty.all(
+                    shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.circular(30),

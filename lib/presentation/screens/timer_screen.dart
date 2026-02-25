@@ -21,9 +21,9 @@ class TimerScreen extends StatefulWidget {
   final List<AmrapBlock> blocks;
 
   const TimerScreen({
-    Key? key,
+    super.key,
     required this.blocks,
-  }) : super(key: key);
+  });
 
   @override
   State<TimerScreen> createState() => _TimerScreenState();
@@ -252,8 +252,21 @@ class _TimerScreenState extends State<TimerScreen> {
                 ? 'Descanso'
                 : 'Amrap ${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        final navigator = Navigator.of(context);
+
+        final shouldExit = await _onWillPop();
+
+        if (!mounted) return;
+
+        if (shouldExit) {
+          navigator.pop();
+        }
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(

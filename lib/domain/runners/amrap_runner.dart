@@ -20,6 +20,7 @@ class AmrapRunner implements WorkoutRunner {
 
   int _index = 0;
   TimerPhase _phase = TimerPhase.work;
+  TimerPhase _phaseBeforePause = TimerPhase.work;
 
   DateTime? _phaseStartTime;
   int _elapsedBeforePause = 0;
@@ -61,6 +62,7 @@ class AmrapRunner implements WorkoutRunner {
 
     _index = 0;
     _phase = TimerPhase.work;
+    _phaseBeforePause = TimerPhase.work;
     _isPaused = false;
     _elapsedBeforePause = 0;
     _globalElapsed = 0;
@@ -75,45 +77,44 @@ class AmrapRunner implements WorkoutRunner {
     _startTicker();
   }
 
-void _startTicker() {
-  _timer?.cancel();
+  void _startTicker() {
+    _timer?.cancel();
 
-  _timer = Timer.periodic(
-    const Duration(milliseconds: 250),
-    (_) {
-      if (_isPaused || _phaseStartTime == null) return;
+    _timer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) {
+        if (_isPaused || _phaseStartTime == null) return;
 
-      final now = DateTime.now();
+        final now = DateTime.now();
 
-      final elapsed =
-          _elapsedBeforePause +
-              now.difference(_phaseStartTime!).inSeconds;
+        final elapsed =
+            _elapsedBeforePause +
+                now.difference(_phaseStartTime!).inSeconds;
 
-      final remaining =
-          _currentPhaseDuration - elapsed;
+        final remaining =
+            _currentPhaseDuration - elapsed;
 
-      if (remaining < 0) {
-        _lastSecondAnnounced = null;
-        _nextPhase();
-        return;
-      }
-
-      // 🔥 EXACTAMENTE como countdown inicial
-      if (_lastSecondAnnounced != remaining) {
-        if (remaining == 3) {
-          _soundEngine.playCountdown();
+        if (remaining < 0) {
+          _lastSecondAnnounced = null;
+          _nextPhase();
+          return;
         }
 
-        _lastSecondAnnounced = remaining;
-      }
+        if (_lastSecondAnnounced != remaining) {
+          if (remaining == 3) {
+            _soundEngine.playCountdown();
+          }
 
-      _globalElapsed =
-          _calculateGlobalElapsed(elapsed);
+          _lastSecondAnnounced = remaining;
+        }
 
-      _emitState(remainingOverride: remaining);
-    },
-  );
-}
+        _globalElapsed =
+            _calculateGlobalElapsed(elapsed);
+
+        _emitState(remainingOverride: remaining);
+      },
+    );
+  }
 
   int _calculateGlobalElapsed(int currentPhaseElapsed) {
     int total = 0;
@@ -207,11 +208,12 @@ void _startTicker() {
               .inSeconds;
 
       _isPaused = true;
+      _phaseBeforePause = _phase;
       _phase = TimerPhase.paused;
     } else {
       _isPaused = false;
       _phaseStartTime = DateTime.now();
-      _phase = TimerPhase.work;
+      _phase = _phaseBeforePause;
     }
 
     _emitState();

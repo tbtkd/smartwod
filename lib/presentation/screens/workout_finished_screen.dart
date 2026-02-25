@@ -7,10 +7,10 @@ class WorkoutFinishedScreen extends StatelessWidget {
   final int totalAmraps;
 
   const WorkoutFinishedScreen({
-    Key? key,
+    super.key,
     required this.totalSeconds,
     required this.totalAmraps,
-  }) : super(key: key);
+  });
 
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;

@@ -110,7 +110,7 @@ class AmrapBlockCard extends StatelessWidget {
           vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius:
               BorderRadius.circular(14),
         ),
