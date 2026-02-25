@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../widgets/wod_button.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
+import '../screens/emom_config_screen.dart';
+
 
 import 'amrap_config_screen.dart';
 import 'workout_history_screen.dart';
@@ -66,7 +68,12 @@ class HomeScreen extends StatelessWidget {
               label: 'EMOM',
               color: Colors.purple,
               onPressed: () {
-                _showComingSoon(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const EmomConfigScreen(),
+                  ),
+                );
               },
             ),
 

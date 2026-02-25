@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../core/timer_ui_state.dart';
-import '../../core/amrap_block.dart';
 import '../../core/audio/sound_engine.dart';
+import '../../core/timer_phase.dart';
 
-import '../../domain/runners/amrap_runner.dart';
+import '../../domain/runners/workout_runner.dart';
 import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
 
@@ -15,14 +15,31 @@ import '../../data/repositories/workout_history_repository_impl.dart';
 
 import '../../widgets/central_timer.dart';
 import 'workout_finished_screen.dart';
-import '../../core/timer_phase.dart';
 
+/// ===============================================================
+/// TIMER SCREEN (MULTIMODO)
+///
+/// Esta pantalla es completamente neutral.
+/// No conoce AMRAP, EMOM, TABATA, etc.
+///
+/// Recibe:
+/// - runnerBuilder → construye el runner correspondiente
+/// - workoutType → tipo de entrenamiento
+/// - totalConfiguredSeconds → duración total configurada
+/// - metadata → información adicional (bloques, rondas, etc.)
+/// ===============================================================
 class TimerScreen extends StatefulWidget {
-  final List<AmrapBlock> blocks;
+  final WorkoutRunner Function(SoundEngine) runnerBuilder;
+  final WorkoutType workoutType;
+  final int totalConfiguredSeconds;
+  final dynamic metadata;
 
   const TimerScreen({
     super.key,
-    required this.blocks,
+    required this.runnerBuilder,
+    required this.workoutType,
+    required this.totalConfiguredSeconds,
+    this.metadata,
   });
 
   @override
@@ -30,14 +47,22 @@ class TimerScreen extends StatefulWidget {
 }
 
 class _TimerScreenState extends State<TimerScreen> {
-  late final AmrapRunner _runner;
+  /// Runner genérico (AMRAP, EMOM, etc.)
+  late final WorkoutRunner _runner;
+
+  /// Motor de sonido independiente
   late final SoundEngine _soundEngine;
+
+  /// Suscripción al stream del runner
   late final StreamSubscription<TimerUiState> _subscription;
 
+  /// Repositorio para guardar historial
   final _historyRepository = WorkoutHistoryRepositoryImpl();
 
+  /// Estado actual emitido por el runner
   TimerUiState? _uiState;
 
+  /// Control del countdown inicial
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
   bool _trainingStarted = false;
@@ -46,13 +71,13 @@ class _TimerScreenState extends State<TimerScreen> {
   void initState() {
     super.initState();
 
+    /// Inicializamos motor de sonido
     _soundEngine = SoundEngine();
 
-    _runner = AmrapRunner(
-      blocks: widget.blocks,
-      soundEngine: _soundEngine,
-    );
+    /// Construimos el runner según el modo recibido
+    _runner = widget.runnerBuilder(_soundEngine);
 
+    /// Escuchamos actualizaciones del runner
     _subscription = _runner.stream.listen(_onUpdate);
   }
 
@@ -60,18 +85,23 @@ class _TimerScreenState extends State<TimerScreen> {
   // RUNNER UPDATE
   // =============================
 
+  /// Recibe actualizaciones del runner
+  /// Maneja:
+  /// - Actualización de UI
+  /// - Finalización del entrenamiento
   void _onUpdate(TimerUiState state) async {
+    /// Si el entrenamiento finalizó
     if (state.phase == TimerPhase.finished) {
       await _historyRepository.save(
         WorkoutResult(
-          type: WorkoutType.amrap,
+          type: widget.workoutType,
           date: DateTime.now(),
           totalSeconds: _runner.totalWorkoutSeconds,
-          blocks: widget.blocks,
+          blocks: widget.metadata, // solo aplica a ciertos modos
         ),
       );
 
-      await _disableWakelock();
+      await WakelockPlus.disable();
 
       if (!mounted) return;
 
@@ -99,10 +129,12 @@ class _TimerScreenState extends State<TimerScreen> {
   // WAKELOCK
   // =============================
 
+  /// Activa wakelock durante entrenamiento
   Future<void> _enableWakelock() async {
     await WakelockPlus.enable();
   }
 
+  /// Desactiva wakelock al salir
   Future<void> _disableWakelock() async {
     await WakelockPlus.disable();
   }
@@ -111,6 +143,7 @@ class _TimerScreenState extends State<TimerScreen> {
   // COUNTDOWN INICIAL
   // =============================
 
+  /// Countdown previo al inicio del entrenamiento
   Future<void> _startCountdown() async {
     if (_isCountingDown || _trainingStarted) return;
 
@@ -132,6 +165,7 @@ class _TimerScreenState extends State<TimerScreen> {
         _countdownSeconds = nextValue;
       });
 
+      /// Sonido en el segundo 3
       if (nextValue == 3) {
         await _soundEngine.playCountdown();
       }
@@ -148,14 +182,16 @@ class _TimerScreenState extends State<TimerScreen> {
     await _runner.start();
   }
 
+  /// Tap central:
+  /// - Inicia countdown si aún no comenzó
+  /// - Pausa / reanuda si ya inició
   void _onCentralTap() {
     if (_uiState == null && !_isCountingDown) {
       _startCountdown();
       return;
     }
 
-    if (_uiState != null) {
-      if (_uiState!.isFinished) return;
+    if (_uiState != null && !_uiState!.isFinished) {
       _runner.togglePause();
     }
   }
@@ -164,6 +200,7 @@ class _TimerScreenState extends State<TimerScreen> {
   // EXIT PROTECTION
   // =============================
 
+  /// Maneja confirmación antes de salir
   Future<bool> _onWillPop() async {
     if (_uiState == null) return true;
 
@@ -210,23 +247,6 @@ class _TimerScreenState extends State<TimerScreen> {
     return false;
   }
 
-  String _formatTotalTime() {
-    int total = 0;
-
-    for (int i = 0; i < widget.blocks.length; i++) {
-      total += widget.blocks[i].workSeconds;
-      if (i > 0) {
-        total += widget.blocks[i].restSeconds ?? 0;
-      }
-    }
-
-    final m = total ~/ 60;
-    final s = total % 60;
-
-    return '${m.toString().padLeft(2, '0')}:'
-        '${s.toString().padLeft(2, '0')}';
-  }
-
   @override
   void dispose() {
     _subscription.cancel();
@@ -250,7 +270,8 @@ class _TimerScreenState extends State<TimerScreen> {
             ? 'Prepárate'
             : (isRest
                 ? 'Descanso'
-                : 'Amrap ${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
+                : '${widget.workoutType.name.toUpperCase()} '
+                  '${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
     return PopScope(
       canPop: false,
@@ -258,7 +279,6 @@ class _TimerScreenState extends State<TimerScreen> {
         if (didPop) return;
 
         final navigator = Navigator.of(context);
-
         final shouldExit = await _onWillPop();
 
         if (!mounted) return;
@@ -273,9 +293,9 @@ class _TimerScreenState extends State<TimerScreen> {
           backgroundColor: Colors.black,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
-            'AMRAP',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          title: Text(
+            widget.workoutType.name.toUpperCase(),
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
         body: SafeArea(
@@ -307,8 +327,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 const SizedBox(height: 24),
                 if (_uiState != null)
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: LinearProgressIndicator(
                       value: _runner.globalProgress,
                       minHeight: 6,
@@ -321,7 +340,9 @@ class _TimerScreenState extends State<TimerScreen> {
                   ),
                 const SizedBox(height: 12),
                 Text(
-                  'Tiempo total · ${_formatTotalTime()}',
+                  'Tiempo total · '
+                  '${widget.totalConfiguredSeconds ~/ 60}:'
+                  '${(widget.totalConfiguredSeconds % 60).toString().padLeft(2, '0')}',
                   style: const TextStyle(
                     color: Colors.white38,
                     fontSize: 14,

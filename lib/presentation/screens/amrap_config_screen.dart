@@ -3,6 +3,9 @@ import '../../core/amrap_block.dart';
 import '../../widgets/duration_picker_dialog.dart';
 import '../widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
+import '../../domain/runners/amrap_runner.dart';
+import '../../domain/enums/workout_type.dart';
+
 
 class AmrapConfigScreen extends StatefulWidget {
   const AmrapConfigScreen({super.key});
@@ -225,7 +228,15 @@ class _AmrapConfigScreenState
       context,
       MaterialPageRoute(
         builder: (_) =>
-            TimerScreen(blocks: _blocks),
+            TimerScreen(
+              runnerBuilder: (soundEngine) => AmrapRunner(
+                blocks: _blocks,
+                soundEngine: soundEngine,
+              ),
+              workoutType: WorkoutType.amrap,
+              totalConfiguredSeconds: _totalSeconds,
+              metadata: _blocks,
+            ),
       ),
     );
   }
