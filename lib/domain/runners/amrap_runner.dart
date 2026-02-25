@@ -101,7 +101,11 @@ class AmrapRunner implements WorkoutRunner {
         }
 
         if (_lastSecondAnnounced != remaining) {
-          if (remaining == 3) {
+
+          // Detectar cruce del segundo 3
+          if (_lastSecondAnnounced != null &&
+              _lastSecondAnnounced! > 3 &&
+              remaining <= 3) {
             _soundEngine.playCountdown();
           }
 
