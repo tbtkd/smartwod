@@ -42,6 +42,24 @@ class _WorkoutDetailScreenState
   }
 
   // ===============================================================
+  // COLOR DINÁMICO SEGÚN TIPO
+  // ===============================================================
+  Color _typeColor() {
+    switch (widget.result.type) {
+      case WorkoutType.amrap:
+        return Colors.orange;
+      case WorkoutType.emom:
+        return Colors.purple;
+      case WorkoutType.tabata:
+        return Colors.blue;
+      case WorkoutType.forTime:
+        return Colors.green;
+      case WorkoutType.mix:
+        return Colors.grey;
+    }
+  }
+
+  // ===============================================================
   // FORMATO TIEMPO
   // ===============================================================
   String _format(int seconds) {
@@ -67,17 +85,11 @@ class _WorkoutDetailScreenState
   }
 
   // ===============================================================
-  // METADATA HELPERS (AMRAP)
+  // METADATA HELPERS (GENÉRICO PARA AMRAP / EMOM)
   // ===============================================================
 
-  /// Extrae bloques solo si el modo es AMRAP.
-  /// Ahora metadata es un Map<String, dynamic>
-  /// y blocks es una lista de Map.
-  List<Map<String, dynamic>> _amrapBlocks() {
-    if (widget.result.type != WorkoutType.amrap) {
-      return [];
-    }
-
+  /// Extrae bloques desde metadata.
+  List<Map<String, dynamic>> _blocks() {
     final raw = widget.result.metadata?['blocks'];
 
     if (raw is List) {
@@ -90,7 +102,7 @@ class _WorkoutDetailScreenState
   }
 
   int _totalWorkTime() {
-    final blocks = _amrapBlocks();
+    final blocks = _blocks();
     return blocks.fold<int>(
       0,
       (sum, b) =>
@@ -99,7 +111,7 @@ class _WorkoutDetailScreenState
   }
 
   int _totalRestTime() {
-    final blocks = _amrapBlocks();
+    final blocks = _blocks();
     return blocks.fold<int>(
       0,
       (sum, b) =>
@@ -115,13 +127,15 @@ class _WorkoutDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final blocks = _amrapBlocks();
+    final blocks = _blocks();
+    final color = _typeColor();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
+        centerTitle: true,
         title: Text(
           'Detalle ${widget.result.type.name.toUpperCase()}',
         ),
@@ -154,13 +168,13 @@ class _WorkoutDetailScreenState
               child: Column(
                 children: [
 
+                  /// TIEMPO TOTAL
                   Text(
                     _format(widget.result.totalSeconds),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 30,
-                      fontWeight:
-                          FontWeight.bold,
-                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      color: color,
                     ),
                   ),
 
@@ -175,12 +189,26 @@ class _WorkoutDetailScreenState
 
                   const SizedBox(height: 14),
 
+                  /// RONDAS COMPLETADAS (si existen bloques)
+                  if (blocks.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'Rondas completadas: ${blocks.length}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ),
+
                   Row(
                     mainAxisAlignment:
                         MainAxisAlignment.spaceBetween,
                     children: [
 
-                      /// Solo mostrar trabajo/descanso en AMRAP
+                      /// AMRAP → Trabajo + Descanso
                       if (widget.result.type ==
                           WorkoutType.amrap) ...[
                         _MiniStat(
@@ -195,6 +223,16 @@ class _WorkoutDetailScreenState
                         ),
                       ],
 
+                      /// EMOM → Intervalo (solo trabajo)
+                      if (widget.result.type ==
+                          WorkoutType.emom)
+                        _MiniStat(
+                          label: 'Intervalo',
+                          value:
+                              _format(_totalWorkTime()),
+                        ),
+
+                      /// FECHA (siempre visible)
                       _MiniStat(
                         label: 'Fecha',
                         value: widget
@@ -213,7 +251,7 @@ class _WorkoutDetailScreenState
             const SizedBox(height: 18),
 
             /// ===================================================
-            /// DESGLOSE SOLO PARA AMRAP
+            /// DESGLOSE (AMRAP / EMOM)
             /// ===================================================
             if (blocks.isNotEmpty)
               Container(
@@ -255,6 +293,14 @@ class _WorkoutDetailScreenState
                         final block =
                             blocks[index];
 
+                        final isEmom =
+                            widget.result.type ==
+                                WorkoutType.emom;
+
+                        final title = isEmom
+                            ? 'EMOM x ${index + 1}'
+                            : 'AMRAP ${index + 1}';
+
                         return Padding(
                           padding:
                               const EdgeInsets.only(
@@ -266,13 +312,15 @@ class _WorkoutDetailScreenState
                             children: [
 
                               _BulletRow(
-                                color: Colors.orange,
+                                color: color,
                                 text:
-                                    'AMRAP ${index + 1}: '
+                                    '$title: '
                                     '${block['workSeconds']} segundos',
                               ),
 
-                              if (block['restSeconds'] !=
+                              /// Mantener descanso solo para AMRAP
+                              if (!isEmom &&
+                                  block['restSeconds'] !=
                                       null &&
                                   block['restSeconds'] >
                                       0)
@@ -305,7 +353,7 @@ class _WorkoutDetailScreenState
                   fontSize: 14,
                   color: Colors.black87,
                 ),
-                cursorColor: Colors.orange,
+                cursorColor: color,
                 decoration:
                     const InputDecoration(
                   border: InputBorder.none,
@@ -327,8 +375,7 @@ class _WorkoutDetailScreenState
                 onPressed: _save,
                 style:
                     ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.orange,
+                  backgroundColor: color,
                 ),
                 child: const Text(
                   'Guardar cambios',

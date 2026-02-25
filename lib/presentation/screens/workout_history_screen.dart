@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 import '../../domain/entities/workout_result.dart';
 import 'workout_detail_screen.dart';
+import '../../domain/enums/workout_type.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
@@ -45,12 +46,38 @@ class _WorkoutHistoryScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
+  /// ===============================================================
+  /// FORMATEA EL NOMBRE DEL TIPO DE ENTRENAMIENTO
+  /// ===============================================================
+  String _formatWorkoutType(WorkoutResult result) {
+    return result.type.name.toUpperCase();
+  }
+
+  /// ===============================================================
+  /// COLOR SEGÚN TIPO DE ENTRENAMIENTO
+  /// ===============================================================
+  Color _typeColor(WorkoutResult result) {
+    switch (result.type) {
+      case WorkoutType.amrap:
+        return Colors.orange;
+      case WorkoutType.emom:
+        return Colors.purple;
+      case WorkoutType.tabata:
+        return Colors.blue;
+      case WorkoutType.forTime:
+        return Colors.green;
+      case WorkoutType.mix:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
+        centerTitle: true,
         title: const Text('Historial'),
       ),
       body: _history.isEmpty
@@ -64,7 +91,9 @@ class _WorkoutHistoryScreenState
           : Column(
               children: [
 
-                // RESUMEN
+                // ===================================================
+                // RESUMEN SUPERIOR
+                // ===================================================
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(16),
@@ -91,6 +120,9 @@ class _WorkoutHistoryScreenState
                   ),
                 ),
 
+                // ===================================================
+                // LISTA DE ENTRENAMIENTOS
+                // ===================================================
                 Expanded(
                   child: ListView.builder(
                     padding:
@@ -100,6 +132,8 @@ class _WorkoutHistoryScreenState
                     itemBuilder: (context, index) {
                       final item =
                           _history[index];
+
+                      final color = _typeColor(item);
 
                       return GestureDetector(
                         onTap: () async {
@@ -121,40 +155,46 @@ class _WorkoutHistoryScreenState
                           padding:
                               const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white10,
+                            color: color.withValues(alpha: 0.15),
                             borderRadius:
-                                BorderRadius.circular(
-                                    14),
+                                BorderRadius.circular(14),
+                            border: Border.all(
+                              color: color.withValues(alpha: 0.4),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment:
                                 MainAxisAlignment
                                     .spaceBetween,
                             children: [
+
+                              // -------------------------------------------------
+                              // LADO IZQUIERDO (TIPO + FECHA)
+                              // -------------------------------------------------
                               Column(
                                 crossAxisAlignment:
                                     CrossAxisAlignment
                                         .start,
                                 children: [
+
                                   Text(
-                                    'AMRAP',
+                                    _formatWorkoutType(item),
                                     style:
-                                        const TextStyle(
-                                      color:
-                                          Colors.white,
+                                        TextStyle(
+                                      color: color,
                                       fontWeight:
-                                          FontWeight
-                                              .w600,
+                                          FontWeight.w600,
                                     ),
                                   ),
+
                                   const SizedBox(
                                       height: 4),
+
                                   Text(
                                     item.date
                                         .toLocal()
                                         .toString()
-                                        .split(
-                                            '.')
+                                        .split('.')
                                         .first,
                                     style:
                                         const TextStyle(
@@ -166,6 +206,10 @@ class _WorkoutHistoryScreenState
                                   ),
                                 ],
                               ),
+
+                              // -------------------------------------------------
+                              // LADO DERECHO (TIEMPO + NOTA)
+                              // -------------------------------------------------
                               Column(
                                 crossAxisAlignment:
                                     CrossAxisAlignment
@@ -175,14 +219,13 @@ class _WorkoutHistoryScreenState
                                     _formatTime(
                                         item.totalSeconds),
                                     style:
-                                        const TextStyle(
-                                      color:
-                                          Colors.orange,
+                                        TextStyle(
+                                      color: color,
                                       fontWeight:
-                                          FontWeight
-                                              .bold,
+                                          FontWeight.bold,
                                     ),
                                   ),
+
                                   if (item.note !=
                                           null &&
                                       item.note!
