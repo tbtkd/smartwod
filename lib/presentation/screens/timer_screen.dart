@@ -88,14 +88,14 @@ class _TimerScreenState extends State<TimerScreen> {
   // ===============================================================
   void _onUpdate(TimerUiState state) async {
 
-    debugPrint('PHASE ACTUAL: ${state.phase}');
+    //debugPrint('PHASE ACTUAL: ${state.phase}');
 
     // ---------------------------------------------------------------
     // FINALIZACIÓN
     // ---------------------------------------------------------------
     if (state.phase == TimerPhase.finished) {
 
-      debugPrint('ENTRO A FINISHED');
+      //debugPrint('ENTRO A FINISHED');
 
       await _subscription.cancel();
 
@@ -137,6 +137,9 @@ class _TimerScreenState extends State<TimerScreen> {
   // ===============================================================
   Map<String, dynamic>? _buildSafeMetadata() {
 
+    // ==============================
+    // AMRAP (SIN CAMBIOS)
+    // ==============================
     if (widget.workoutType == WorkoutType.amrap) {
 
       final raw = widget.metadata;
@@ -159,6 +162,28 @@ class _TimerScreenState extends State<TimerScreen> {
       }
     }
 
+    // ==============================
+    // 🔥 EMOM (NUEVO SOPORTE REAL)
+    // ==============================
+    if (widget.workoutType == WorkoutType.emom) {
+
+      final rounds = _uiState?.totalRounds ?? 0;
+
+      final intervalSeconds =
+          rounds > 0
+              ? widget.totalConfiguredSeconds ~/ rounds
+              : 0;
+
+      return {
+        "intervalSeconds": intervalSeconds,
+        "rounds": rounds,
+        "blocks": [],
+      };
+    }
+
+    // ==============================
+    // OTROS CASOS (SIN CAMBIOS)
+    // ==============================
     if (widget.metadata is Map<String, dynamic>) {
       return widget.metadata;
     }

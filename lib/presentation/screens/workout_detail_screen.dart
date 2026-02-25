@@ -119,6 +119,20 @@ class _WorkoutDetailScreenState
     );
   }
 
+  int _intervalSeconds() {
+    final value =
+        widget.result.metadata?['intervalSeconds'];
+    return (value is int) ? value : 0;
+  }
+
+  int _emomRounds() {
+    final value =
+        widget.result.metadata?['rounds'];
+    return (value is int)
+        ? value
+        : _blocks().length;
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
@@ -203,47 +217,63 @@ class _WorkoutDetailScreenState
                       ),
                     ),
 
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                    children: [
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
 
-                      /// AMRAP → Trabajo + Descanso
-                      if (widget.result.type ==
-                          WorkoutType.amrap) ...[
-                        _MiniStat(
-                          label: 'Trabajo',
-                          value:
-                              _format(_totalWorkTime()),
-                        ),
-                        _MiniStat(
-                          label: 'Descanso',
-                          value:
-                              _format(_totalRestTime()),
-                        ),
+                        /// ==========================
+                        /// AMRAP (SIN CAMBIOS)
+                        /// ==========================
+                        if (widget.result.type ==
+                            WorkoutType.amrap) ...[
+                          _MiniStat(
+                            label: 'Trabajo',
+                            value:
+                                _format(_totalWorkTime()),
+                          ),
+                          _MiniStat(
+                            label: 'Descanso',
+                            value:
+                                _format(_totalRestTime()),
+                          ),
+                          _MiniStat(
+                            label: 'Fecha',
+                            value: widget
+                                .result.date
+                                .toLocal()
+                                .toString()
+                                .split(' ')
+                                .first,
+                          ),
+                        ],
+
+                        /// ==========================
+                        /// EMOM (ACTUALIZADO)
+                        /// ==========================
+                        if (widget.result.type ==
+                            WorkoutType.emom) ...[
+                          _MiniStat(
+                            label: 'NoEMOM',
+                            value: _emomRounds().toString(),
+                          ),
+                          _MiniStat(
+                            label: 'Tiempo EMOM',
+                            value:
+                                _format(_intervalSeconds()),
+                          ),
+                          _MiniStat(
+                            label: 'Fecha',
+                            value: widget
+                                .result.date
+                                .toLocal()
+                                .toString()
+                                .split(' ')
+                                .first,
+                          ),
+                        ],
                       ],
-
-                      /// EMOM → Intervalo (solo trabajo)
-                      if (widget.result.type ==
-                          WorkoutType.emom)
-                        _MiniStat(
-                          label: 'Intervalo',
-                          value:
-                              _format(_totalWorkTime()),
-                        ),
-
-                      /// FECHA (siempre visible)
-                      _MiniStat(
-                        label: 'Fecha',
-                        value: widget
-                            .result.date
-                            .toLocal()
-                            .toString()
-                            .split(' ')
-                            .first,
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
