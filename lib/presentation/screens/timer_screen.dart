@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -19,14 +18,9 @@ import 'workout_finished_screen.dart';
 /// ===============================================================
 /// TIMER SCREEN (MULTIMODO)
 ///
-/// Esta pantalla es completamente neutral.
-/// No conoce AMRAP, EMOM, TABATA, etc.
-///
-/// Recibe:
-/// - runnerBuilder → construye el runner correspondiente
-/// - workoutType → tipo de entrenamiento
-/// - totalConfiguredSeconds → duración total configurada
-/// - metadata → información adicional (bloques, rondas, etc.)
+/// Pantalla neutral.
+/// Ejecuta cualquier WorkoutRunner.
+/// No conoce lógica específica de AMRAP o EMOM.
 /// ===============================================================
 class TimerScreen extends StatefulWidget {
   final WorkoutRunner Function(SoundEngine) runnerBuilder;
@@ -47,66 +41,78 @@ class TimerScreen extends StatefulWidget {
 }
 
 class _TimerScreenState extends State<TimerScreen> {
-  /// Runner genérico (AMRAP, EMOM, etc.)
+
   late final WorkoutRunner _runner;
-
-  /// Motor de sonido independiente
   late final SoundEngine _soundEngine;
-
-  /// Suscripción al stream del runner
   late final StreamSubscription<TimerUiState> _subscription;
 
-  /// Repositorio para guardar historial
   final _historyRepository = WorkoutHistoryRepositoryImpl();
 
-  /// Estado actual emitido por el runner
   TimerUiState? _uiState;
 
-  /// Control del countdown inicial
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
   bool _trainingStarted = false;
+
+  // ===============================================================
+  // COLOR DINÁMICO SEGÚN MODO
+  // ===============================================================
+  Color _progressColor() {
+    switch (widget.workoutType) {
+      case WorkoutType.amrap:
+        return Colors.orange;
+      case WorkoutType.emom:
+        return Colors.purple;
+      case WorkoutType.tabata:
+        return Colors.blue;
+      case WorkoutType.forTime:
+        return Colors.green;
+      case WorkoutType.mix:
+        return Colors.grey;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
 
-    /// Inicializamos motor de sonido
     _soundEngine = SoundEngine();
-
-    /// Construimos el runner según el modo recibido
     _runner = widget.runnerBuilder(_soundEngine);
 
-    /// Escuchamos actualizaciones del runner
+    /// Escuchamos el stream del runner
     _subscription = _runner.stream.listen(_onUpdate);
   }
 
-  // =============================
+  // ===============================================================
   // RUNNER UPDATE
-  // =============================
-
-  /// Recibe actualizaciones del runner
-  /// Maneja:
-  /// - Actualización de UI
-  /// - Finalización del entrenamiento
+  // ===============================================================
   void _onUpdate(TimerUiState state) async {
-    /// Si el entrenamiento finalizó
+
+    debugPrint('PHASE ACTUAL: ${state.phase}');
+
+    // ---------------------------------------------------------------
+    // FINALIZACIÓN
+    // ---------------------------------------------------------------
     if (state.phase == TimerPhase.finished) {
+
+      debugPrint('ENTRO A FINISHED');
+
+      await _subscription.cancel();
+
       await _historyRepository.save(
         WorkoutResult(
           type: widget.workoutType,
           date: DateTime.now(),
           totalSeconds: _runner.totalWorkoutSeconds,
-          blocks: widget.metadata, // solo aplica a ciertos modos
+          metadata: _buildSafeMetadata(),
         ),
       );
 
-      await WakelockPlus.disable();
+      await _disableWakelock();
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => WorkoutFinishedScreen(
             totalSeconds: _runner.totalWorkoutSeconds,
@@ -125,26 +131,57 @@ class _TimerScreenState extends State<TimerScreen> {
     });
   }
 
-  // =============================
-  // WAKELOCK
-  // =============================
+  // ===============================================================
+  // METADATA SEGURA
+  // Convierte List<AmrapBlock> → Map<String, dynamic>
+  // ===============================================================
+  Map<String, dynamic>? _buildSafeMetadata() {
 
-  /// Activa wakelock durante entrenamiento
+    if (widget.workoutType == WorkoutType.amrap) {
+
+      final raw = widget.metadata;
+
+      if (raw == null) return null;
+
+      if (raw is Map<String, dynamic>) {
+        return raw;
+      }
+
+      if (raw is List) {
+        return {
+          "blocks": raw.map((b) {
+            return {
+              "workSeconds": b.workSeconds,
+              "restSeconds": b.restSeconds,
+            };
+          }).toList(),
+        };
+      }
+    }
+
+    if (widget.metadata is Map<String, dynamic>) {
+      return widget.metadata;
+    }
+
+    return null;
+  }
+
+  // ===============================================================
+  // WAKELOCK
+  // ===============================================================
   Future<void> _enableWakelock() async {
     await WakelockPlus.enable();
   }
 
-  /// Desactiva wakelock al salir
   Future<void> _disableWakelock() async {
     await WakelockPlus.disable();
   }
 
-  // =============================
-  // COUNTDOWN INICIAL
-  // =============================
-
-  /// Countdown previo al inicio del entrenamiento
+  // ===============================================================
+  // COUNTDOWN
+  // ===============================================================
   Future<void> _startCountdown() async {
+
     if (_isCountingDown || _trainingStarted) return;
 
     await _soundEngine.init();
@@ -157,15 +194,12 @@ class _TimerScreenState extends State<TimerScreen> {
     while (_countdownSeconds > 0 && mounted) {
       await Future.delayed(const Duration(seconds: 1));
 
-      if (!mounted) return;
-
       final nextValue = _countdownSeconds - 1;
 
       setState(() {
         _countdownSeconds = nextValue;
       });
 
-      /// Sonido en el segundo 3
       if (nextValue == 3) {
         await _soundEngine.playCountdown();
       }
@@ -182,9 +216,6 @@ class _TimerScreenState extends State<TimerScreen> {
     await _runner.start();
   }
 
-  /// Tap central:
-  /// - Inicia countdown si aún no comenzó
-  /// - Pausa / reanuda si ya inició
   void _onCentralTap() {
     if (_uiState == null && !_isCountingDown) {
       _startCountdown();
@@ -196,12 +227,11 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
-  // =============================
+  // ===============================================================
   // EXIT PROTECTION
-  // =============================
-
-  /// Maneja confirmación antes de salir
+  // ===============================================================
   Future<bool> _onWillPop() async {
+
     if (_uiState == null) return true;
 
     final shouldExit = await showDialog<bool>(
@@ -255,12 +285,12 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
-  // =============================
+  // ===============================================================
   // UI
-  // =============================
-
+  // ===============================================================
   @override
   Widget build(BuildContext context) {
+
     final bool isRest =
         _uiState != null && _uiState!.phase == TimerPhase.rest;
 
@@ -275,10 +305,15 @@ class _TimerScreenState extends State<TimerScreen> {
 
     return PopScope(
       canPop: false,
+
+      /// Nuevo callback recomendado por Flutter
       onPopInvokedWithResult: (didPop, result) async {
+
         if (didPop) return;
 
+        /// Guardamos referencia del Navigator ANTES del await
         final navigator = Navigator.of(context);
+
         final shouldExit = await _onWillPop();
 
         if (!mounted) return;
@@ -303,6 +338,7 @@ class _TimerScreenState extends State<TimerScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: Text(
@@ -316,7 +352,9 @@ class _TimerScreenState extends State<TimerScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 32),
+
                 CentralTimer(
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
@@ -324,21 +362,9 @@ class _TimerScreenState extends State<TimerScreen> {
                   totalSeconds: _uiState?.phaseTotalSeconds ?? 0,
                   onTap: _onCentralTap,
                 ),
-                const SizedBox(height: 24),
-                if (_uiState != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: LinearProgressIndicator(
-                      value: _runner.globalProgress,
-                      minHeight: 6,
-                      backgroundColor: Colors.white12,
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(
-                            Color(0xFF00E5FF),
-                          ),
-                    ),
-                  ),
-                const SizedBox(height: 12),
+
+                const SizedBox(height: 32),
+
                 Text(
                   'Tiempo total · '
                   '${widget.totalConfiguredSeconds ~/ 60}:'
@@ -348,6 +374,21 @@ class _TimerScreenState extends State<TimerScreen> {
                     fontSize: 14,
                   ),
                 ),
+
+                const SizedBox(height: 22),
+
+                if (_uiState != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: LinearProgressIndicator(
+                      value: _runner.globalProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.white12,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _progressColor(),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

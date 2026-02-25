@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/workout_result.dart';
+import '../../domain/enums/workout_type.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 
+/// ===============================================================
+/// WORKOUT DETAIL SCREEN
+///
+/// Pantalla de detalle del entrenamiento guardado.
+/// Soporta múltiples modos (AMRAP, EMOM, etc.).
+///
+/// - Lee información desde WorkoutResult
+/// - Interpreta metadata según el tipo
+/// - Permite agregar / editar notas
+/// ===============================================================
 class WorkoutDetailScreen extends StatefulWidget {
   final WorkoutResult result;
 
@@ -30,6 +41,9 @@ class _WorkoutDetailScreenState
         TextEditingController(text: widget.result.note ?? '');
   }
 
+  // ===============================================================
+  // FORMATO TIEMPO
+  // ===============================================================
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
@@ -37,6 +51,9 @@ class _WorkoutDetailScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
+  // ===============================================================
+  // SAVE
+  // ===============================================================
   Future<void> _save() async {
     final updated =
         widget.result.copyWith(
@@ -49,16 +66,45 @@ class _WorkoutDetailScreenState
     Navigator.pop(context);
   }
 
+  // ===============================================================
+  // METADATA HELPERS (AMRAP)
+  // ===============================================================
+
+  /// Extrae bloques solo si el modo es AMRAP.
+  /// Ahora metadata es un Map<String, dynamic>
+  /// y blocks es una lista de Map.
+  List<Map<String, dynamic>> _amrapBlocks() {
+    if (widget.result.type != WorkoutType.amrap) {
+      return [];
+    }
+
+    final raw = widget.result.metadata?['blocks'];
+
+    if (raw is List) {
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    }
+
+    return [];
+  }
+
   int _totalWorkTime() {
-    if (widget.result.blocks == null) return 0;
-    return widget.result.blocks!
-        .fold(0, (sum, b) => sum + b.workSeconds);
+    final blocks = _amrapBlocks();
+    return blocks.fold<int>(
+      0,
+      (sum, b) =>
+          sum + ((b['workSeconds'] ?? 0) as int),
+    );
   }
 
   int _totalRestTime() {
-    if (widget.result.blocks == null) return 0;
-    return widget.result.blocks!
-        .fold(0, (sum, b) => sum + (b.restSeconds ?? 0));
+    final blocks = _amrapBlocks();
+    return blocks.fold<int>(
+      0,
+      (sum, b) =>
+          sum + ((b['restSeconds'] ?? 0) as int),
+    );
   }
 
   @override
@@ -69,21 +115,25 @@ class _WorkoutDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final blocks = widget.result.blocks ?? [];
+    final blocks = _amrapBlocks();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: const Text('Detalle AMRAP'),
+        title: Text(
+          'Detalle ${widget.result.type.name.toUpperCase()}',
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
         child: Column(
           children: [
 
-            /// 🔥 HEADER COMPACTO
+            /// ===================================================
+            /// HEADER PRINCIPAL
+            /// ===================================================
             Container(
               padding: const EdgeInsets.symmetric(
                 vertical: 18,
@@ -105,8 +155,7 @@ class _WorkoutDetailScreenState
                 children: [
 
                   Text(
-                    _format(
-                        widget.result.totalSeconds),
+                    _format(widget.result.totalSeconds),
                     style: const TextStyle(
                       fontSize: 30,
                       fontWeight:
@@ -128,19 +177,24 @@ class _WorkoutDetailScreenState
 
                   Row(
                     mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceBetween,
+                        MainAxisAlignment.spaceBetween,
                     children: [
-                      _MiniStat(
-                        label: 'Trabajo',
-                        value: _format(
-                            _totalWorkTime()),
-                      ),
-                      _MiniStat(
-                        label: 'Descanso',
-                        value: _format(
-                            _totalRestTime()),
-                      ),
+
+                      /// Solo mostrar trabajo/descanso en AMRAP
+                      if (widget.result.type ==
+                          WorkoutType.amrap) ...[
+                        _MiniStat(
+                          label: 'Trabajo',
+                          value:
+                              _format(_totalWorkTime()),
+                        ),
+                        _MiniStat(
+                          label: 'Descanso',
+                          value:
+                              _format(_totalRestTime()),
+                        ),
+                      ],
+
                       _MiniStat(
                         label: 'Fecha',
                         value: widget
@@ -158,7 +212,9 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
-            /// 🔥 DESGLOSE
+            /// ===================================================
+            /// DESGLOSE SOLO PARA AMRAP
+            /// ===================================================
             if (blocks.isNotEmpty)
               Container(
                 padding:
@@ -188,55 +244,48 @@ class _WorkoutDetailScreenState
 
                     const SizedBox(height: 14),
 
-                    SizedBox(
-                      height: blocks.length > 3
-                          ? 150
-                          : null,
-                      child: ListView.builder(
-                        physics: blocks.length > 3
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: blocks.length,
-                        itemBuilder:
-                            (context, index) {
-                          final block =
-                              blocks[index];
+                    ListView.builder(
+                      physics:
+                          const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: blocks.length,
+                      itemBuilder:
+                          (context, index) {
 
-                          return Padding(
-                            padding:
-                                const EdgeInsets
-                                    .only(
-                                        bottom:
-                                            12),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment
-                                      .start,
-                              children: [
+                        final block =
+                            blocks[index];
 
+                        return Padding(
+                          padding:
+                              const EdgeInsets.only(
+                                  bottom: 12),
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start,
+                            children: [
+
+                              _BulletRow(
+                                color: Colors.orange,
+                                text:
+                                    'AMRAP ${index + 1}: '
+                                    '${block['workSeconds']} segundos',
+                              ),
+
+                              if (block['restSeconds'] !=
+                                      null &&
+                                  block['restSeconds'] >
+                                      0)
                                 _BulletRow(
-                                  color: Colors.orange,
+                                  color: Colors.grey,
                                   text:
-                                      'AMRAP ${index + 1}: '
-                                      '${block.workSeconds} segundos',
+                                      'Descanso ${index + 1}: '
+                                      '${block['restSeconds']} segundos',
                                 ),
-
-                                if (block.restSeconds !=
-                                        null &&
-                                    block.restSeconds! >
-                                        0)
-                                  _BulletRow(
-                                    color: Colors.grey,
-                                    text:
-                                        'Descanso ${index + 1}: '
-                                        '${block.restSeconds} segundos',
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -244,7 +293,9 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
-            /// 🔥 NOTAS
+            /// ===================================================
+            /// NOTAS
+            /// ===================================================
             _SectionCard(
               child: TextField(
                 controller:
@@ -291,6 +342,9 @@ class _WorkoutDetailScreenState
   }
 }
 
+/// ===============================================================
+/// MINI STAT
+/// ===============================================================
 class _MiniStat extends StatelessWidget {
   final String label;
   final String value;
@@ -326,6 +380,9 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
+/// ===============================================================
+/// SECTION CARD
+/// ===============================================================
 class _SectionCard extends StatelessWidget {
   final Widget child;
 
@@ -348,6 +405,9 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+/// ===============================================================
+/// BULLET ROW
+/// ===============================================================
 class _BulletRow extends StatelessWidget {
   final Color color;
   final String text;
