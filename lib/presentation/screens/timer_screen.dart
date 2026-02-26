@@ -72,6 +72,18 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
+  Color _modeAccentColor() {
+    switch (widget.workoutType) {
+      case WorkoutType.amrap:
+        return Colors.orange;
+      case WorkoutType.emom:
+        return Colors.blueAccent;
+      default:
+        return Colors.orange;
+    }
+  }
+
+
   @override
   void initState() {
     super.initState();
@@ -380,12 +392,13 @@ class _TimerScreenState extends State<TimerScreen> {
 
                 const SizedBox(height: 32),
 
-                CentralTimer(
+                CentralTimer(                  
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
                   countdownSeconds: _countdownSeconds,
                   totalSeconds: _uiState?.phaseTotalSeconds ?? 0,
                   onTap: _onCentralTap,
+                  accentColor: _modeAccentColor(),
                 ),
 
                 const SizedBox(height: 32),

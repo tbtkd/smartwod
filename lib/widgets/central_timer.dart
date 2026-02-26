@@ -9,6 +9,9 @@ class CentralTimer extends StatelessWidget {
   final int totalSeconds;
   final VoidCallback onTap;
 
+  /// 🔥 NUEVO: color dinámico por modo
+  final Color accentColor;
+
   const CentralTimer({
     super.key,
     required this.uiState,
@@ -16,6 +19,7 @@ class CentralTimer extends StatelessWidget {
     required this.countdownSeconds,
     required this.totalSeconds,
     required this.onTap,
+    required this.accentColor,
   });
 
   String _format(int seconds) {
@@ -46,10 +50,11 @@ class CentralTimer extends StatelessWidget {
               .clamp(0.0, 1.0);
     }
 
+    /// 🔥 AJUSTE DE COLOR SIN ELIMINAR LÓGICA ORIGINAL
     final Color color = isCountingDown
-        ? Colors.orange
+        ? accentColor
         : phase == TimerPhase.work
-            ? Colors.orange
+            ? accentColor
             : phase == TimerPhase.rest
                 ? Colors.blue
                 : phase == TimerPhase.paused
