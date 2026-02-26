@@ -6,115 +6,154 @@
 
 Nombre: SMARTWOD  
 Plataforma: Flutter  
-Estado actual: Beta Técnica Estable  
-Modo activo: AMRAP completamente funcional  
+Versión actual: 0.3.0-beta  
+Estado: Beta Técnica Estable  
+Modos activos: AMRAP + EMOM  
 
 Enfoque actual:
-Consolidación estructural antes de expansión funcional.
+Consolidar arquitectura antes de expandir modos.
 
 ---
 
-## 2. ESTADO REAL DEL MOTOR AMRAP
+## 2. MOTOR TEMPORAL ACTUAL
 
-### Flujo correcto implementado
+### Modelo de ejecución
 
-W1 → sin descanso  
-D1 → descanso bloque 2  
-W2 → trabajo bloque 2  
-D2 → descanso bloque 3  
-W3 → trabajo bloque 3  
-FIN  
+- Runner comunica estado vía Stream<TimerUiState>
+- TimerScreen recibe runnerBuilder
+- TimerScreen no conoce la implementación interna del runner
+- Comunicación desacoplada
 
-El descanso pertenece siempre al bloque siguiente.
+### Máquina de estados
 
----
+TimerPhase:
 
-## 3. MOTOR TEMPORAL
-
-- Basado en DateTime (no Stopwatch)
-- Compatible con background
-- Cálculo periódico con Timer de 250ms
-- Sin drift acumulativo
-- Sin reinicios al pausar
-- Pausa no permitida en fase rest
-- Barra global sincronizada con tiempo real
+- work
+- rest
+- paused
+- finished
 
 ---
 
-## 4. SISTEMA DE AUDIO
+## 3. SISTEMA DE AUDIO
 
-Implementación actual:
+Implementación:
 
-- SoundEngine inyectado en AmrapRunner
+- SoundEngine inyectado en runner
 - Dos AudioPlayer separados
 - ReleaseMode.stop
-- Countdown disparado únicamente cuando remaining == 3
 - countdown_1.wav contiene 3-2-1 completo
-- No se utilizan comparaciones <=
+- Countdown disparado únicamente cuando remaining == 3
+- No se usan comparaciones <=
 - No se corta el audio manualmente
 - No hay duplicaciones ni loops
-- Well Done reproducido al finalizar estado finished
+- Well Done en estado finished
 
-Audio sincronizado y estable.
+Audio estable.
 
 ---
 
-## 5. ESTRUCTURA ACTUAL
+## 4. DIFERENCIACIÓN VISUAL POR MODO
 
-Domain:
-- AmrapRunner
-- WorkoutRunner (interfaz)
-- Entidades
+CentralTimer recibe accentColor.
+
+AMRAP → Colors.orange  
+EMOM → Colors.blueAccent  
+
+Countdown usa el color del modo.
+Rest mantiene azul estándar.
+Paused mantiene gris.
+Finished mantiene verde.
+
+---
+
+## 5. ARQUITECTURA ACTUAL
 
 Core:
-- TimerUiState
-- TimerPhase
+- timer_phase.dart
+- timer_ui_state.dart
+
+Domain:
+- WorkoutRunner (interfaz)
+- AmrapRunner
+- EmomRunner
+
+Presentation:
+- TimerScreen (unificado)
+- ConfigScreens por modo
+- CentralTimer
 
 Data:
 - WorkoutHistoryRepositoryImpl
 
-Presentation:
-- TimerScreen
-- ConfigScreen
-- HistoryScreen
-
-Widgets:
-- CentralTimer
-- WodButton
-
 ---
 
-## 6. DECISIONES TÉCNICAS CONSOLIDADAS
+## 6. DECISIONES CONSOLIDADAS
 
-- DateTime se mantiene sobre Stopwatch
-- Audio desacoplado
-- Runner independiente de UI
-- Countdown centralizado
+- DateTime sobre Stopwatch
+- Stream sobre callbacks
+- RunnerBuilder en TimerScreen
 - No instanciar dependencias dentro de build()
-- Limpieza de código muerto realizada
-- Arquitectura preparada para múltiples runners
+- Countdown centralizado en runner
+- Identidad visual desacoplada
 
 ---
 
-## 7. PRÓXIMA EVOLUCIÓN ESTRUCTURAL
+## 7. PROBLEMA ARQUITECTÓNICO PENDIENTE
 
-Fase 2 – Arquitectura Escalable
+Actualmente:
 
-1. Crear BaseRunner abstracto
-2. Extraer PhaseEngine reutilizable
-3. Unificar lógica temporal para EMOM / TABATA / FOR TIME
-4. Agregar pruebas unitarias del motor
+Cada runner tiene su propia lógica temporal.
 
-Fase 3 – Nuevos modos
+Objetivo siguiente:
 
-- EMOM
-- Tabata
-- ForTime
-- Mixed
-
-Todos reutilizando el mismo CoreTimerEngine.
+Unificar ejecución por segmentos.
 
 ---
 
-SMARTWOD prioriza estabilidad estructural antes de expansión funcional.
-El motor AMRAP se considera consolidado en versión beta técnica.
+## 8. SIGUIENTE EVOLUCIÓN (FASE 2)
+
+Crear arquitectura por segmentos:
+
+abstract class WorkoutDefinition {
+    int get totalSeconds;
+    List<WorkoutSegment> buildSegments();
+}
+
+class WorkoutSegment {
+    final TimerPhase phase;
+    final int duration;
+}
+
+El runner ejecutará segmentos.
+No ejecutará modos.
+
+Esto permitirá:
+
+- Tabata sin duplicación
+- ForTime simple
+- Mixed flexible
+- Eliminación de lógica repetida
+
+---
+
+## 9. OBJETIVO ESTRATÉGICO
+
+Transformar SMARTWOD en:
+
+Un motor profesional de ejecución temporal configurable.
+
+No solo una app con múltiples timers.
+
+---
+
+SMARTWOD se encuentra en un punto óptimo
+para consolidar arquitectura antes de expandir funcionalidad.
+
+
+Si quieres, ahora el siguiente paso fuerte sería:
+
+👉 Diseñar WorkoutSegment y WorkoutDefinition formalmente
+y convertir AMRAP y EMOM a ese modelo.
+
+Ese es el salto serio de arquitectura.

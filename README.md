@@ -3,8 +3,8 @@
 SMARTWOD es una aplicación móvil desarrollada en Flutter para la creación
 y ejecución precisa de entrenamientos funcionales tipo WOD.
 
-Versión actual: 0.2.0-beta  
-Estado: Beta Técnica Estable (AMRAP consolidado)
+Versión actual: 0.3.0-beta  
+Estado: Beta Técnica Estable (AMRAP + EMOM consolidados)
 
 ---
 
@@ -16,26 +16,31 @@ y entrenadores que necesitan:
 - Precisión temporal real
 - Ejecución estable sin drift
 - Flujo correcto de trabajo y descanso
+- Identidad visual por modo
 - Registro automático de entrenamientos
 - Arquitectura preparada para escalar
 
-El enfoque principal es robustez estructural antes de expansión funcional.
+El enfoque principal es consolidación estructural antes de expansión funcional.
 
 ---
 
 ## 🏗 Estado Actual
 
 **Fase:** Beta Técnica Estable  
-**Modalidad activa:** AMRAP completamente funcional  
-**Motor temporal:** Estable y sin drift perceptible  
-**Audio:** Sincronizado y desacoplado  
-**Arquitectura:** Lista para expansión a nuevos modos
+**Modos activos:**
+- AMRAP
+- EMOM
+
+**Motor temporal:** Estable y desacoplado  
+**Audio:** Sin duplicaciones ni loops  
+**Arquitectura:** RunnerBuilder + Stream  
+**Persistencia:** Funcional y consistente  
 
 ---
 
-## 🏋️ AMRAP – Implementación Actual
+## 🏋️ AMRAP – Implementación
 
-### Flujo estructural correcto
+Flujo estructural:
 
 W1 → sin descanso  
 D1 → descanso bloque 2  
@@ -44,109 +49,142 @@ D2 → descanso bloque 3
 W3 → trabajo bloque 3  
 FIN  
 
-El descanso pertenece siempre al siguiente bloque.
-
----
-
-### Funcionalidades activas
+Características:
 
 - Configuración dinámica de bloques
-- Descanso opcional por bloque
-- Cálculo automático de tiempo total
-- Countdown inicial sincronizado (3-2-1)
-- Countdown automático en final de fase
-- Pausa funcional (solo en fase Work)
+- Descanso opcional
+- Countdown automático en 3
+- Pausa solo en Work
 - Rest no permite pausa
-- Barra de progreso global precisa
-- Persistencia automática al finalizar
-- Registro en historial
+- Barra global precisa
+- Identidad visual naranja
+- Persistencia automática
 
 ---
 
-## ⏱ Motor de ejecución
+## 🔵 EMOM – Implementación
+
+Características:
+
+- Rondas configurables
+- Duración configurable por ronda
+- Preview dinámico de tiempo total
+- Countdown sincronizado
+- Identidad visual azul
+- Persistencia automática
+- Integración completa con TimerScreen unificado
+
+---
+
+## 🎨 Sistema Visual por Modo
+
+AMRAP → Naranja  
+EMOM → Azul  
+
+Countdown utiliza el color del modo.  
+Barra de progreso global mantiene coherencia visual.
+
+---
+
+## ⏱ Motor de Ejecución
 
 - Runner desacoplado de UI
-- Máquina de estados clara (work / rest / paused / finished)
-- Cálculo temporal basado en DateTime (compatible con background)
-- Sin reinicio incorrecto al pausar
-- Sin adelantamiento de barra
-- Sin desfases acumulativos
+- Comunicación vía Stream<TimerUiState>
+- TimerScreen recibe runnerBuilder
+- Máquina de estados:
+  - work
+  - rest
+  - paused
+  - finished
 - Countdown disparado únicamente cuando remaining == 3
-- El archivo countdown_1.wav contiene 3-2-1 completo
+- No se utilizan comparaciones <=
 - No se corta audio manualmente
-- No hay duplicaciones ni loops
+- No hay loops de sonido
 
 ---
 
 ## 🔊 Sistema de Audio
 
-Implementado mediante `SoundEngine`:
+SoundEngine desacoplado:
 
-- Countdown único disparado en segundo 3
-- Sonido de finalización ("Well Done") funcional
-- Sin duplicaciones
-- Sin cortes prematuros
-- Pre-carga de assets
+- Dos AudioPlayer separados
 - ReleaseMode.stop
-- Audio desacoplado e inyectado en Runner
+- Preload de assets
+- Countdown único en segundo 3
+- Well Done al finalizar
 
 ---
 
 ## 💾 Persistencia
 
-- Guardado automático al finalizar entrenamiento
-- Registro en historial
-- Implementación actual basada en repositorio local
+- Guardado automático al finalizar
+- Historial por tipo de entrenamiento
+- WorkoutType integrado en navegación
 
 ---
 
 ## 🧠 Arquitectura Actual
 
 lib/
-├── core/  
-├── data/  
-├── domain/  
-├── presentation/  
-└── widgets/  
+├── core/
+│   ├── timer_phase.dart
+│   └── timer_ui_state.dart
+├── domain/
+│   ├── runners/
+│   │   ├── amrap_runner.dart
+│   │   └── emom_runner.dart
+│   └── entities/
+├── data/
+├── presentation/
+│   └── screens/
+├── widgets/
 
-Separación por capas en progreso consolidado:
+Separación por capas consolidada:
 
-- Domain → Runner, Entidades
-- Data → Repositorios
-- Presentation → Screens
-- Core → Estado y motor temporal
+- Core → Estado y fases
+- Domain → Runners
+- Presentation → UI
+- Data → Persistencia
 
 ---
 
-# 📈 ROADMAP OFICIAL
+# 📈 ROADMAP OFICIAL ACTUALIZADO
 
-## Fase 1 – Consolidación del Core (ACTUAL)
+## Fase 1 – Consolidación del Core (COMPLETADA)
 
-✔ Motor temporal estable  
+✔ AMRAP estable  
+✔ EMOM estable  
 ✔ Audio sincronizado  
-✔ Arquitectura runner desacoplada  
-✔ Countdown consistente  
-✔ Beta funcional AMRAP  
+✔ Stream-based runner  
+✔ Identidad visual por modo  
+✔ Persistencia funcional  
 
 ---
 
-## Fase 2 – Arquitectura Escalable
+## Fase 2 – Arquitectura por Segmentos (SIGUIENTE)
 
-1. Crear BaseRunner abstracto
-2. Extraer PhaseEngine reutilizable
-3. Separar máquina de estados del runner
-4. Implementar pruebas unitarias del motor
+Objetivo:
+Convertir el motor en ejecutor genérico de segmentos.
+
+1. Crear WorkoutSegment
+2. Crear WorkoutDefinition
+3. Hacer que runners construyan segmentos
+4. Unificar lógica temporal en un motor común
+5. Eliminar duplicación entre runners
+
+Esto permitirá:
+
+- Tabata sin duplicar lógica
+- For Time sin crear runner complejo
+- Modo Mixed estructuralmente limpio
 
 ---
 
 ## Fase 3 – Nuevos Modos
 
-- EMOM
-- Tabata
+- Tabata (validación del motor por segmentos)
 - For Time
-- Mixed (secuencias combinadas)
-
-Todos reutilizando el mismo CoreTimerEngine.
+- Mixed
 
 ---
 
@@ -154,9 +192,9 @@ Todos reutilizando el mismo CoreTimerEngine.
 
 - Persistencia robusta (Hive / Isar)
 - Exportación de historial
-- Estadísticas
-- Métricas por bloque
-- Refinamiento UI
+- Métricas por sesión
+- Refinamiento UI global
+- Sistema de temas centralizado
 
 ---
 
@@ -168,5 +206,5 @@ Todos reutilizando el mismo CoreTimerEngine.
 
 ---
 
-SMARTWOD se está construyendo con enfoque en precisión, estabilidad
-y crecimiento sostenible.
+SMARTWOD está evolucionando de temporizador funcional
+a motor profesional de ejecución de entrenamientos.
