@@ -53,6 +53,7 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
   bool _trainingStarted = false;
+  Timer? _countdownTimer;
 
   // ===============================================================
   // COLOR DINÁMICO SEGÚN MODO
@@ -137,7 +138,7 @@ class _TimerScreenState extends State<TimerScreen> {
     }
 
     if (!mounted) return;
-
+  
     setState(() {
       _uiState = state;
     });
@@ -223,6 +224,8 @@ class _TimerScreenState extends State<TimerScreen> {
 
     await _soundEngine.init();
 
+    if (!mounted) return;
+
     setState(() {
       _isCountingDown = true;
       _countdownSeconds = 10;
@@ -232,6 +235,8 @@ class _TimerScreenState extends State<TimerScreen> {
       await Future.delayed(const Duration(seconds: 1));
 
       final nextValue = _countdownSeconds - 1;
+
+      if (!mounted) return;
 
       setState(() {
         _countdownSeconds = nextValue;
@@ -316,6 +321,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel(); 
     _subscription.cancel();
     _disableWakelock();
     _runner.dispose();

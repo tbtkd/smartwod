@@ -55,7 +55,9 @@ class SegmentRunner implements WorkoutRunner {
 
   @override
   Future<void> start() async {
-    if (_segments.isEmpty) return;
+    if (_segments.isEmpty || _structure.totalRounds <= 0) {
+      return;
+    }
 
     _segmentIndex = 0;
     _elapsedBeforePause = 0;
@@ -67,6 +69,10 @@ class SegmentRunner implements WorkoutRunner {
   }
 
   void _startSegment() {
+    if (_segmentIndex < 0 || _segmentIndex >= _segments.length) {
+      return;
+    }
+
     final segment = _segments[_segmentIndex];
 
     _phase = segment.phase;
@@ -156,6 +162,10 @@ class SegmentRunner implements WorkoutRunner {
   }
 
   void _emitState(int remaining) {
+    if (_segmentIndex < 0 || _segmentIndex >= _segments.length) {
+      return;
+    }
+
     final segment = _segments[_segmentIndex];
 
     _controller.add(

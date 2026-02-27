@@ -18,7 +18,7 @@ class _EmomConfigScreenState
     extends State<EmomConfigScreen>
     with TickerProviderStateMixin {
 
-  int _rounds = 5;
+  int _rounds = 1;
   int _secondsPerRound = 60;
 
   int get _totalSeconds => _rounds * _secondsPerRound;
@@ -90,10 +90,10 @@ class _EmomConfigScreenState
               padding: const EdgeInsets.symmetric(
                   vertical: 16, horizontal: 24),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.08),
+                color: Colors.blueAccent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Colors.blueAccent.withOpacity(0.3),
+                  color: Colors.blueAccent.withValues(alpha: 0.03),
                 ),
               ),
               child: Column(
@@ -275,7 +275,7 @@ class _SelectorCard extends StatelessWidget {
                   const Duration(milliseconds: 200),
               child: Text(
                 value,
-                key: ValueKey(value),
+                key: ValueKey('$title-$value'),
                 style: TextStyle(
                   color: accentColor,
                   fontSize: 20,
