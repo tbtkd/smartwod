@@ -57,11 +57,11 @@ class _EmomConfigScreenState
             _SelectorCard(
               title: 'Rondas',
               value: _rounds.toString(),
-              accentColor: Colors.blueAccent,
+              accentColor: Colors.purple,
               child: _buildWheel(
                 options: _roundOptions,
                 selected: _rounds,
-                accentColor: Colors.blueAccent,
+                accentColor: Colors.purple,
                 onChanged: (val) =>
                     setState(() => _rounds = val),
               ),
@@ -72,11 +72,11 @@ class _EmomConfigScreenState
             _SelectorCard(
               title: 'Duración por ronda',
               value: '$_secondsPerRound seg',
-              accentColor: Colors.blueAccent,
+              accentColor: Colors.purple,
               child: _buildWheel(
                 options: _secondOptions,
                 selected: _secondsPerRound,
-                accentColor: Colors.blueAccent,
+                accentColor: Colors.purple,
                 onChanged: (val) =>
                     setState(() => _secondsPerRound = val),
               ),
@@ -90,10 +90,10 @@ class _EmomConfigScreenState
               padding: const EdgeInsets.symmetric(
                   vertical: 16, horizontal: 24),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withValues(alpha: 0.08),
+                color: Colors.purple.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Colors.blueAccent.withValues(alpha: 0.03),
+                  color: Colors.purple.withValues(alpha: 0.03),
                 ),
               ),
               child: Column(
@@ -115,7 +115,7 @@ class _EmomConfigScreenState
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
+                        color: Colors.purple,
                       ),
                     ),
                   ),
@@ -133,7 +133,7 @@ class _EmomConfigScreenState
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Colors.purple,
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(30),

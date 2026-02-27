@@ -14,6 +14,8 @@ import '../../data/repositories/workout_history_repository_impl.dart';
 
 import '../../widgets/central_timer.dart';
 import 'workout_finished_screen.dart';
+import '../../core/workout_type_extension.dart';
+
 
 /// ===============================================================
 /// TIMER SCREEN (MULTIMODO)
@@ -54,35 +56,6 @@ class _TimerScreenState extends State<TimerScreen> {
   int _countdownSeconds = 10;
   bool _trainingStarted = false;
   Timer? _countdownTimer;
-
-  // ===============================================================
-  // COLOR DINÁMICO SEGÚN MODO
-  // ===============================================================
-  Color _progressColor() {
-    switch (widget.workoutType) {
-      case WorkoutType.amrap:
-        return Colors.orange;
-      case WorkoutType.emom:
-        return Colors.purple;
-      case WorkoutType.tabata:
-        return Colors.blue;
-      case WorkoutType.forTime:
-        return Colors.green;
-      case WorkoutType.mix:
-        return Colors.grey;
-    }
-  }
-
-  Color _modeAccentColor() {
-    switch (widget.workoutType) {
-      case WorkoutType.amrap:
-        return Colors.orange;
-      case WorkoutType.emom:
-        return Colors.blueAccent;
-      default:
-        return Colors.orange;
-    }
-  }
 
 
   @override
@@ -334,6 +307,8 @@ class _TimerScreenState extends State<TimerScreen> {
   @override
   Widget build(BuildContext context) {
 
+    final accentColor = widget.workoutType.color;
+
     final bool isRest =
         _uiState != null && _uiState!.phase == TimerPhase.rest;
 
@@ -343,7 +318,7 @@ class _TimerScreenState extends State<TimerScreen> {
             ? 'Prepárate'
             : (isRest
                 ? 'Descanso'
-                : '${widget.workoutType.name.toUpperCase()} '
+                : '${widget.workoutType.displayName} '
                   '${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
     return PopScope(
@@ -372,7 +347,7 @@ class _TimerScreenState extends State<TimerScreen> {
           elevation: 0,
           centerTitle: true,
           title: Text(
-            widget.workoutType.name.toUpperCase(),
+            widget.workoutType.displayName,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -404,7 +379,7 @@ class _TimerScreenState extends State<TimerScreen> {
                   countdownSeconds: _countdownSeconds,
                   totalSeconds: _uiState?.phaseTotalSeconds ?? 0,
                   onTap: _onCentralTap,
-                  accentColor: _modeAccentColor(),
+                  accentColor: accentColor,
                 ),
 
                 const SizedBox(height: 32),
@@ -429,7 +404,7 @@ class _TimerScreenState extends State<TimerScreen> {
                       minHeight: 6,
                       backgroundColor: Colors.white12,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        _progressColor(),
+                      accentColor,
                       ),
                     ),
                   ),

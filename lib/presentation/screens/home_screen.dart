@@ -4,9 +4,11 @@ import '../../widgets/wod_button.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 import '../screens/emom_config_screen.dart';
 
-
+import 'tabata_config_screen.dart';
 import 'amrap_config_screen.dart';
 import 'workout_history_screen.dart';
+import '../../core/workout_type_extension.dart';
+import '../../domain/enums/workout_type.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,6 +16,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repository = WorkoutHistoryRepositoryImpl(); // va ligada al debug boton para eliminar registros
+
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -39,8 +42,8 @@ class HomeScreen extends StatelessWidget {
             // ==========================
 
             WodButton(
-              label: 'AMRAP',
-              color: Colors.orange,
+              label: WorkoutType.amrap.displayName,
+              color: WorkoutType.amrap.color,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -55,8 +58,8 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 15),
 
             WodButton(
-              label: 'FOR TIME',
-              color: Colors.blueGrey,
+              label: WorkoutType.forTime.displayName,
+              color: WorkoutType.forTime.color,
               onPressed: () {
                 _showComingSoon(context);
               },
@@ -65,8 +68,8 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 15),
 
             WodButton(
-              label: 'EMOM',
-              color: Colors.purple,
+              label: WorkoutType.emom.displayName,
+              color: WorkoutType.emom.color,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -80,18 +83,23 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 15),
 
             WodButton(
-              label: 'TABATA',
-              color: Colors.green,
+              label: WorkoutType.tabata.displayName,
+              color: WorkoutType.tabata.color,
               onPressed: () {
-                _showComingSoon(context);
-              },
-            ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TabataConfigScreen(),
+                ),
+              );
+            },
+          ),
 
             const SizedBox(height: 15),
 
             WodButton(
-              label: 'MIX',
-              color: Colors.grey,
+              label: WorkoutType.mix.displayName,
+              color: WorkoutType.mix.color,
               onPressed: () {
                 _showComingSoon(context);
               },
