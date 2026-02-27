@@ -3,8 +3,8 @@
 SMARTWOD es una aplicación móvil desarrollada en Flutter para la creación
 y ejecución precisa de entrenamientos funcionales tipo WOD.
 
-Versión actual: 0.3.0-beta  
-Estado: Beta Técnica Estable (AMRAP + EMOM consolidados)
+Versión actual: 0.4.0-beta  
+Estado: Motor Unificado por Segmentos (AMRAP + EMOM consolidados)
 
 ---
 
@@ -26,129 +26,54 @@ El enfoque principal es consolidación estructural antes de expansión funcional
 
 ## 🏗 Estado Actual
 
-**Fase:** Beta Técnica Estable  
+**Fase:** 0.4.0-beta  
 **Modos activos:**
 - AMRAP
 - EMOM
 
-**Motor temporal:** Estable y desacoplado  
+**Motor temporal:** Segmentado y unificado  
 **Audio:** Sin duplicaciones ni loops  
-**Arquitectura:** RunnerBuilder + Stream  
+**Arquitectura:** Definition → SegmentRunner → TimerScreen  
 **Persistencia:** Funcional y consistente  
 
 ---
 
-## 🏋️ AMRAP – Implementación
+## 🧠 Evolución Arquitectónica (0.4.0-beta)
 
-Flujo estructural:
+Se eliminó la lógica duplicada entre runners específicos y se implementó un
+motor unificado basado en segmentos.
 
-W1 → sin descanso  
-D1 → descanso bloque 2  
-W2 → trabajo bloque 2  
-D2 → descanso bloque 3  
-W3 → trabajo bloque 3  
-FIN  
-
-Características:
-
-- Configuración dinámica de bloques
-- Descanso opcional
-- Countdown automático en 3
-- Pausa solo en Work
-- Rest no permite pausa
-- Barra global precisa
-- Identidad visual naranja
-- Persistencia automática
-
----
-
-## 🔵 EMOM – Implementación
-
-Características:
-
-- Rondas configurables
-- Duración configurable por ronda
-- Preview dinámico de tiempo total
-- Countdown sincronizado
-- Identidad visual azul
-- Persistencia automática
-- Integración completa con TimerScreen unificado
-
----
-
-## 🎨 Sistema Visual por Modo
-
-AMRAP → Naranja  
-EMOM → Azul  
-
-Countdown utiliza el color del modo.  
-Barra de progreso global mantiene coherencia visual.
-
----
-
-## ⏱ Motor de Ejecución
-
-- Runner desacoplado de UI
-- Comunicación vía Stream<TimerUiState>
-- TimerScreen recibe runnerBuilder
-- Máquina de estados:
-  - work
-  - rest
-  - paused
-  - finished
-- Countdown disparado únicamente cuando remaining == 3
-- No se utilizan comparaciones <=
-- No se corta audio manualmente
-- No hay loops de sonido
-
----
-
-## 🔊 Sistema de Audio
-
-SoundEngine desacoplado:
-
-- Dos AudioPlayer separados
-- ReleaseMode.stop
-- Preload de assets
-- Countdown único en segundo 3
-- Well Done al finalizar
-
----
-
-## 💾 Persistencia
-
-- Guardado automático al finalizar
-- Historial por tipo de entrenamiento
-- WorkoutType integrado en navegación
-
----
-
-## 🧠 Arquitectura Actual
+Nueva estructura:
 
 lib/
 ├── core/
-│   ├── timer_phase.dart
-│   └── timer_ui_state.dart
+│ ├── timer_phase.dart
+│ └── timer_ui_state.dart
 ├── domain/
-│   ├── runners/
-│   │   ├── amrap_runner.dart
-│   │   └── emom_runner.dart
-│   └── entities/
+│ ├── definitions/
+│ │ ├── workout_definition.dart
+│ │ ├── workout_structure.dart
+│ │ ├── workout_segment.dart
+│ │ ├── amrap_definition.dart
+│ │ └── emom_definition.dart
+│ └── runners/
+│ ├── workout_runner.dart
+│ └── segment_runner.dart
 ├── data/
 ├── presentation/
-│   └── screens/
-├── widgets/
+└── widgets/
+
 
 Separación por capas consolidada:
 
 - Core → Estado y fases
-- Domain → Runners
+- Domain → Definitions + Motor
 - Presentation → UI
 - Data → Persistencia
 
 ---
 
-# 📈 ROADMAP OFICIAL ACTUALIZADO
+# 📈 ROADMAP ACTUALIZADO
 
 ## Fase 1 – Consolidación del Core (COMPLETADA)
 
@@ -156,33 +81,25 @@ Separación por capas consolidada:
 ✔ EMOM estable  
 ✔ Audio sincronizado  
 ✔ Stream-based runner  
-✔ Identidad visual por modo  
 ✔ Persistencia funcional  
 
 ---
 
-## Fase 2 – Arquitectura por Segmentos (SIGUIENTE)
+## Fase 2 – Arquitectura por Segmentos (COMPLETADA)
 
-Objetivo:
-Convertir el motor en ejecutor genérico de segmentos.
-
-1. Crear WorkoutSegment
-2. Crear WorkoutDefinition
-3. Hacer que runners construyan segmentos
-4. Unificar lógica temporal en un motor común
-5. Eliminar duplicación entre runners
-
-Esto permitirá:
-
-- Tabata sin duplicar lógica
-- For Time sin crear runner complejo
-- Modo Mixed estructuralmente limpio
+✔ WorkoutDefinition  
+✔ WorkoutStructure  
+✔ WorkoutSegment  
+✔ SegmentRunner unificado  
+✔ Eliminación de runners duplicados  
+✔ Validaciones defensivas  
+✔ Correcciones de lifecycle  
 
 ---
 
-## Fase 3 – Nuevos Modos
+## Fase 3 – Nuevos Modos (SIGUIENTE)
 
-- Tabata (validación del motor por segmentos)
+- Tabata (validación final del motor segmentado)
 - For Time
 - Mixed
 
@@ -198,13 +115,5 @@ Esto permitirá:
 
 ---
 
-## Fase 5 – Versión 1.0.0
-
-- Optimización final
-- Publicación Play Store
-- Versión estable pública
-
----
-
-SMARTWOD está evolucionando de temporizador funcional
-a motor profesional de ejecución de entrenamientos.
+SMARTWOD ha evolucionado de temporizador funcional
+a motor profesional configurable de ejecución temporal.

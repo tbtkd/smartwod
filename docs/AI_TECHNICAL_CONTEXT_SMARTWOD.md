@@ -6,12 +6,12 @@
 
 Nombre: SMARTWOD  
 Plataforma: Flutter  
-Versión actual: 0.3.0-beta  
-Estado: Beta Técnica Estable  
+Versión actual: 0.4.0-beta  
+Estado: Motor Segmentado Unificado  
 Modos activos: AMRAP + EMOM  
 
 Enfoque actual:
-Consolidar arquitectura antes de expandir modos.
+Expansión funcional sobre arquitectura consolidada.
 
 ---
 
@@ -19,12 +19,26 @@ Consolidar arquitectura antes de expandir modos.
 
 ### Modelo de ejecución
 
-- Runner comunica estado vía Stream<TimerUiState>
-- TimerScreen recibe runnerBuilder
-- TimerScreen no conoce la implementación interna del runner
+- Definition construye estructura
+- SegmentRunner ejecuta segmentos
+- Comunicación vía Stream<TimerUiState>
+- TimerScreen no conoce la implementación interna
 - Comunicación desacoplada
 
-### Máquina de estados
+Arquitectura:
+
+    WorkoutDefinition
+    ↓
+    WorkoutStructure
+    ↓
+    SegmentRunner
+    ↓
+    TimerScreen
+
+
+---
+
+## 3. MÁQUINA DE ESTADOS
 
 TimerPhase:
 
@@ -33,127 +47,120 @@ TimerPhase:
 - paused
 - finished
 
+Reglas:
+
+- Pausa solo permitida en work
+- Countdown se dispara al cruzar segundo 3
+- Countdown activo en work y rest
+- Finalización dispara sonido y estado finished
+
 ---
 
-## 3. SISTEMA DE AUDIO
+## 4. SEGMENTRUNNER
 
-Implementación:
+Responsabilidades:
 
-- SoundEngine inyectado en runner
-- Dos AudioPlayer separados
+- Ejecutar segmentos secuencialmente
+- Calcular remaining vía DateTime
+- Mantener progreso global
+- Emitir TimerUiState
+- Manejar transición automática entre segmentos
+- Disparar countdown
+- Manejar finalización
+
+Protecciones añadidas:
+
+- Validación defensiva de índices
+- Protección contra setState después de dispose
+- Cancelación adecuada de timers
+
+---
+
+## 5. SISTEMA DE AUDIO
+
+- SoundEngine inyectado
+- Dos AudioPlayer independientes
 - ReleaseMode.stop
-- countdown_1.wav contiene 3-2-1 completo
-- Countdown disparado únicamente cuando remaining == 3
-- No se usan comparaciones <=
-- No se corta el audio manualmente
-- No hay duplicaciones ni loops
-- Well Done en estado finished
-
-Audio estable.
+- Countdown único
+- Well Done en finished
+- Sin loops ni duplicaciones
 
 ---
 
-## 4. DIFERENCIACIÓN VISUAL POR MODO
-
-CentralTimer recibe accentColor.
+## 6. DIFERENCIACIÓN VISUAL
 
 AMRAP → Colors.orange  
 EMOM → Colors.blueAccent  
 
-Countdown usa el color del modo.
-Rest mantiene azul estándar.
-Paused mantiene gris.
-Finished mantiene verde.
+Uso actualizado de:
+ - withValues(alpha: x)
+
+Reemplazando withOpacity() (deprecated).
 
 ---
 
-## 5. ARQUITECTURA ACTUAL
+## 7. ESTRUCTURA DE DOMINIO
 
-Core:
-- timer_phase.dart
-- timer_ui_state.dart
+Definitions:
 
-Domain:
-- WorkoutRunner (interfaz)
+- workout_definition.dart
+- workout_structure.dart
+- workout_segment.dart
+- amrap_definition.dart
+- emom_definition.dart
+
+Runner:
+
+- segment_runner.dart
+
+Eliminados:
+
 - AmrapRunner
 - EmomRunner
 
-Presentation:
-- TimerScreen (unificado)
-- ConfigScreens por modo
-- CentralTimer
+---
 
-Data:
-- WorkoutHistoryRepositoryImpl
+## 8. ESTADO (TimerUiState)
+
+Contiene:
+
+- remainingSeconds
+- phaseTotalSeconds
+- currentRound
+- totalRounds
+- phase
+- isPaused
+
+No fue modificado en la migración.
+Se mantiene contrato estable con UI.
 
 ---
 
-## 6. DECISIONES CONSOLIDADAS
+## 9. ESTADO ACTUAL DE LA ARQUITECTURA
 
-- DateTime sobre Stopwatch
-- Stream sobre callbacks
-- RunnerBuilder en TimerScreen
-- No instanciar dependencias dentro de build()
-- Countdown centralizado en runner
-- Identidad visual desacoplada
-
----
-
-## 7. PROBLEMA ARQUITECTÓNICO PENDIENTE
-
-Actualmente:
-
-Cada runner tiene su propia lógica temporal.
-
-Objetivo siguiente:
-
-Unificar ejecución por segmentos.
+Duplicación temporal: Eliminada  
+Motor: Unificado  
+UI: Desacoplada  
+Persistencia: Estable  
+Lifecycle: Corregido  
 
 ---
 
-## 8. SIGUIENTE EVOLUCIÓN (FASE 2)
+## 10. SIGUIENTE EVOLUCIÓN
 
-Crear arquitectura por segmentos:
+Implementar:
 
-abstract class WorkoutDefinition {
-    int get totalSeconds;
-    List<WorkoutSegment> buildSegments();
-}
+- TabataDefinition (segmentos repetitivos work/rest)
+- ForTimeDefinition (modo open-ended)
 
-class WorkoutSegment {
-    final TimerPhase phase;
-    final int duration;
-}
-
-El runner ejecutará segmentos.
-No ejecutará modos.
-
-Esto permitirá:
-
-- Tabata sin duplicación
-- ForTime simple
-- Mixed flexible
-- Eliminación de lógica repetida
+El motor actual permite añadir nuevos modos sin modificar SegmentRunner.
 
 ---
 
-## 9. OBJETIVO ESTRATÉGICO
+## 11. OBJETIVO ESTRATÉGICO
 
 Transformar SMARTWOD en:
 
-Un motor profesional de ejecución temporal configurable.
-
-No solo una app con múltiples timers.
-
----
-
-SMARTWOD se encuentra en un punto óptimo
-para consolidar arquitectura antes de expandir funcionalidad.
-
-
-Si quieres, ahora el siguiente paso fuerte sería:
-
-👉 Diseñar WorkoutSegment y WorkoutDefinition formalmente
-y convertir AMRAP y EMOM a ese modelo.
-
-Ese es el salto serio de arquitectura.
+Un motor profesional configurable de ejecución temporal
+capaz de soportar múltiples estructuras de entrenamiento
+sin alterar la lógica central.
