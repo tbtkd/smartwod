@@ -3,8 +3,11 @@ import '../../core/amrap_block.dart';
 import '../../widgets/duration_picker_dialog.dart';
 import '../widgets/amrap_block_card.dart';
 import 'timer_screen.dart';
-import '../../domain/runners/amrap_runner.dart';
+//import '../../domain/runners/amrap_runner.dart';
 import '../../domain/enums/workout_type.dart';
+
+import '../../domain/runners/segment_runner.dart';
+import '../../domain/definitions/amrap_definition.dart';
 
 
 class AmrapConfigScreen extends StatefulWidget {
@@ -229,8 +232,14 @@ class _AmrapConfigScreenState
       MaterialPageRoute(
         builder: (_) =>
             TimerScreen(
+              /*
               runnerBuilder: (soundEngine) => AmrapRunner(
                 blocks: _blocks,
+                soundEngine: soundEngine,
+              ),
+              */
+              runnerBuilder: (soundEngine) => SegmentRunner(
+                definition: AmrapDefinition(blocks: _blocks),
                 soundEngine: soundEngine,
               ),
               workoutType: WorkoutType.amrap,

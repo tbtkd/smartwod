@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/runners/emom_runner.dart';
+//import '../../domain/runners/emom_runner.dart';
 import '../../domain/enums/workout_type.dart';
 import 'timer_screen.dart';
+import '../../domain/runners/segment_runner.dart';
+import '../../domain/definitions/emom_definition.dart';
 
 class EmomConfigScreen extends StatefulWidget {
   const EmomConfigScreen({super.key});
@@ -142,7 +144,7 @@ class _EmomConfigScreenState
                       context,
                       MaterialPageRoute(
                         builder: (_) => TimerScreen(
-                          runnerBuilder:
+                          /*runnerBuilder:
                               (soundEngine) =>
                                   EmomRunner(
                             totalRounds: _rounds,
@@ -150,6 +152,14 @@ class _EmomConfigScreenState
                                 _secondsPerRound,
                             soundEngine:
                                 soundEngine,
+                          ),*/
+                          runnerBuilder: (soundEngine) =>
+                          SegmentRunner(
+                            definition: EmomDefinition(
+                              totalRounds: _rounds,
+                              secondsPerRound: _secondsPerRound,
+                            ),
+                            soundEngine: soundEngine,
                           ),
                           workoutType:
                               WorkoutType.emom,
