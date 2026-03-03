@@ -16,14 +16,6 @@ import '../../widgets/central_timer.dart';
 import 'workout_finished_screen.dart';
 import '../../core/workout_type_extension.dart';
 
-
-/// ===============================================================
-/// TIMER SCREEN (MULTIMODO)
-///
-/// Pantalla neutral.
-/// Ejecuta cualquier WorkoutRunner.
-/// No conoce lógica específica de AMRAP o EMOM.
-/// ===============================================================
 class TimerScreen extends StatefulWidget {
   final WorkoutRunner Function(SoundEngine) runnerBuilder;
   final WorkoutType workoutType;
@@ -57,6 +49,75 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _trainingStarted = false;
   Timer? _countdownTimer;
 
+  // ===============================================================
+  // 🆕 FINALIZAR MANUAL SOLO FOR TIME
+  // ===============================================================
+  Future<void> _finishForTimeManually() async {
+
+    final shouldFinish = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Finalizar entrenamiento',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '¿Seguro que deseas finalizar el entrenamiento?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Finalizar',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldFinish != true) return;
+
+    final elapsedSeconds =
+        widget.totalConfiguredSeconds -
+        (_uiState?.remainingSeconds ?? 0);
+
+    await _subscription.cancel();
+
+    await _historyRepository.save(
+      WorkoutResult(
+        type: widget.workoutType,
+        date: DateTime.now(),
+        totalSeconds: elapsedSeconds,
+        metadata: _buildSafeMetadata(),
+      ),
+    );
+
+    await _disableWakelock();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => WorkoutFinishedScreen(
+          totalSeconds: elapsedSeconds,
+          totalAmraps: 1,
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -64,24 +125,12 @@ class _TimerScreenState extends State<TimerScreen> {
 
     _soundEngine = SoundEngine();
     _runner = widget.runnerBuilder(_soundEngine);
-
-    /// Escuchamos el stream del runner
     _subscription = _runner.stream.listen(_onUpdate);
   }
 
-  // ===============================================================
-  // RUNNER UPDATE
-  // ===============================================================
   void _onUpdate(TimerUiState state) async {
 
-    //debugPrint('PHASE ACTUAL: ${state.phase}');
-
-    // ---------------------------------------------------------------
-    // FINALIZACIÓN
-    // ---------------------------------------------------------------
     if (state.phase == TimerPhase.finished) {
-
-      //debugPrint('ENTRO A FINISHED');
 
       await _subscription.cancel();
 
@@ -117,24 +166,15 @@ class _TimerScreenState extends State<TimerScreen> {
     });
   }
 
-  // ===============================================================
-  // METADATA SEGURA
-  // Convierte List<AmrapBlock> → Map<String, dynamic>
-  // ===============================================================
   Map<String, dynamic>? _buildSafeMetadata() {
 
-    // ==============================
-    // AMRAP (SIN CAMBIOS)
-    // ==============================
     if (widget.workoutType == WorkoutType.amrap) {
 
       final raw = widget.metadata;
 
       if (raw == null) return null;
 
-      if (raw is Map<String, dynamic>) {
-        return raw;
-      }
+      if (raw is Map<String, dynamic>) return raw;
 
       if (raw is List) {
         return {
@@ -148,9 +188,6 @@ class _TimerScreenState extends State<TimerScreen> {
       }
     }
 
-    // ==============================
-    // 🔥 EMOM (NUEVO SOPORTE REAL)
-    // ==============================
     if (widget.workoutType == WorkoutType.emom) {
 
       final rounds = _uiState?.totalRounds ?? 0;
@@ -167,9 +204,6 @@ class _TimerScreenState extends State<TimerScreen> {
       };
     }
 
-    // ==============================
-    // OTROS CASOS (SIN CAMBIOS)
-    // ==============================
     if (widget.metadata is Map<String, dynamic>) {
       return widget.metadata;
     }
@@ -177,9 +211,6 @@ class _TimerScreenState extends State<TimerScreen> {
     return null;
   }
 
-  // ===============================================================
-  // WAKELOCK
-  // ===============================================================
   Future<void> _enableWakelock() async {
     await WakelockPlus.enable();
   }
@@ -188,9 +219,6 @@ class _TimerScreenState extends State<TimerScreen> {
     await WakelockPlus.disable();
   }
 
-  // ===============================================================
-  // COUNTDOWN
-  // ===============================================================
   Future<void> _startCountdown() async {
 
     if (_isCountingDown || _trainingStarted) return;
@@ -242,9 +270,6 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
-  // ===============================================================
-  // EXIT PROTECTION
-  // ===============================================================
   Future<bool> _onWillPop() async {
 
     if (_uiState == null) return true;
@@ -301,9 +326,6 @@ class _TimerScreenState extends State<TimerScreen> {
     super.dispose();
   }
 
-  // ===============================================================
-  // UI
-  // ===============================================================
   @override
   Widget build(BuildContext context) {
 
@@ -317,21 +339,19 @@ class _TimerScreenState extends State<TimerScreen> {
         : (_uiState == null
             ? 'Prepárate'
             : (isRest
-                ? 'Descanso'
-                : '${widget.workoutType.displayName} '
+            ? 'Descanso'
+            : widget.workoutType == WorkoutType.forTime
+                ? widget.workoutType.displayName.toUpperCase()
+                : '${widget.workoutType.displayName.toUpperCase()} '
                   '${_uiState!.currentRound} de ${_uiState!.totalRounds}'));
 
     return PopScope(
       canPop: false,
-
-      /// Nuevo callback recomendado por Flutter
       onPopInvokedWithResult: (didPop, result) async {
 
         if (didPop) return;
 
-        /// Guardamos referencia del Navigator ANTES del await
         final navigator = Navigator.of(context);
-
         final shouldExit = await _onWillPop();
 
         if (!mounted) return;
@@ -404,7 +424,35 @@ class _TimerScreenState extends State<TimerScreen> {
                       minHeight: 6,
                       backgroundColor: Colors.white12,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                      accentColor,
+                        accentColor,
+                      ),
+                    ),
+                  ),
+
+                // 🆕 BOTÓN SOLO PARA FOR TIME
+                if (widget.workoutType == WorkoutType.forTime &&
+                    _uiState != null &&
+                    !_uiState!.isFinished)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: SizedBox(
+                      width: 200,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        onPressed: _finishForTimeManually,
+                        child: const Text(
+                          'Finalizar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
                     ),
                   ),

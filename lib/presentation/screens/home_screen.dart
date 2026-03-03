@@ -7,6 +7,9 @@ import '../screens/emom_config_screen.dart';
 import 'tabata_config_screen.dart';
 import 'amrap_config_screen.dart';
 import 'workout_history_screen.dart';
+import 'for_time_config_screen.dart';
+
+
 import '../../core/workout_type_extension.dart';
 import '../../domain/enums/workout_type.dart';
 
@@ -61,7 +64,13 @@ class HomeScreen extends StatelessWidget {
               label: WorkoutType.forTime.displayName,
               color: WorkoutType.forTime.color,
               onPressed: () {
-                _showComingSoon(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const ForTimeConfigScreen(),
+                  ),
+                );
               },
             ),
 
@@ -96,7 +105,7 @@ class HomeScreen extends StatelessWidget {
           ),
 
             const SizedBox(height: 15),
-
+            /*    //no disponible en esta version
             WodButton(
               label: WorkoutType.mix.displayName,
               color: WorkoutType.mix.color,
@@ -106,7 +115,7 @@ class HomeScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 35),
-
+            */
             // ==========================
             // ETIQUETA HISTORIAL
             // ==========================
@@ -172,7 +181,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
+/*
   static void _showComingSoon(BuildContext context) {
     showDialog(
       context: context,
@@ -190,4 +199,5 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+*/
 }
