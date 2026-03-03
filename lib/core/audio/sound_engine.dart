@@ -29,7 +29,7 @@ class SoundEngine {
 
       _initialized = true;
     } catch (e) {
-      print('Audio init error: $e');
+      //print('Audio init error: $e');
     }
   }
 
@@ -40,7 +40,7 @@ class SoundEngine {
         AssetSource('audio/countdown_1.wav'),
       );
     } catch (e) {
-      print('Countdown audio error: $e');
+      //print('Countdown audio error: $e');
     }
   }
 
@@ -51,7 +51,7 @@ class SoundEngine {
         AssetSource('audio/well_done_optimized.wav'),
       );
     } catch (e) {
-      print('Finish audio error: $e');
+      //print('Finish audio error: $e');
     }
   }
 
@@ -60,7 +60,7 @@ class SoundEngine {
     try {
       await _countdownPlayer.stop();
     } catch (e) {
-      print('Stop countdown error: $e');
+      //print('Stop countdown error: $e');
     }
   }
 
