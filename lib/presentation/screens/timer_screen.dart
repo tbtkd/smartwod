@@ -140,6 +140,7 @@ class _TimerScreenState extends State<TimerScreen> {
         (_uiState?.remainingSeconds ?? 0);
 
     await _subscription.cancel();
+    _runner.dispose(); // 🔴 importante
 
     await _historyRepository.save(
       WorkoutResult(
@@ -189,6 +190,7 @@ class _TimerScreenState extends State<TimerScreen> {
     if (state.phase == TimerPhase.finished) {
 
       await _subscription.cancel();
+      _runner.dispose(); // 🔴 importante
 
       await _historyRepository.save(
         WorkoutResult(
@@ -410,9 +412,9 @@ class _TimerScreenState extends State<TimerScreen> {
   // DISPOSE
   // ===============================================================
   @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    _subscription.cancel();
+  void dispose() {    
+    _countdownTimer?.cancel();  
+    _subscription.cancel();    
     _disableWakelock();
     _runner.dispose();
     super.dispose();

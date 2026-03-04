@@ -4,6 +4,27 @@ import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 
+/// ===============================================================
+/// WORKOUT DETAIL SCREEN
+///
+/// Pantalla que muestra el detalle de un entrenamiento guardado.
+///
+/// RESPONSABILIDADES:
+/// - Mostrar duración total del entrenamiento
+/// - Mostrar metadata según tipo de entrenamiento
+/// - Permitir edición de notas
+///
+/// SOPORTA:
+/// AMRAP
+/// EMOM
+/// TABATA
+/// FOR TIME
+///
+/// IMPORTANTE:
+/// Cada tipo de entrenamiento guarda metadata diferente.
+/// Esta pantalla interpreta esa metadata para mostrarla.
+///
+/// ===============================================================
 class WorkoutDetailScreen extends StatefulWidget {
   final WorkoutResult result;
 
@@ -31,6 +52,9 @@ class _WorkoutDetailScreenState
         TextEditingController(text: widget.result.note ?? '');
   }
 
+  /// ===============================================================
+  /// COLOR SEGÚN TIPO DE ENTRENAMIENTO
+  /// ===============================================================
   Color _typeColor() {
     switch (widget.result.type) {
       case WorkoutType.amrap:
@@ -46,6 +70,9 @@ class _WorkoutDetailScreenState
     }
   }
 
+  /// ===============================================================
+  /// FORMATO DE TIEMPO (segundos → mm:ss)
+  /// ===============================================================
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
@@ -53,6 +80,9 @@ class _WorkoutDetailScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
+  /// ===============================================================
+  /// GUARDAR NOTA EDITADA
+  /// ===============================================================
   Future<void> _save() async {
     final updated =
         widget.result.copyWith(
@@ -65,10 +95,12 @@ class _WorkoutDetailScreenState
     Navigator.pop(context);
   }
 
-  /// ===============================
+  /// ===============================================================
   /// BLOQUES (AMRAP / EMOM)
-  /// ===============================
-
+  ///
+  /// Algunos entrenamientos guardan múltiples bloques
+  /// de trabajo/descanso.
+  /// ===============================================================
   List<Map<String, dynamic>> _blocks() {
     final raw = widget.result.metadata?['blocks'];
 
@@ -113,9 +145,11 @@ class _WorkoutDetailScreenState
         : _blocks().length;
   }
 
-  /// ===============================
-  /// TABATA
-  /// ===============================
+  /// ===============================================================
+  /// TABATA METADATA
+  ///
+  /// Guardada desde TabataConfigScreen
+  /// ===============================================================
 
   int _tabataRounds() {
     final value =
@@ -135,14 +169,27 @@ class _WorkoutDetailScreenState
     return (value is int) ? value : 0;
   }
 
-  /// ===============================
-  /// FOR TIME
-  /// ===============================
+  /// ===============================================================
+  /// FOR TIME METADATA
+  ///
+  /// El time cap se guarda como:
+  ///
+  /// metadata["timeCapSeconds"]
+  ///
+  /// Si no existe (versiones antiguas),
+  /// usamos totalSeconds como fallback.
+  /// ===============================================================
+  int _timeCapSeconds() {
 
-  int _timeCap() {
     final value =
-        widget.result.metadata?['timeCap'];
-    return (value is int) ? value : 0;
+        widget.result.metadata?['timeCapSeconds'];
+
+    if (value is int) {
+      return value;
+    }
+
+    /// fallback para entrenamientos antiguos
+    return widget.result.totalSeconds;
   }
 
   @override
@@ -171,7 +218,9 @@ class _WorkoutDetailScreenState
         child: Column(
           children: [
 
-            /// HEADER
+            /// ===================================================
+            /// HEADER PRINCIPAL
+            /// ===================================================
             Container(
               padding: const EdgeInsets.symmetric(
                 vertical: 18,
@@ -192,6 +241,7 @@ class _WorkoutDetailScreenState
               child: Column(
                 children: [
 
+                  /// TIEMPO TOTAL DEL ENTRENAMIENTO
                   Text(
                     _format(widget.result.totalSeconds),
                     style: TextStyle(
@@ -212,7 +262,9 @@ class _WorkoutDetailScreenState
 
                   const SizedBox(height: 14),
 
-                  /// TABATA INFO
+                  /// ==============================
+                  /// TABATA
+                  /// ==============================
                   if (widget.result.type == WorkoutType.tabata)
                     Row(
                       mainAxisAlignment:
@@ -233,7 +285,9 @@ class _WorkoutDetailScreenState
                       ],
                     ),
 
-                  /// FOR TIME INFO
+                  /// ==============================
+                  /// FOR TIME
+                  /// ==============================
                   if (widget.result.type == WorkoutType.forTime)
                     Row(
                       mainAxisAlignment:
@@ -241,7 +295,7 @@ class _WorkoutDetailScreenState
                       children: [
                         _MiniStat(
                           label: 'Time Cap',
-                          value: _format(_timeCap()),
+                          value: _format(_timeCapSeconds()),
                         ),
                         _MiniStat(
                           label: 'Fecha',
@@ -254,7 +308,9 @@ class _WorkoutDetailScreenState
                       ],
                     ),
 
+                  /// ==============================
                   /// AMRAP
+                  /// ==============================
                   if (widget.result.type == WorkoutType.amrap)
                     Row(
                       mainAxisAlignment:
@@ -281,7 +337,9 @@ class _WorkoutDetailScreenState
                       ],
                     ),
 
+                  /// ==============================
                   /// EMOM
+                  /// ==============================
                   if (widget.result.type == WorkoutType.emom)
                     Row(
                       mainAxisAlignment:
@@ -313,7 +371,9 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
-            /// DESGLOSE
+            /// ===================================================
+            /// DESGLOSE (AMRAP / EMOM)
+            /// ===================================================
             if (blocks.isNotEmpty)
               Container(
                 padding:
@@ -401,6 +461,9 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
+            /// ===================================================
+            /// NOTAS
+            /// ===================================================
             _SectionCard(
               child: TextField(
                 controller:
@@ -446,6 +509,12 @@ class _WorkoutDetailScreenState
   }
 }
 
+/// ===============================================================
+/// MINI STAT
+///
+/// Widget reutilizable para mostrar
+/// valores pequeños en el header.
+/// ===============================================================
 class _MiniStat extends StatelessWidget {
   final String label;
   final String value;
