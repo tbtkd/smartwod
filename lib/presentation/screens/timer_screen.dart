@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:flutter/services.dart'; // 🔵 NUEVO: vibración háptica
 
 import '../../core/timer_ui_state.dart';
 import '../../core/audio/sound_engine.dart';
@@ -92,6 +93,10 @@ class _TimerScreenState extends State<TimerScreen> {
   bool _trainingStarted = false;
 
   Timer? _countdownTimer;
+
+  /// 🔵 NUEVO
+  /// Permite detectar cambio de fase para generar vibración háptica
+  TimerPhase? _lastPhase;
 
   // ===============================================================
   // FINALIZACIÓN MANUAL (solo For Time)
@@ -185,6 +190,22 @@ class _TimerScreenState extends State<TimerScreen> {
   // ACTUALIZACIONES DEL RUNNER
   // ===============================================================
   void _onUpdate(TimerUiState state) async {
+
+    /// 🔵 NUEVO
+    /// Detecta cambio de fase para emitir vibración háptica
+    if (_lastPhase != null && _lastPhase != state.phase) {
+
+      if (state.phase == TimerPhase.work ||
+          state.phase == TimerPhase.rest) {
+        HapticFeedback.mediumImpact();
+      }
+
+      if (state.phase == TimerPhase.finished) {
+        HapticFeedback.heavyImpact();
+      }
+    }
+
+    _lastPhase = state.phase;
 
     /// Runner indica que terminó el entrenamiento
     if (state.phase == TimerPhase.finished) {

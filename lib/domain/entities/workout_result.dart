@@ -31,15 +31,15 @@ class WorkoutResult {
 
   /// Información adicional específica del modo.
   ///
-  /// Se estandariza como Map<String, dynamic> para:
+  /// Se estandariza como `Map<String, dynamic>` para:
   /// - Permitir serialización futura (JSON, SQLite, Hive)
   /// - Evitar acoplamiento a clases concretas
   /// - Facilitar expansión a nuevos modos
   ///
   /// Ejemplos:
-  /// - AMRAP → { "blocks": List<AmrapBlock> }
-  /// - EMOM → { "rounds": 5, "secondsPerRound": 60 }
-  /// - TABATA → { "work": 20, "rest": 10, "rounds": 8 }
+  /// - AMRAP → `{ "blocks": List<AmrapBlock> }`
+  /// - EMOM → `{ "rounds": 5, "secondsPerRound": 60 }`
+  /// - TABATA → `{ "work": 20, "rest": 10, "rounds": 8 }`
   /// - FOR TIME → null
   /// - MIX → estructura combinada
   final Map<String, dynamic>? metadata;

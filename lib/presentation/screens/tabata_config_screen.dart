@@ -203,7 +203,7 @@ class _TabataConfigScreenState
                       ),
                     );
                   },
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(width: 10),
                   itemCount: _presets.length,
                 ),

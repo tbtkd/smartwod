@@ -11,6 +11,9 @@ class WodButton extends StatelessWidget {
   // Color principal del botón
   final Color color;
 
+  // Icono opcional que se mostrará junto al texto
+  final IconData? icon;
+
   // Acción que se ejecutará al presionar el botón
   final VoidCallback onPressed;
 
@@ -19,6 +22,7 @@ class WodButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.color,
+    this.icon,
     required this.onPressed,
   });
 
@@ -44,14 +48,23 @@ class WodButton extends StatelessWidget {
           ),
         ),
 
-        // Texto del botón
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 22, color: Colors.white),
+              const SizedBox(width: 10),
+            ],
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
         ),
       ),
     );
