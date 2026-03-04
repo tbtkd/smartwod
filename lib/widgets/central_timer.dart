@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 import '../core/timer_ui_state.dart';
 import '../core/timer_phase.dart';
 
+/// ===============================================================
+/// CENTRAL TIMER
+///
+/// Widget visual principal del temporizador.
+///
+/// RESPONSABILIDADES
+/// - Mostrar countdown previo
+/// - Mostrar tiempo restante
+/// - Mostrar progreso circular del intervalo
+///
+/// IMPORTANTE
+/// Este widget NO controla el tiempo ni los sonidos.
+/// Solo representa el estado enviado por TimerScreen.
+///
+/// Los sonidos se controlan en:
+/// - TimerScreen
+/// - SoundEngine
+/// - WorkoutRunner
+///
+/// Mantener este widget **sin lógica de tiempo**
+/// evita interferencias con los sonidos del runner.
+/// ===============================================================
 class CentralTimer extends StatelessWidget {
   final TimerUiState? uiState;
   final bool isCountingDown;
@@ -9,7 +31,7 @@ class CentralTimer extends StatelessWidget {
   final int totalSeconds;
   final VoidCallback onTap;
 
-  /// 🔥 NUEVO: color dinámico por modo
+  /// Color dinámico según tipo de entrenamiento
   final Color accentColor;
 
   const CentralTimer({
@@ -22,35 +44,52 @@ class CentralTimer extends StatelessWidget {
     required this.accentColor,
   });
 
+  /// ===============================================================
+  /// FORMATO DE TIEMPO
+  ///
+  /// Convierte segundos a formato mm:ss
+  /// ===============================================================
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
+
     return '${m.toString().padLeft(2, '0')}:'
         '${s.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
+    /// Fase actual del runner
     final TimerPhase? phase = uiState?.phase;
 
+    /// Mostrar botón play cuando aún no inicia
     final bool showPlayIcon =
         uiState == null && !isCountingDown;
 
+    /// Segundos restantes del intervalo
     final int remaining =
         uiState?.remainingSeconds ?? 0;
 
+    /// ===============================================================
+    /// CÁLCULO DEL PROGRESO
+    ///
+    /// 0 = inicio
+    /// 1 = intervalo terminado
+    /// ===============================================================
     double progress = 0;
 
     if (isCountingDown) {
+      /// Countdown siempre es de 10 segundos
       progress = 1 - (countdownSeconds / 10);
-    } else if (uiState != null &&
-        totalSeconds > 0) {
+    } else if (uiState != null && totalSeconds > 0) {
       progress = 1 -
           (remaining / totalSeconds)
               .clamp(0.0, 1.0);
     }
 
-    /// 🔥 AJUSTE DE COLOR SIN ELIMINAR LÓGICA ORIGINAL
+    /// ===============================================================
+    /// COLOR SEGÚN FASE
+    /// ===============================================================
     final Color color = isCountingDown
         ? accentColor
         : phase == TimerPhase.work
@@ -61,6 +100,13 @@ class CentralTimer extends StatelessWidget {
                     ? Colors.grey
                     : Colors.green;
 
+    /// ===============================================================
+    /// TEXTO PRINCIPAL DEL TIMER
+    /// ===============================================================
+    final String timerText = isCountingDown
+        ? countdownSeconds.toString()
+        : _format(remaining);
+
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -69,6 +115,12 @@ class CentralTimer extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
+
+            /// ===================================================
+            /// ANILLO DE PROGRESO
+            ///
+            /// Representa visualmente cuánto falta del intervalo.
+            /// ===================================================
             SizedBox(
               width: 240,
               height: 240,
@@ -77,27 +129,37 @@ class CentralTimer extends StatelessWidget {
                 strokeWidth: 10,
                 backgroundColor: Colors.white12,
                 valueColor:
-                    AlwaysStoppedAnimation<Color>(
-                        color),
+                    AlwaysStoppedAnimation<Color>(color),
               ),
             ),
+
+            /// ===================================================
+            /// CONTENIDO CENTRAL
+            /// ===================================================
             if (showPlayIcon)
+
+              /// Icono play cuando el timer aún no inicia
               const Icon(
                 Icons.play_arrow,
                 size: 70,
                 color: Colors.white70,
               )
+
             else
-              Text(
-                isCountingDown
-                    ? countdownSeconds.toString()
-                    : _format(remaining),
-                style: TextStyle(
-                  color: color,
-                  fontSize:
-                      isCountingDown ? 48 : 40,
-                  fontWeight:
-                      FontWeight.bold,
+
+              /// AnimatedSwitcher solo anima el cambio visual
+              /// del texto SIN alterar el tiempo del runner.
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+
+                child: Text(
+                  timerText,
+                  key: ValueKey(timerText),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: isCountingDown ? 48 : 40,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
           ],
