@@ -82,7 +82,12 @@ class _TabataConfigScreenState
     });
   }
 
+  // ===============================================================
+  // START WORKOUT
+  // ===============================================================
+
   void _startWorkout() {
+
     final definition = TabataDefinition(
       workSeconds: _workSeconds,
       restSeconds: _restSeconds,
@@ -101,6 +106,13 @@ class _TabataConfigScreenState
           workoutType: WorkoutType.tabata,
           totalConfiguredSeconds:
               definition.totalSeconds,
+
+          /// 🔥 NUEVO: metadata para historial
+          metadata: {
+            "rounds": _rounds,
+            "workSeconds": _workSeconds,
+            "restSeconds": _restSeconds,
+          },
         ),
       ),
     );
@@ -439,12 +451,11 @@ class _SelectorCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
 
-            /// 🔥 CORRECCIÓN CLAVE AQUÍ
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Text(
                 value,
-                key: ValueKey('$title-$value'), // ← evita duplicate keys
+                key: ValueKey('$title-$value'),
                 style: TextStyle(
                   color: accentColor,
                   fontSize: 18,

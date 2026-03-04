@@ -4,7 +4,7 @@ import '../../domain/definitions/for_time_definition.dart';
 import '../../domain/runners/segment_runner.dart';
 import '../../domain/enums/workout_type.dart';
 import '../../core/workout_type_extension.dart';
-import '../../core/audio/sound_engine.dart';
+//import '../../core/audio/sound_engine.dart';
 import 'timer_screen.dart';
 
 class ForTimeConfigScreen extends StatefulWidget {
@@ -32,7 +32,11 @@ class _ForTimeConfigScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
+  // ===============================================================
+  // START WORKOUT
+  // ===============================================================
   void _startWorkout() {
+
     final definition = ForTimeDefinition(
       timeCapSeconds: _totalSeconds,
     );
@@ -46,9 +50,16 @@ class _ForTimeConfigScreenState
                 definition: definition,
                 soundEngine: soundEngine,
               ),
+
           workoutType: WorkoutType.forTime,
+
           totalConfiguredSeconds:
               definition.totalSeconds,
+
+          /// 🔥 NUEVO — metadata para historial
+          metadata: {
+            "timeCapSeconds": _totalSeconds,
+          },
         ),
       ),
     );
@@ -56,6 +67,7 @@ class _ForTimeConfigScreenState
 
   @override
   Widget build(BuildContext context) {
+
     final accentColor =
         WorkoutType.forTime.color;
 
@@ -191,6 +203,7 @@ class _ForTimeConfigScreenState
             ListWheelChildBuilderDelegate(
           childCount: options.length,
           builder: (context, index) {
+
             final value = options[index];
             final isSelected =
                 value == selected;
@@ -222,6 +235,7 @@ class _ForTimeConfigScreenState
 }
 
 class _SelectorCard extends StatelessWidget {
+
   final String title;
   final String value;
   final Widget child;
@@ -236,6 +250,7 @@ class _SelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Padding(
       padding:
           const EdgeInsets.symmetric(
@@ -253,6 +268,7 @@ class _SelectorCard extends StatelessWidget {
         ),
         child: Column(
           children: [
+
             Text(
               title,
               style: const TextStyle(
@@ -260,7 +276,9 @@ class _SelectorCard extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
+
             const SizedBox(height: 4),
+
             Text(
               value,
               style: TextStyle(
@@ -270,7 +288,9 @@ class _SelectorCard extends StatelessWidget {
                     FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 8),
+
             child,
           ],
         ),

@@ -16,10 +16,43 @@ import '../../widgets/central_timer.dart';
 import 'workout_finished_screen.dart';
 import '../../core/workout_type_extension.dart';
 
+/// ===============================================================
+/// TIMER SCREEN
+///
+/// Pantalla central que ejecuta cualquier tipo de entrenamiento.
+///
+/// RESPONSABILIDADES:
+/// - Ejecutar el runner correspondiente
+/// - Escuchar actualizaciones del runner
+/// - Mostrar UI del timer
+/// - Guardar el resultado en historial
+/// - Manejar pausa / countdown / salida
+///
+/// IMPORTANTE:
+/// Esta pantalla es **agnóstica del tipo de entrenamiento**.
+/// La lógica específica vive en los runners.
+///
+/// Soporta:
+/// - AMRAP
+/// - EMOM
+/// - TABATA
+/// - FOR TIME
+/// ===============================================================
 class TimerScreen extends StatefulWidget {
+
+  /// Builder que crea el runner correspondiente
   final WorkoutRunner Function(SoundEngine) runnerBuilder;
+
+  /// Tipo de entrenamiento
   final WorkoutType workoutType;
+
+  /// Duración total configurada (en segundos)
   final int totalConfiguredSeconds;
+
+  /// Metadata opcional enviada desde la pantalla de configuración
+  /// Ejemplos:
+  /// Tabata → rounds/workSeconds/restSeconds
+  /// ForTime → timeCapSeconds
   final dynamic metadata;
 
   const TimerScreen({
@@ -36,21 +69,32 @@ class TimerScreen extends StatefulWidget {
 
 class _TimerScreenState extends State<TimerScreen> {
 
+  /// Runner activo
   late final WorkoutRunner _runner;
+
+  /// Motor de sonido
   late final SoundEngine _soundEngine;
+
+  /// Suscripción al stream del runner
   late final StreamSubscription<TimerUiState> _subscription;
 
+  /// Repositorio de historial
   final _historyRepository = WorkoutHistoryRepositoryImpl();
 
+  /// Estado actual del timer
   TimerUiState? _uiState;
 
+  /// Estado del countdown previo al entrenamiento
   bool _isCountingDown = false;
   int _countdownSeconds = 10;
+
+  /// Indica si el entrenamiento ya inició
   bool _trainingStarted = false;
+
   Timer? _countdownTimer;
 
   // ===============================================================
-  // 🆕 FINALIZAR MANUAL SOLO FOR TIME
+  // FINALIZACIÓN MANUAL (solo For Time)
   // ===============================================================
   Future<void> _finishForTimeManually() async {
 
@@ -90,6 +134,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
     if (shouldFinish != true) return;
 
+    /// Calculamos tiempo real usado
     final elapsedSeconds =
         widget.totalConfiguredSeconds -
         (_uiState?.remainingSeconds ?? 0);
@@ -119,17 +164,28 @@ class _TimerScreenState extends State<TimerScreen> {
     );
   }
 
+  // ===============================================================
+  // INIT
+  // ===============================================================
   @override
   void initState() {
     super.initState();
 
     _soundEngine = SoundEngine();
+
+    /// El runner se construye dinámicamente
     _runner = widget.runnerBuilder(_soundEngine);
+
+    /// Escuchamos actualizaciones del runner
     _subscription = _runner.stream.listen(_onUpdate);
   }
 
+  // ===============================================================
+  // ACTUALIZACIONES DEL RUNNER
+  // ===============================================================
   void _onUpdate(TimerUiState state) async {
 
+    /// Runner indica que terminó el entrenamiento
     if (state.phase == TimerPhase.finished) {
 
       await _subscription.cancel();
@@ -160,14 +216,23 @@ class _TimerScreenState extends State<TimerScreen> {
     }
 
     if (!mounted) return;
-  
+
     setState(() {
       _uiState = state;
     });
   }
 
+  // ===============================================================
+  // METADATA SEGURA
+  //
+  // Convierte metadata enviada desde configuración en un formato
+  // seguro para persistencia en historial.
+  // ===============================================================
   Map<String, dynamic>? _buildSafeMetadata() {
 
+    /// -----------------------------
+    /// AMRAP
+    /// -----------------------------
     if (widget.workoutType == WorkoutType.amrap) {
 
       final raw = widget.metadata;
@@ -188,6 +253,9 @@ class _TimerScreenState extends State<TimerScreen> {
       }
     }
 
+    /// -----------------------------
+    /// EMOM
+    /// -----------------------------
     if (widget.workoutType == WorkoutType.emom) {
 
       final rounds = _uiState?.totalRounds ?? 0;
@@ -204,6 +272,9 @@ class _TimerScreenState extends State<TimerScreen> {
       };
     }
 
+    /// -----------------------------
+    /// TABATA / FOR TIME
+    /// -----------------------------
     if (widget.metadata is Map<String, dynamic>) {
       return widget.metadata;
     }
@@ -211,6 +282,9 @@ class _TimerScreenState extends State<TimerScreen> {
     return null;
   }
 
+  // ===============================================================
+  // WAKELOCK
+  // ===============================================================
   Future<void> _enableWakelock() async {
     await WakelockPlus.enable();
   }
@@ -219,6 +293,9 @@ class _TimerScreenState extends State<TimerScreen> {
     await WakelockPlus.disable();
   }
 
+  // ===============================================================
+  // COUNTDOWN PREVIO AL ENTRENAMIENTO
+  // ===============================================================
   Future<void> _startCountdown() async {
 
     if (_isCountingDown || _trainingStarted) return;
@@ -233,6 +310,7 @@ class _TimerScreenState extends State<TimerScreen> {
     });
 
     while (_countdownSeconds > 0 && mounted) {
+
       await Future.delayed(const Duration(seconds: 1));
 
       final nextValue = _countdownSeconds - 1;
@@ -243,6 +321,7 @@ class _TimerScreenState extends State<TimerScreen> {
         _countdownSeconds = nextValue;
       });
 
+      /// Sonido de cuenta regresiva
       if (nextValue == 3) {
         await _soundEngine.playCountdown();
       }
@@ -259,7 +338,14 @@ class _TimerScreenState extends State<TimerScreen> {
     await _runner.start();
   }
 
+  // ===============================================================
+  // TAP EN TIMER CENTRAL
+  //
+  // - Antes de iniciar → inicia countdown
+  // - Durante entrenamiento → pausa / resume
+  // ===============================================================
   void _onCentralTap() {
+
     if (_uiState == null && !_isCountingDown) {
       _startCountdown();
       return;
@@ -270,6 +356,9 @@ class _TimerScreenState extends State<TimerScreen> {
     }
   }
 
+  // ===============================================================
+  // PROTECCIÓN AL SALIR
+  // ===============================================================
   Future<bool> _onWillPop() async {
 
     if (_uiState == null) return true;
@@ -317,15 +406,21 @@ class _TimerScreenState extends State<TimerScreen> {
     return false;
   }
 
+  // ===============================================================
+  // DISPOSE
+  // ===============================================================
   @override
   void dispose() {
-    _countdownTimer?.cancel(); 
+    _countdownTimer?.cancel();
     _subscription.cancel();
     _disableWakelock();
     _runner.dispose();
     super.dispose();
   }
 
+  // ===============================================================
+  // UI
+  // ===============================================================
   @override
   Widget build(BuildContext context) {
 
@@ -377,6 +472,7 @@ class _TimerScreenState extends State<TimerScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
 
+                /// Etiqueta superior (fase actual)
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: Text(
@@ -393,7 +489,8 @@ class _TimerScreenState extends State<TimerScreen> {
 
                 const SizedBox(height: 32),
 
-                CentralTimer(                  
+                /// Timer central
+                CentralTimer(
                   uiState: _uiState,
                   isCountingDown: _isCountingDown,
                   countdownSeconds: _countdownSeconds,
@@ -404,6 +501,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
                 const SizedBox(height: 32),
 
+                /// Tiempo total configurado
                 Text(
                   'Tiempo total · '
                   '${widget.totalConfiguredSeconds ~/ 60}:'
@@ -416,6 +514,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
                 const SizedBox(height: 22),
 
+                /// Barra de progreso
                 if (_uiState != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -429,7 +528,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     ),
                   ),
 
-                // 🆕 BOTÓN SOLO PARA FOR TIME
+                /// Botón finalizar manual (solo For Time)
                 if (widget.workoutType == WorkoutType.forTime &&
                     _uiState != null &&
                     !_uiState!.isFinished)

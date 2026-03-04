@@ -4,16 +4,6 @@ import '../../domain/entities/workout_result.dart';
 import '../../domain/enums/workout_type.dart';
 import '../../data/repositories/workout_history_repository_impl.dart';
 
-/// ===============================================================
-/// WORKOUT DETAIL SCREEN
-///
-/// Pantalla de detalle del entrenamiento guardado.
-/// Soporta múltiples modos (AMRAP, EMOM, etc.).
-///
-/// - Lee información desde WorkoutResult
-/// - Interpreta metadata según el tipo
-/// - Permite agregar / editar notas
-/// ===============================================================
 class WorkoutDetailScreen extends StatefulWidget {
   final WorkoutResult result;
 
@@ -41,9 +31,6 @@ class _WorkoutDetailScreenState
         TextEditingController(text: widget.result.note ?? '');
   }
 
-  // ===============================================================
-  // COLOR DINÁMICO SEGÚN TIPO
-  // ===============================================================
   Color _typeColor() {
     switch (widget.result.type) {
       case WorkoutType.amrap:
@@ -59,9 +46,6 @@ class _WorkoutDetailScreenState
     }
   }
 
-  // ===============================================================
-  // FORMATO TIEMPO
-  // ===============================================================
   String _format(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
@@ -69,9 +53,6 @@ class _WorkoutDetailScreenState
         '${s.toString().padLeft(2, '0')}';
   }
 
-  // ===============================================================
-  // SAVE
-  // ===============================================================
   Future<void> _save() async {
     final updated =
         widget.result.copyWith(
@@ -84,11 +65,10 @@ class _WorkoutDetailScreenState
     Navigator.pop(context);
   }
 
-  // ===============================================================
-  // METADATA HELPERS (GENÉRICO PARA AMRAP / EMOM)
-  // ===============================================================
+  /// ===============================
+  /// BLOQUES (AMRAP / EMOM)
+  /// ===============================
 
-  /// Extrae bloques desde metadata.
   List<Map<String, dynamic>> _blocks() {
     final raw = widget.result.metadata?['blocks'];
 
@@ -133,6 +113,38 @@ class _WorkoutDetailScreenState
         : _blocks().length;
   }
 
+  /// ===============================
+  /// TABATA
+  /// ===============================
+
+  int _tabataRounds() {
+    final value =
+        widget.result.metadata?['rounds'];
+    return (value is int) ? value : 0;
+  }
+
+  int _tabataWork() {
+    final value =
+        widget.result.metadata?['workSeconds'];
+    return (value is int) ? value : 0;
+  }
+
+  int _tabataRest() {
+    final value =
+        widget.result.metadata?['restSeconds'];
+    return (value is int) ? value : 0;
+  }
+
+  /// ===============================
+  /// FOR TIME
+  /// ===============================
+
+  int _timeCap() {
+    final value =
+        widget.result.metadata?['timeCap'];
+    return (value is int) ? value : 0;
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
@@ -159,9 +171,7 @@ class _WorkoutDetailScreenState
         child: Column(
           children: [
 
-            /// ===================================================
-            /// HEADER PRINCIPAL
-            /// ===================================================
+            /// HEADER
             Container(
               padding: const EdgeInsets.symmetric(
                 vertical: 18,
@@ -182,7 +192,6 @@ class _WorkoutDetailScreenState
               child: Column(
                 children: [
 
-                  /// TIEMPO TOTAL
                   Text(
                     _format(widget.result.totalSeconds),
                     style: TextStyle(
@@ -203,75 +212,99 @@ class _WorkoutDetailScreenState
 
                   const SizedBox(height: 14),
 
-                  /// RONDAS COMPLETADAS (si existen bloques)
-                  if (blocks.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'Rondas completadas: ${blocks.length}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                        ),
-                      ),
-                    ),
-
+                  /// TABATA INFO
+                  if (widget.result.type == WorkoutType.tabata)
                     Row(
                       mainAxisAlignment:
                           MainAxisAlignment.spaceBetween,
                       children: [
+                        _MiniStat(
+                          label: 'Rondas',
+                          value: _tabataRounds().toString(),
+                        ),
+                        _MiniStat(
+                          label: 'Trabajo',
+                          value: '${_tabataWork()}s',
+                        ),
+                        _MiniStat(
+                          label: 'Descanso',
+                          value: '${_tabataRest()}s',
+                        ),
+                      ],
+                    ),
 
-                        /// ==========================
-                        /// AMRAP (SIN CAMBIOS)
-                        /// ==========================
-                        if (widget.result.type ==
-                            WorkoutType.amrap) ...[
-                          _MiniStat(
-                            label: 'Trabajo',
-                            value:
-                                _format(_totalWorkTime()),
-                          ),
-                          _MiniStat(
-                            label: 'Descanso',
-                            value:
-                                _format(_totalRestTime()),
-                          ),
-                          _MiniStat(
-                            label: 'Fecha',
-                            value: widget
-                                .result.date
-                                .toLocal()
-                                .toString()
-                                .split(' ')
-                                .first,
-                          ),
-                        ],
+                  /// FOR TIME INFO
+                  if (widget.result.type == WorkoutType.forTime)
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        _MiniStat(
+                          label: 'Time Cap',
+                          value: _format(_timeCap()),
+                        ),
+                        _MiniStat(
+                          label: 'Fecha',
+                          value: widget.result.date
+                              .toLocal()
+                              .toString()
+                              .split(' ')
+                              .first,
+                        ),
+                      ],
+                    ),
 
-                        /// ==========================
-                        /// EMOM (ACTUALIZADO)
-                        /// ==========================
-                        if (widget.result.type ==
-                            WorkoutType.emom) ...[
-                          _MiniStat(
-                            label: 'NoEMOM',
-                            value: _emomRounds().toString(),
-                          ),
-                          _MiniStat(
-                            label: 'Tiempo EMOM',
-                            value:
-                                _format(_intervalSeconds()),
-                          ),
-                          _MiniStat(
-                            label: 'Fecha',
-                            value: widget
-                                .result.date
-                                .toLocal()
-                                .toString()
-                                .split(' ')
-                                .first,
-                          ),
-                        ],
+                  /// AMRAP
+                  if (widget.result.type == WorkoutType.amrap)
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        _MiniStat(
+                          label: 'Trabajo',
+                          value:
+                              _format(_totalWorkTime()),
+                        ),
+                        _MiniStat(
+                          label: 'Descanso',
+                          value:
+                              _format(_totalRestTime()),
+                        ),
+                        _MiniStat(
+                          label: 'Fecha',
+                          value: widget.result.date
+                              .toLocal()
+                              .toString()
+                              .split(' ')
+                              .first,
+                        ),
+                      ],
+                    ),
+
+                  /// EMOM
+                  if (widget.result.type == WorkoutType.emom)
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        _MiniStat(
+                          label: 'NoEMOM',
+                          value:
+                              _emomRounds().toString(),
+                        ),
+                        _MiniStat(
+                          label: 'Tiempo EMOM',
+                          value:
+                              _format(_intervalSeconds()),
+                        ),
+                        _MiniStat(
+                          label: 'Fecha',
+                          value: widget.result.date
+                              .toLocal()
+                              .toString()
+                              .split(' ')
+                              .first,
+                        ),
                       ],
                     ),
                 ],
@@ -280,9 +313,7 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
-            /// ===================================================
-            /// DESGLOSE (AMRAP / EMOM)
-            /// ===================================================
+            /// DESGLOSE
             if (blocks.isNotEmpty)
               Container(
                 padding:
@@ -348,7 +379,6 @@ class _WorkoutDetailScreenState
                                     '${block['workSeconds']} segundos',
                               ),
 
-                              /// Mantener descanso solo para AMRAP
                               if (!isEmom &&
                                   block['restSeconds'] !=
                                       null &&
@@ -371,9 +401,6 @@ class _WorkoutDetailScreenState
 
             const SizedBox(height: 18),
 
-            /// ===================================================
-            /// NOTAS
-            /// ===================================================
             _SectionCard(
               child: TextField(
                 controller:
@@ -419,9 +446,6 @@ class _WorkoutDetailScreenState
   }
 }
 
-/// ===============================================================
-/// MINI STAT
-/// ===============================================================
 class _MiniStat extends StatelessWidget {
   final String label;
   final String value;
@@ -457,9 +481,6 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
-/// ===============================================================
-/// SECTION CARD
-/// ===============================================================
 class _SectionCard extends StatelessWidget {
   final Widget child;
 
@@ -482,9 +503,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-/// ===============================================================
-/// BULLET ROW
-/// ===============================================================
 class _BulletRow extends StatelessWidget {
   final Color color;
   final String text;
