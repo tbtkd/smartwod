@@ -83,7 +83,7 @@ class HomeScreen extends StatelessWidget {
               // ==================================================
 
               const Text(
-                'SMARTWOD',
+                'EMMORA',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -297,6 +297,24 @@ class HomeScreen extends StatelessWidget {
                 child: const Text('Limpiar historial (Debug)'),
               ),
                *///cierre comentario debug boton */
+            
+            /// ==================================================
+            /// FOOTER VERSION
+            ///
+            /// Permite identificar la versión de la app
+            /// durante pruebas con usuarios.
+            /// ==================================================
+            const Text(
+              'v0.9 Beta',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 12,
+                letterSpacing: 1,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
             ],
           ),
         ),
