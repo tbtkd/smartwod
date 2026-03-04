@@ -47,62 +47,100 @@ class _WorkoutHistoryScreenState
   /// CARGA HISTORIAL
   /// ===============================================================
   Future<void> _load() async {
+
     final data = await _repository.loadAll();
+
     if (!mounted) return;
+
     setState(() {
       _history = data;
     });
   }
 
-  /// Total de entrenamientos realizados
+  /// ===============================================================
+  /// ESTADÍSTICAS
+  /// ===============================================================
+
+  /// Total de entrenamientos
   int get totalWorkouts => _history.length;
 
   /// Tiempo total acumulado
   int get totalTimeSeconds =>
-      _history.fold(
-          0, (sum, e) => sum + e.totalSeconds);
+      _history.fold(0, (sum, e) => sum + e.totalSeconds);
 
   /// ===============================================================
   /// FORMATO DE TIEMPO
   /// ===============================================================
   String _formatTime(int seconds) {
+
     final m = seconds ~/ 60;
     final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:' 
+
+    return '${m.toString().padLeft(2, '0')}:'
            '${s.toString().padLeft(2, '0')}';
   }
 
   /// ===============================================================
-  /// FORMATO DEL NOMBRE DEL TIPO
+  /// ICONO SEGÚN TIPO
+  ///
+  /// Mejora lectura visual del historial.
   /// ===============================================================
-  String _formatWorkoutType(WorkoutResult result) {
-    return result.type.name.toUpperCase();
+  IconData _typeIcon(WorkoutType type) {
+
+    switch (type) {
+
+      case WorkoutType.amrap:
+        return Icons.loop;
+
+      case WorkoutType.emom:
+        return Icons.timer;
+
+      case WorkoutType.tabata:
+        return Icons.fitness_center;
+
+      case WorkoutType.forTime:
+        return Icons.flag;
+
+      case WorkoutType.mix:
+        return Icons.shuffle;
+    }
   }
 
   /// ===============================================================
-  /// COLOR SEGÚN TIPO DE ENTRENAMIENTO
+  /// COLOR SEGÚN TIPO
   /// ===============================================================
   Color _typeColor(WorkoutResult result) {
+
     switch (result.type) {
+
       case WorkoutType.amrap:
         return Colors.orange;
+
       case WorkoutType.emom:
         return Colors.purple;
+
       case WorkoutType.tabata:
         return Colors.blue;
+
       case WorkoutType.forTime:
         return Colors.green;
+
       case WorkoutType.mix:
         return Colors.grey;
     }
   }
 
   /// ===============================================================
-  /// SUBTITULO DEL ENTRENAMIENTO
+  /// NOMBRE DEL TIPO
+  /// ===============================================================
+  String _formatWorkoutType(WorkoutResult result) {
+    return result.type.name.toUpperCase();
+  }
+
+  /// ===============================================================
+  /// SUBTITULO DEL WORKOUT
   ///
-  /// Genera una descripción corta usando metadata.
-  /// Esto permite entender el entrenamiento
-  /// sin abrir el detalle.
+  /// Permite entender el workout sin abrir detalle.
   /// ===============================================================
   String _workoutSubtitle(WorkoutResult result) {
 
@@ -157,34 +195,35 @@ class _WorkoutHistoryScreenState
 
         return 'AMRAP';
 
-      /// MIX (para futuras versiones)
       case WorkoutType.mix:
         return 'Workout mixto';
     }
   }
 
+  /// ===============================================================
+  /// UI
+  /// ===============================================================
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+
       backgroundColor: Colors.black,
+
       appBar: AppBar(
         backgroundColor: Colors.black,
         centerTitle: true,
         title: const Text('Historial'),
       ),
 
-      /// ===========================================================
-      /// BODY
-      /// ===========================================================
       body: _history.isEmpty
           ? const Center(
               child: Text(
                 'Aún no hay entrenamientos',
-                style:
-                    TextStyle(color: Colors.white54),
+                style: TextStyle(color: Colors.white54),
               ),
             )
+
           : Column(
               children: [
 
@@ -192,50 +231,53 @@ class _WorkoutHistoryScreenState
                 /// RESUMEN SUPERIOR
                 /// ===================================================
                 Container(
+
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(16),
+
                   decoration: BoxDecoration(
                     color: Colors.white10,
-                    borderRadius:
-                        BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+
                   child: Row(
                     mainAxisAlignment:
                         MainAxisAlignment.spaceAround,
+
                     children: [
+
                       _StatItem(
                         label: 'Entrenamientos',
-                        value:
-                            totalWorkouts.toString(),
+                        value: totalWorkouts.toString(),
                       ),
+
                       _StatItem(
                         label: 'Tiempo total',
-                        value: _formatTime(
-                            totalTimeSeconds),
+                        value: _formatTime(totalTimeSeconds),
                       ),
                     ],
                   ),
                 ),
 
                 /// ===================================================
-                /// LISTA DE ENTRENAMIENTOS
+                /// LISTA DE WORKOUTS
                 /// ===================================================
                 Expanded(
+
                   child: ListView.builder(
+
                     padding:
-                        const EdgeInsets.symmetric(
-                            horizontal: 16),
+                        const EdgeInsets.symmetric(horizontal: 16),
+
                     itemCount: _history.length,
+
                     itemBuilder: (context, index) {
 
-                      final item =
-                          _history[index];
-
+                      final item = _history[index];
                       final color = _typeColor(item);
 
                       return GestureDetector(
 
-                        /// Al tocar abrimos detalle
                         onTap: () async {
 
                           await Navigator.push(
@@ -248,124 +290,120 @@ class _WorkoutHistoryScreenState
                             ),
                           );
 
-                          /// Recargar historial
-                          /// por si la nota cambió
+                          /// Recarga historial por si
+                          /// se editó una nota
                           _load();
                         },
 
                         child: Container(
+
                           margin:
-                              const EdgeInsets.only(
-                                  bottom: 12),
+                              const EdgeInsets.only(bottom: 12),
+
                           padding:
-                              const EdgeInsets.all(14),
+                              const EdgeInsets.all(16),
+
                           decoration: BoxDecoration(
+
                             color: color.withValues(alpha: 0.15),
+
                             borderRadius:
-                                BorderRadius.circular(14),
+                                BorderRadius.circular(16),
+
                             border: Border.all(
-                              color: color.withValues(alpha: 0.4),
+                              color: color.withValues(alpha: 0.35),
                             ),
                           ),
 
                           child: Row(
+
                             mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
+                                MainAxisAlignment.spaceBetween,
 
                             children: [
 
-                              /// -------------------------------------------------
-                              /// LADO IZQUIERDO
-                              /// Tipo + Subtitulo + Fecha
-                              /// -------------------------------------------------
-                              Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .start,
+                              /// IZQUIERDA
+                              Row(
+
                                 children: [
 
-                                  /// Tipo de entrenamiento
-                                  Text(
-                                    _formatWorkoutType(item),
-                                    style:
-                                        TextStyle(
-                                      color: color,
-                                      fontWeight:
-                                          FontWeight.w600,
-                                    ),
+                                  Icon(
+                                    _typeIcon(item.type),
+                                    color: color,
+                                    size: 22,
                                   ),
 
-                                  const SizedBox(
-                                      height: 2),
+                                  const SizedBox(width: 12),
 
-                                  /// 🔥 NUEVO
-                                  /// Descripción del workout
-                                  Text(
-                                    _workoutSubtitle(item),
-                                    style:
-                                        const TextStyle(
-                                      color:
-                                          Colors
-                                              .white54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                  Column(
 
-                                  const SizedBox(
-                                      height: 4),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
 
-                                  /// Fecha
-                                  Text(
-                                    item.date
-                                        .toLocal()
-                                        .toString()
-                                        .split('.')
-                                        .first,
-                                    style:
-                                        const TextStyle(
-                                      color:
-                                          Colors
-                                              .white38,
-                                      fontSize: 12,
-                                    ),
+                                    children: [
+
+                                      Text(
+                                        _formatWorkoutType(item),
+                                        style: TextStyle(
+                                          color: color,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 2),
+
+                                      Text(
+                                        _workoutSubtitle(item),
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 4),
+
+                                      Text(
+                                        item.date
+                                            .toLocal()
+                                            .toString()
+                                            .split('.')
+                                            .first,
+                                        style: const TextStyle(
+                                          color: Colors.white38,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
 
-                              /// -------------------------------------------------
-                              /// LADO DERECHO
-                              /// Tiempo + indicador de nota
-                              /// -------------------------------------------------
+                              /// DERECHA
                               Column(
+
                                 crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .end,
+                                    CrossAxisAlignment.end,
+
                                 children: [
 
-                                  /// Tiempo trabajado
                                   Text(
-                                    _formatTime(
-                                        item.totalSeconds),
-                                    style:
-                                        TextStyle(
+                                    _formatTime(item.totalSeconds),
+                                    style: TextStyle(
                                       color: color,
-                                      fontWeight:
-                                          FontWeight.bold,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
                                   ),
 
-                                  /// Icono si existe nota
-                                  if (item.note !=
-                                          null &&
-                                      item.note!
-                                          .isNotEmpty)
+                                  const SizedBox(height: 4),
+
+                                  if (item.note != null &&
+                                      item.note!.isNotEmpty)
+
                                     const Icon(
-                                      Icons
-                                          .sticky_note_2,
+                                      Icons.sticky_note_2,
                                       size: 16,
-                                      color:
-                                          Colors.white38,
+                                      color: Colors.white38,
                                     ),
                                 ],
                               ),
@@ -383,11 +421,10 @@ class _WorkoutHistoryScreenState
 }
 
 /// ===============================================================
-/// WIDGET ESTADISTICA
-///
-/// Utilizado en el resumen superior.
+/// WIDGET ESTADÍSTICA
 /// ===============================================================
 class _StatItem extends StatelessWidget {
+
   final String label;
   final String value;
 
@@ -398,8 +435,10 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Column(
       children: [
+
         Text(
           value,
           style: const TextStyle(
@@ -408,7 +447,9 @@ class _StatItem extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: 4),
+
         Text(
           label,
           style: const TextStyle(
