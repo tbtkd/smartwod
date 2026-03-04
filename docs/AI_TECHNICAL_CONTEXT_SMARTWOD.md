@@ -1,166 +1,279 @@
-# SMARTWOD — CONTEXTO TÉCNICO ACTUAL
+
+# SMARTWOD — CONTEXTO TÉCNICO
 
 ---
 
-## 1. IDENTIDAD DEL PROYECTO
+# 1. INFORMACIÓN GENERAL
 
-Nombre: SMARTWOD  
+Nombre del proyecto: SMARTWOD  
 Plataforma: Flutter  
-Versión actual: 0.4.0-beta  
-Estado: Motor Segmentado Unificado  
-Modos activos: AMRAP + EMOM  
+Versión actual: 0.5.0-beta
 
-Enfoque actual:
-Expansión funcional sobre arquitectura consolidada.
+Estado del sistema:
+
+Arquitectura consolidada basada en segmentos.
+
+Modos activos:
+
+- AMRAP
+- EMOM
+- TABATA
+- FOR TIME
+
+Próximo modo:
+
+- MIX
 
 ---
 
-## 2. MOTOR TEMPORAL ACTUAL
+# 2. PRINCIPIO ARQUITECTÓNICO
 
-### Modelo de ejecución
-
-- Definition construye estructura
-- SegmentRunner ejecuta segmentos
-- Comunicación vía Stream<TimerUiState>
-- TimerScreen no conoce la implementación interna
-- Comunicación desacoplada
+SMARTWOD separa responsabilidades en capas.
 
 Arquitectura:
 
-    WorkoutDefinition
-    ↓
-    WorkoutStructure
-    ↓
-    SegmentRunner
-    ↓
-    TimerScreen
+Definition  
+↓  
+Structure  
+↓  
+Runner  
+↓  
+UI
 
-
----
-
-## 3. MÁQUINA DE ESTADOS
-
-TimerPhase:
-
-- work
-- rest
-- paused
-- finished
-
-Reglas:
-
-- Pausa solo permitida en work
-- Countdown se dispara al cruzar segundo 3
-- Countdown activo en work y rest
-- Finalización dispara sonido y estado finished
+Esto permite agregar nuevos modos sin modificar el motor.
 
 ---
 
-## 4. SEGMENTRUNNER
+# 3. DEFINITIONS
+
+Cada modo tiene su definición.
+
+Ejemplos:
+
+```
+AmrapDefinition
+EmomDefinition
+TabataDefinition
+ForTimeDefinition
+```
+
+La definición contiene los parámetros del workout.
+
+Ejemplo Tabata:
+
+```
+rounds
+workSeconds
+restSeconds
+```
+
+Ejemplo For Time:
+
+```
+timeCapSeconds
+```
+
+---
+
+# 4. STRUCTURE
+
+Las definiciones se transforman en segmentos ejecutables.
+
+```
+WorkSegment
+RestSegment
+```
+
+Estos segmentos son ejecutados por el runner.
+
+---
+
+# 5. SEGMENT RUNNER
+
+SegmentRunner es el motor principal del timer.
 
 Responsabilidades:
 
-- Ejecutar segmentos secuencialmente
-- Calcular remaining vía DateTime
-- Mantener progreso global
-- Emitir TimerUiState
-- Manejar transición automática entre segmentos
-- Disparar countdown
-- Manejar finalización
-
-Protecciones añadidas:
-
-- Validación defensiva de índices
-- Protección contra setState después de dispose
-- Cancelación adecuada de timers
+- ejecutar segmentos
+- manejar transición work/rest
+- emitir estado del timer
+- calcular progreso global
+- manejar pausa
 
 ---
 
-## 5. SISTEMA DE AUDIO
+# 6. TIMER PHASE
 
-- SoundEngine inyectado
-- Dos AudioPlayer independientes
-- ReleaseMode.stop
-- Countdown único
-- Well Done en finished
-- Sin loops ni duplicaciones
+Estados posibles:
 
----
+```
+work
+rest
+paused
+finished
+```
 
-## 6. DIFERENCIACIÓN VISUAL
+Reglas:
 
-AMRAP → Colors.orange  
-EMOM → Colors.blueAccent  
-
-Uso actualizado de:
- - withValues(alpha: x)
-
-Reemplazando withOpacity() (deprecated).
+- pausa solo durante work
+- rest no puede pausarse
+- finalización automática al terminar segmentos
 
 ---
 
-## 7. ESTRUCTURA DE DOMINIO
+# 7. TIMER UI STATE
 
-Definitions:
+El runner emite estados hacia la UI.
 
-- workout_definition.dart
-- workout_structure.dart
-- workout_segment.dart
-- amrap_definition.dart
-- emom_definition.dart
+Campos:
 
-Runner:
+```
+remainingSeconds
+phase
+currentRound
+totalRounds
+phaseTotalSeconds
+isPaused
+isFinished
+```
 
-- segment_runner.dart
+La UI se actualiza mediante:
 
-Eliminados:
-
-- AmrapRunner
-- EmomRunner
-
----
-
-## 8. ESTADO (TimerUiState)
-
-Contiene:
-
-- remainingSeconds
-- phaseTotalSeconds
-- currentRound
-- totalRounds
-- phase
-- isPaused
-
-No fue modificado en la migración.
-Se mantiene contrato estable con UI.
+```
+Stream<TimerUiState>
+```
 
 ---
 
-## 9. ESTADO ACTUAL DE LA ARQUITECTURA
+# 8. TIMER SCREEN
 
-Duplicación temporal: Eliminada  
-Motor: Unificado  
-UI: Desacoplada  
-Persistencia: Estable  
-Lifecycle: Corregido  
+TimerScreen funciona como controlador principal.
 
----
+Responsabilidades:
 
-## 10. SIGUIENTE EVOLUCIÓN
+- iniciar countdown
+- iniciar runner
+- escuchar actualizaciones
+- guardar historial
+- controlar wakelock
 
-Implementar:
-
-- TabataDefinition (segmentos repetitivos work/rest)
-- ForTimeDefinition (modo open-ended)
-
-El motor actual permite añadir nuevos modos sin modificar SegmentRunner.
+TimerScreen no conoce lógica interna del workout.
 
 ---
 
-## 11. OBJETIVO ESTRATÉGICO
+# 9. HISTORIAL
 
-Transformar SMARTWOD en:
+Persistencia mediante:
 
-Un motor profesional configurable de ejecución temporal
-capaz de soportar múltiples estructuras de entrenamiento
-sin alterar la lógica central.
+```
+WorkoutHistoryRepository
+```
+
+Entidad principal:
+
+```
+WorkoutResult
+```
+
+Campos:
+
+```
+type
+date
+totalSeconds
+metadata
+note
+```
+
+---
+
+# 10. METADATA POR MODO
+
+TABATA
+
+```
+rounds
+workSeconds
+restSeconds
+```
+
+FOR TIME
+
+```
+timeCapSeconds
+```
+
+EMOM
+
+```
+rounds
+intervalSeconds
+```
+
+AMRAP
+
+```
+blocks[]
+```
+
+Esto permite reconstruir el entrenamiento en el detalle.
+
+---
+
+# 11. FINALIZACIÓN MANUAL
+
+Solo el modo FOR TIME permite finalizar manualmente.
+
+El tiempo real se calcula como:
+
+```
+elapsedSeconds =
+configuredSeconds - remainingSeconds
+```
+
+Esto permite terminar antes del time cap.
+
+---
+
+# 12. SEGURIDAD
+
+Protecciones implementadas:
+
+- cancelación segura de streams
+- limpieza de runners
+- control de wakelock
+- validación de metadata
+
+---
+
+# 13. ROADMAP TÉCNICO
+
+v0.6
+
+- mejoras UI
+- optimización del timer
+- iconos por tipo
+
+v0.7
+
+modo MIX
+
+v0.8
+
+mejoras UX
+
+v1.0
+
+release pública
+
+---
+
+# 14. FUNCIONES PREMIUM
+
+Planeadas:
+
+- estadísticas semanales
+- filtros de historial
+- dashboard de progreso
+
+Estas funciones no modifican el motor temporal.
