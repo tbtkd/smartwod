@@ -89,13 +89,18 @@ class CentralTimer extends StatelessWidget {
 
     /// ===============================================================
     /// COLOR SEGÚN FASE
+    ///
+    /// WORK → color del modo de entrenamiento
+    /// REST → rojo (alto contraste para indicar descanso)
+    /// PAUSED → gris
+    /// FINISHED → verde
     /// ===============================================================
     final Color color = isCountingDown
         ? accentColor
         : phase == TimerPhase.work
             ? accentColor
             : phase == TimerPhase.rest
-                ? Colors.blue
+                ? Colors.red
                 : phase == TimerPhase.paused
                     ? Colors.grey
                     : Colors.green;
