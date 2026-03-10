@@ -110,8 +110,8 @@ class CentralTimer extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 240,
-        height: 240,
+        width: 270,
+        height: 270,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -122,11 +122,11 @@ class CentralTimer extends StatelessWidget {
             /// Representa visualmente cuánto falta del intervalo.
             /// ===================================================
             SizedBox(
-              width: 240,
-              height: 240,
+              width: 270,
+              height: 270,
               child: CircularProgressIndicator(
                 value: progress,
-                strokeWidth: 10,
+                strokeWidth: 14,
                 backgroundColor: Colors.white12,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(color),
@@ -151,14 +151,36 @@ class CentralTimer extends StatelessWidget {
               /// del texto SIN alterar el tiempo del runner.
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-
                 child: Text(
                   timerText,
                   key: ValueKey(timerText),
+                  
+                /// ============================================================
+                /// DISPLAY PRINCIPAL DEL TIMER
+                ///
+                /// Ajustado para alta visibilidad durante entrenamientos.
+                ///
+                /// Objetivo:
+                /// Permitir lectura clara del contador desde ~10 metros.
+                ///
+                /// Valores elegidos:
+                /// Countdown → muy grande para impacto visual
+                /// Timer normal → grande pero sin overflow
+                ///
+                /// El contenedor central es de 240x240, lo cual permite
+                /// estos tamaños sin provocar RenderFlex overflow.
+                ///
+                /// Fuente monospace evita saltos visuales al cambiar
+                /// de 09 → 10 → 11 segundos.
+                /// ============================================================
                   style: TextStyle(
                     color: color,
-                    fontSize: isCountingDown ? 48 : 40,
-                    fontWeight: FontWeight.bold,
+                    
+                    /// Tamaño del countdown previo (3..2..1)
+                    fontSize: isCountingDown ? 120 : 80,
+                    
+                    /// Fuente monoespaciada para estabilidad visual
+                    fontFamily: 'monospace',
                   ),
                 ),
               ),
