@@ -305,7 +305,7 @@ class HomeScreen extends StatelessWidget {
             /// durante pruebas con usuarios.
             /// ==================================================
             const Text(
-              'v0.9 Beta',
+              'v 1.0',
               style: TextStyle(
                 color: Colors.white38,
                 fontSize: 12,
