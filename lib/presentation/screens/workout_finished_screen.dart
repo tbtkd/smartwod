@@ -56,7 +56,7 @@ class WorkoutFinishedScreen extends StatelessWidget {
               const SizedBox(height: 8),
 
               const Text(
-                'Gran trabajo. Sigue entrenando.',
+                'Gran trabajo. Estás a un paso de lograr tu objetivo.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white70,

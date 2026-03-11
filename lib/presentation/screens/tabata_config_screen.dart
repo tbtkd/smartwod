@@ -298,8 +298,7 @@ class _TabataConfigScreenState
                           milliseconds: 250),
                       child: Text(
                         _format(_totalSeconds),
-                        key: ValueKey(
-                            _totalSeconds),
+                        key: ValueKey("tabata_${_totalSeconds}_display"),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight:

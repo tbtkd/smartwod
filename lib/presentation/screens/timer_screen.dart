@@ -56,13 +56,19 @@ class TimerScreen extends StatefulWidget {
   /// ForTime → timeCapSeconds
   final dynamic metadata;
 
+  /// 🔵 MODO GYM DISPLAY (experimental)
+  /// Solo cambia la presentación visual
+  final bool gymMode;
+
   const TimerScreen({
     super.key,
     required this.runnerBuilder,
     required this.workoutType,
     required this.totalConfiguredSeconds,
     this.metadata,
+    this.gymMode = false,
   });
+
 
   @override
   State<TimerScreen> createState() => _TimerScreenState();
@@ -480,7 +486,9 @@ class _TimerScreenState extends State<TimerScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(
+        appBar: widget.gymMode 
+        ? null 
+        : AppBar(
           backgroundColor: Colors.black,
           elevation: 0,
           centerTitle: true,
@@ -504,7 +512,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isRest ? Colors.blue : Colors.white,
-                      fontSize: 18,
+                      fontSize: widget.gymMode ? 40 : 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -538,6 +546,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
 const SizedBox(height: 12),
                 /// Tiempo total configurado
+                if (!widget.gymMode)
                 Text(
                   'Tiempo total · '
                   '${widget.totalConfiguredSeconds ~/ 60}:'
@@ -551,7 +560,7 @@ const SizedBox(height: 12),
                 const SizedBox(height: 22),
 
                 /// Barra de progreso
-                if (_uiState != null)
+                if (_uiState != null && !widget.gymMode)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: LinearProgressIndicator(
