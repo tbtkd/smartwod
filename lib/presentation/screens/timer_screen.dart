@@ -524,6 +524,19 @@ class _TimerScreenState extends State<TimerScreen> {
 
                 const SizedBox(height: 32),
 
+                /// ROUND INFO
+                if (_uiState != null &&
+                    widget.workoutType != WorkoutType.forTime)
+                  Text(
+                    'Round ${_uiState!.currentRound} / ${_uiState!.totalRounds}',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+const SizedBox(height: 12),
                 /// Tiempo total configurado
                 Text(
                   'Tiempo total · '

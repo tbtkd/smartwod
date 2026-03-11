@@ -86,9 +86,9 @@ class HomeScreen extends StatelessWidget {
                 'EMMORA',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  letterSpacing: 3,
                 ),
               ),
 
