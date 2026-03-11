@@ -47,7 +47,7 @@ class WorkoutFinishedScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
                 ),
@@ -60,7 +60,7 @@ class WorkoutFinishedScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 14,
+                  fontSize: 18,
                 ),
               ),
 
